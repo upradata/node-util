@@ -1,0 +1,9 @@
+node_modules
+.yarn-error.log
+.directory
+.vscode/*
+!.vscode/*.json
+dist
+out
+lib
+lib-esm
