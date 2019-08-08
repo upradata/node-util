@@ -9,7 +9,7 @@
         "url": "https://github.com/mt-typescript/node-util.git"
     },
     "license": "MIT",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "",
     "main": "dist",
     "types": "dist-es6",
