@@ -1,4 +1,4 @@
-import { recreateString } from '../../src/color/template-string';
+import { recreateString } from '../../src/style/template-string';
 
 describe('Test Suite For Template String Functions', () => {
 

@@ -1,5 +1,5 @@
 import * as colorsSafe from 'colors/safe';
-import { BasicStyleList } from './colors-list';
+import { BasicStyleList } from './basic-style-list';
 import { recreateString, KeyType } from './template-string';
 
 

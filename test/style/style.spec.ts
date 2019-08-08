@@ -1,5 +1,5 @@
-import { styles, Style, COLORS_SAFE } from '../../src/color';
-import { BasicStyleList } from '../../src/color/colors-list';
+import { styles, Style, COLORS_SAFE } from '../../src/style';
+import { BasicStyleList } from '../../src/style/basic-style-list';
 
 describe('Test suite template string styles', () => {
 
@@ -51,7 +51,6 @@ describe('Test suite template string styles', () => {
 
         expect(styles.yellow.bold.bgWhite.$`caca est bon2`).toBe('[47m[1m[33mcaca est bon2[39m[22m[49m');
 
-        // export
         const highlightArgs = styles.bold.yellow.args.$;
         expect(highlightArgs`Attention l'${'argument'} est ${'highlited'} :)))`).toBe(`Attention l'[33m[1margument[22m[39m est [33m[1mhighlited[22m[39m :)))`);
 

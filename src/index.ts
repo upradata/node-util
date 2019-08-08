@@ -1,2 +1,2 @@
 export * from './path-normalize';
-export * from './color';
+export * from './style';
