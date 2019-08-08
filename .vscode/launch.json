@@ -26,87 +26,24 @@
             "protocol": "inspector",
         },
         {
-            "name": "Test WebpackConfig TS mode File",
             "type": "node",
+            "name": "UT Test",
             "request": "launch",
+            "program": "${workspaceFolder}/node_modules/jest/bin/jest",
+            "outFiles": [
+                "${workspaceFolder}/dist"
+            ],
             "args": [
-                "${workspaceFolder}/test/webpack.config.ts"
+                "--runInBand",
+                "--verbose",
+                "false",
+                "--config",
+                "${workspaceFolder}/jest-ut.config.js"
             ],
-            "runtimeArgs": [
-                "--nolazy",
-                "-r",
-                "ts-node/register",
-                "-r",
-                "tsconfig-paths/register"
-            ],
-            "outFiles": [
-                "${workspaceFolder}/lib/**/*.js"
-            ],
-            "sourceMaps": true,
-            "cwd": "${workspaceRoot}",
-            "protocol": "inspector",
-        },
-        {
-            "name": "Test WebpackConfig ESM mode File",
-            "type": "node",
-            "request": "launch",
-            "preLaunchTask": "Tsc Watch",
-            "args": [
-                "${workspaceFolder}/test/webpack.config.js"
-            ],
-            "runtimeArgs": [
-                "--nolazy",
-                "-r",
-                "esm",
-                "-r",
-                "${workspaceFolder}/test/require-boot.js"
-            ],
-            "outFiles": [
-                "${workspaceFolder}/lib/**/*.js"
-            ],
-            "sourceMaps": true,
-            "cwd": "${workspaceRoot}",
-            "protocol": "inspector",
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Test WebpackConfig JS mode File",
-            "preLaunchTask": "Tsc Watch",
-            "program": "${workspaceFolder}/test/src/webpack.config.js",
-            "outFiles": [
-                "${workspaceFolder}/lib/**/*.js"
-            ],
-            "cwd": "${workspaceFolder}/test",
-            "runtimeArgs": [
-                "--nolazy"
-            ],
-            "skipFiles": [
-                "${workspaceRoot}/node_modules/**/*.js",
-                "<node_internals>/**/*.js"
-            ],
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch Test",
-            "preLaunchTask": "Tsc Watch",
-            "program": "${workspaceFolder}/test/webpack.config.js",
-            "outFiles": [
-                "${workspaceFolder}/lib/**/*.js"
-            ],
-            "skipFiles": [
-                "${workspaceRoot}/node_modules/**/*.js",
-                "<node_internals>/**/*.js"
-            ],
-            "runtimeArgs": [
-                "--nolazy",
-                "-r",
-                "esm",
-                "-r",
-                "tsconfig-paths/register"
-            ],
-            "timeout": 1000
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "disableOptimisticBPs": true
         },
         {
             "name": "Launch in Chrome",

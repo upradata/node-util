@@ -1,16 +1,19 @@
 import * as colorsSafe from 'colors/safe';
-import { ColorsList } from './colors-list';
+import { BasicStyleList } from './colors-list';
 import { recreateString, KeyType } from './template-string';
 
 
 export type StringTransform = (arg: string) => string;
 export type StyleMode = 'args' | 'full';
 
-export const colors = colorsSafe;
+export const COLORS_SAFE = colorsSafe as typeof colorsSafe & { none: (s: string) => string };
+COLORS_SAFE.none = s => s;
+export type StyleTemplate = (strings: TemplateStringsArray, ...keys: KeyType[]) => string;
+
 
 export class Style {
     // private parent: Style;
-    protected colors: StringTransform[] = [];
+    protected styleTransforms: StringTransform[] = [];
     protected mode: StyleMode = 'full';
 
     get args() {
@@ -26,10 +29,10 @@ export class Style {
 
     constructor() { }
 
-    style(colors: StringTransform[], newStyle: Style = undefined): Style {
+    style(styleTransforms: StringTransform[], newStyle: Style = undefined): Style {
         const style = newStyle === undefined ? this : newStyle;
 
-        style.colors = [ ...this.colors, ...colors ];
+        style.styleTransforms = [ ...this.styleTransforms, ...styleTransforms ];
         return style;
     }
 
@@ -42,18 +45,18 @@ export class Style {
         return this.styleTemplate()`${s}`;
     }
 
-    private styleTemplate() {
+    private styleTemplate(): StyleTemplate {
         return (strings: TemplateStringsArray, ...keys: KeyType[]) => this.generateTag((s: string) => {
             let newString = s;
 
-            for (const c of this.colors)
+            for (const c of this.styleTransforms)
                 newString = c(newString);
 
             return newString;
         }, strings, ...keys);
     }
 
-    generateTag(format: (arg: string) => string, strings: TemplateStringsArray, ...keys: KeyType[]) {
+    private generateTag(format: (arg: string) => string, strings: TemplateStringsArray, ...keys: KeyType[]) {
         const newKeys: string[] = [];
 
         for (const key of keys)
@@ -67,34 +70,36 @@ export class Style {
 }
 
 
+class StyleList extends Style {
+    static init() {
+        for (const k of Object.keys(new BasicStyleList())) {
 
-export type ColorsSafe = {
-    [ k in keyof ColorsList ]: ColorsSafe & Style;
-};
-
-
-const chainSymbol = Symbol('StyleList2.chain');
-
-// should be a Singleton
-export class Colors extends Style {
-    private __kCalled__: string; // debugging
-
-    constructor(first = true) {
-        super();
-
-        if (first) {
-            for (const [ k, v ] of Object.entries(new ColorsList())) {
-                const s = new Colors(false);
-                const style = this.style([ colorsSafe[ k ] ], s) as Colors;
-
-                Object.defineProperty(Colors.prototype, k, {
-                    // tslint:disable-next-line:object-literal-shorthand
-                    get: function () {
-                        this._kCalled = k;
-                        return style;
-                    }
-                });
-            }
+            Object.defineProperty(StyleList.prototype, k, {
+                // tslint:disable-next-line:object-literal-shorthand
+                get: function () {
+                    return this.style([ COLORS_SAFE[ k ] ], new StyleList());
+                }
+            });
         }
     }
 }
+
+StyleList.init();
+
+export type BasicStyleListRecursive = {
+    [ K in keyof BasicStyleList ]: BasicStyleListRecursive & Style;
+};
+
+export const styles = new StyleList() as unknown as BasicStyleListRecursive;
+
+
+
+// backward compatible
+
+export type ColorType = ColorsSafe & Style;
+
+export type ColorsSafe = {
+    [ k in keyof BasicStyleList ]: ColorType;
+};
+
+export const colors = styles; 
