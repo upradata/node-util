@@ -1,12 +1,14 @@
-# @upradata/browser-util
+# @upradata/node-util
 Node Utilities
 
 ## A bunch of utilities in typescript working on Node (not on browsers)
 
+Look at [Browser Utilities](https://www.npmjs.com/package/@upradata/browser-util), for util stuff working on both Browser and Node
+
 - template string style function to stylish output on terminal
   
 ```
-conconst { styles, Style, COLORS_SAFE } = require('../../dist');
+const { styles, Style, COLORS_SAFE } = require('@upradata/node-util');
 
 const y = styles.yellow;
 

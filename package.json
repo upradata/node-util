@@ -12,8 +12,8 @@
     "version": "2.0.1",
     "description": "",
     "main": "dist",
-    "types": "dist-es6",
-    "module": "dist-es6",
+    "types": "lib-esm",
+    "module": "lib-esm",
     "scripts": {
         "clean": "shx rm -rf dist lib-esm",
         "build:watch": "npm run clean && tsc -w",
