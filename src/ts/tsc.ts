@@ -1,15 +1,15 @@
 import * as ts from 'typescript';
-import * as tmp from 'tmp';
-import * as fs from 'fs';
-import * as path from 'path';
+import tmp from 'tmp';
+import fs from 'fs';
+import path from 'path';
 import * as tsconfig from 'tsconfig';
-import { TsConfig } from './tsconfig';
+import { TsConfig } from './tsconfig.json';
 
 export class TscCompiler {
     constructor() { }
 
     static compileAndEmit(fileNames: string[], options?: ts.CompilerOptions) {
-        const tsConfig: { path?: string; config: TsConfig } = tsconfig.loadSync(__dirname);
+        const tsConfig: { path?: string; config: TsConfig; } = tsconfig.loadSync(__dirname);
         if (!tsConfig.path)
             throw new Error('cannot find Milotti Webpack project tsconfig.json');
 

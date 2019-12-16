@@ -1,12 +1,12 @@
-import * as colorsSafe from 'colors/safe';
+import colorsSafe from 'colors/safe';
 import { BasicStyleList } from './basic-style-list';
 import { recreateString, KeyType } from './template-string';
-
+import { isNil } from '@upradata/util';
 
 export type StringTransform = (arg: string) => string;
 export type StyleMode = 'args' | 'full';
 
-export const COLORS_SAFE = colorsSafe as typeof colorsSafe & { none: (s: string) => string };
+export const COLORS_SAFE = colorsSafe as typeof colorsSafe & { none: (s: string) => string; };
 COLORS_SAFE.none = s => s;
 export type StyleTemplate = (strings: TemplateStringsArray, ...keys: KeyType[]) => string;
 
@@ -29,7 +29,7 @@ export class Style {
 
     constructor() { }
 
-    style(styleTransforms: StringTransform[], newStyle: Style = undefined): Style {
+    add(styleTransforms: StringTransform[], newStyle: Style = undefined): Style {
         const style = newStyle === undefined ? this : newStyle;
 
         style.styleTransforms = [ ...this.styleTransforms, ...styleTransforms ];
@@ -59,8 +59,10 @@ export class Style {
     private generateTag(format: (arg: string) => string, strings: TemplateStringsArray, ...keys: KeyType[]) {
         const newKeys: string[] = [];
 
-        for (const key of keys)
-            newKeys.push(this.mode === 'args' ? format(key.toString()) : key.toString());
+        for (const key of keys) {
+            const k = isNil(key) ? '' : key;
+            newKeys.push(this.mode === 'args' ? format(k.toString()) : k.toString());
+        }
 
 
         const recreated = recreateString(strings, ...newKeys);
@@ -77,7 +79,7 @@ class StyleList extends Style {
             Object.defineProperty(StyleList.prototype, k, {
                 // tslint:disable-next-line:object-literal-shorthand
                 get: function () {
-                    return this.style([ COLORS_SAFE[ k ] ], new StyleList());
+                    return this.add([ COLORS_SAFE[ k ] ], new StyleList());
                 }
             });
         }

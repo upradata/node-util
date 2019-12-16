@@ -1,63 +1,46 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Current TS File",
-            "type": "node",
-            "request": "launch",
-            "args": [
-                "${relativeFile}"
-            ],
-            "runtimeArgs": [
-                "--nolazy",
-                "-r",
-                "ts-node/register",
-                "-r",
-                "tsconfig-paths/register"
-            ],
-            "outFiles": [
-                "${workspaceFolder}/lib/**/*.js"
-            ],
-            "sourceMaps": true,
-            "cwd": "${workspaceRoot}",
-            "protocol": "inspector",
-        },
-        {
-            "type": "node",
-            "name": "UT Test",
-            "request": "launch",
-            "program": "${workspaceFolder}/node_modules/jest/bin/jest",
-            "outFiles": [
-                "${workspaceFolder}/dist"
-            ],
-            "args": [
-                "--runInBand",
-                "--verbose",
-                "false",
-                "--config",
-                "${workspaceFolder}/jest-ut.config.js"
-            ],
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen",
-            "disableOptimisticBPs": true
-        },
-        {
-            "name": "Launch in Chrome",
-            "type": "chrome",
-            "request": "launch",
-            "url": "http://localhost:3145",
-            //"debugServer": 4712,
-            "sourceMaps": true,
-            "webRoot": "${workspaceRoot}/bundles",
-            //"runtimeArgs": ["--auto-open-devtools-for-tabs"],
-            "disableNetworkCache": true,
-            "preLaunchTask": "Npm Watch",
-            "showAsyncStacks": true,
-            "timeout": 2000
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Current TS File",
+      "type": "node",
+      "request": "launch",
+      "args": ["${relativeFile}"],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register", "-r", "tsconfig-paths/register"],
+      "outFiles": ["${workspaceFolder}/lib/**/*.js"],
+      "sourceMaps": true,
+      "cwd": "${workspaceRoot}",
+      "protocol": "inspector",
+      "runtimeExecutable": "/home/milottit/.nvm/versions/node/v12.7.0/bin/node"
+    },
+    {
+      "type": "node",
+      "name": "UT Test",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest",
+      "outFiles": ["${workspaceFolder}/dist"],
+      "args": ["--runInBand", "--verbose", "false", "--config", "${workspaceFolder}/jest-ut.config.js"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "disableOptimisticBPs": true
+    },
+    {
+      "name": "Launch in Chrome",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3145",
+      //"debugServer": 4712,
+      "sourceMaps": true,
+      "webRoot": "${workspaceRoot}/bundles",
+      //"runtimeArgs": ["--auto-open-devtools-for-tabs"],
+      "disableNetworkCache": true,
+      "preLaunchTask": "Npm Watch",
+      "showAsyncStacks": true,
+      "timeout": 2000
+    }
+  ]
 }
