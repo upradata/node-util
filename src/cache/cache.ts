@@ -1,6 +1,7 @@
-import glob, { IOptions as GlobOptions } from 'glob';
 import { StoreOptions, Store } from './store';
 import { warn } from './common';
+import { Files, GlobFiles } from './glob-files';
+import { isDefined } from '@upradata/util/lib';
 
 
 export type CacheOptions = StoreOptions;
@@ -26,30 +27,27 @@ export class Cache {
         return this;
     }
 
-    private loop(args: { targets: string[], options?: GlobOptions, method: string, action: (file: string) => any; }) {
+    private loop(args: { files: Files, method: string, action: (file: string) => any; }) {
 
-        const { targets, method, action, options } = args;
+        const { method, action } = args;
+        const globFiles = new GlobFiles(args.files);
+        const { files, missed } = globFiles.getFiles();
 
-        for (const pattern of targets) {
-            try {
-                const files = glob.sync(pattern, options);
+        files.forEach(action);
 
-                if (files.length === 0) {
-                    warn(`[${method}] Pattern match no file: ${pattern}`);
-                    continue;
-                }
 
-                files.forEach(action);
-            } catch (err) {
+        for (const { pattern, err } of missed) {
+            if (isDefined(err))
                 warn(`[${method}] Pattern parse fail for ${pattern}: ${err.message}`);
-            }
+            else
+                warn(`[${method}] Pattern match no file: ${pattern}`);
         }
     }
 
 
-    public addOrUpdateFile(collectionName: string = 'default', ...files: string[]) {
+    public addOrUpdateFile(collectionName: string = 'default', ...files: Files) {
         this.loop({
-            targets: files ? files : this.store.fileNames(collectionName),
+            files: files ? files : this.store.fileNames(collectionName),
             method: 'addOrUpdateFile',
             action: file => this.store.addFile(file, collectionName)
         });
@@ -57,9 +55,9 @@ export class Cache {
         return this;
     }
 
-    public deleteFile(collectionName: string = 'default', ...files: string[]) {
+    public deleteFile(collectionName: string = 'default', ...files: Files) {
         this.loop({
-            targets: files,
+            files,
             method: 'rmFile',
             action: file => this.store.deleteFile(file, collectionName)
         });
@@ -83,11 +81,11 @@ export class Cache {
         return changedCollections;
     }
 
-    public changedFiles(collectionName: string = 'default', ...files: string[]) {
+    public changedFiles(collectionName: string = 'default', ...files: Files) {
         const ret = [];
 
         this.loop({
-            targets: files.length || files.length > 0 ? files : this.store.fileNames(collectionName),
+            files: files.length || files.length > 0 ? files : this.store.fileNames(collectionName),
             method: 'changedFiles',
             action: file => {
                 const isChanged = this.store.fileHasChanged(file, collectionName);
@@ -98,7 +96,7 @@ export class Cache {
         return ret;
     }
 
-    public isChangedFiles(collectionName: string = 'default', ...files: string[]) {
+    public isChangedFiles(collectionName: string = 'default', ...files: Files) {
         if (this.store.files(collectionName).length === 0)
             return true;
 

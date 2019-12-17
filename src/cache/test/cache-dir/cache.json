@@ -1,0 +1,67 @@
+{
+    "default": {},
+    "collection1": {
+        "/home/milottit/Libraries/Util/node-util/src/cache/cache.ts": {
+            "mtime": 1576373473831
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/common.ts": {
+            "mtime": 1576371398160
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/index.ts": {
+            "mtime": 1576368828659
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/store.ts": {
+            "mtime": 1576575164980
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test": {
+            "mtime": 1576575402369
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test/cache-dir": {
+            "mtime": 1576575402369
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test/cache-dir/cache2.json": {
+            "mtime": 1576575402373
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test/cache.example.ts": {
+            "mtime": 1576575393684
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test/cache.example2.ts": {
+            "mtime": 1576575378712
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test/file.ts": {
+            "mtime": 1576575322488
+        }
+    },
+    "collection-default": {
+        "/home/milottit/Libraries/Util/node-util/src/cache/cache.ts": {
+            "mtime": 1576373473831
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/common.ts": {
+            "mtime": 1576371398160
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/index.ts": {
+            "mtime": 1576368828659
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/store.ts": {
+            "mtime": 1576575164980
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test": {
+            "mtime": 1576575402369
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test/cache-dir": {
+            "mtime": 1576575402369
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test/cache-dir/cache2.json": {
+            "mtime": 1576575402373
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test/cache.example.ts": {
+            "mtime": 1576575393684
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test/cache.example2.ts": {
+            "mtime": 1576575378712
+        },
+        "/home/milottit/Libraries/Util/node-util/src/cache/test/file.ts": {
+            "mtime": 1576575322488
+        }
+    }
+}

@@ -8,20 +8,31 @@ import { warn } from './common';
 
 const ENCODING = 'utf8';
 
+export interface Stringable {
+    toString(): string;
+}
+
+export type Criteria = (path: string) => Stringable;
+export type IsSameComparator = (path: string, criteria: Stringable) => boolean;
+
 export interface FilePrint {
     mtime: number;
-    md5: string;
+    criteria?: string | number;
 }
 
 export type Collection = ObjectOf<FilePrint>;
 
+
+
 export class StoreOptions {
     path: string;
+    criteria?: Criteria | 'mtime' | 'md5' = 'mtime';
+    isSameComparator?: IsSameComparator;
 
     constructor(options: Partial<StoreOptions>) {
-        if (options.path)
-            this.path = options.path;
-        else {
+        Object.assign(this, options);
+
+        if (isUndefined(this.path)) {
             const root = findUp.sync(directory => {
                 const hasPackageJson = findUp.sync.exists(path.join(directory, 'package.json'));
                 return hasPackageJson && directory;
@@ -35,6 +46,7 @@ export class StoreOptions {
 
 export class Store extends StoreOptions {
     store: ObjectOf<Collection>;
+    criteriaFunc: Criteria;
 
     constructor(options: Partial<StoreOptions> = {}) {
         super(options);
@@ -48,6 +60,15 @@ export class Store extends StoreOptions {
             this.store = {};
         }
 
+        if (this.criteria === 'mtime')
+            this.criteriaFunc = path => this.mtime(path);
+        else if (this.criteria === 'md5')
+            this.criteriaFunc = path => this.md5(path);
+        else
+            this.criteriaFunc = this.criteria;
+
+        if (isUndefined(this.isSameComparator))
+            this.isSameComparator = (path, criteria) => this.criteriaFunc(path).toString() === criteria;
         // this.createCollectionIfNotExist('default');
     }
 
@@ -103,10 +124,17 @@ export class Store extends StoreOptions {
         if (isUndefined(collection))
             collection = this.createCollectionIfNotExist(collectionName);
 
-        collection[ file ] = {
+        const print: FilePrint = {
             mtime: this.mtime(file),
-            md5: this.md5(file)
+            criteria: this.criteriaFunc(file).toString()
         };
+
+        collection[ file ] = {
+            mtime: this.mtime(file)
+        };
+
+        if (this.criteria !== 'mtime')
+            collection[ file ].criteria = print.criteria;
 
         return this;
     }
@@ -134,7 +162,8 @@ export class Store extends StoreOptions {
             return true; // if doesn not exist yet ==> has changed because new one
         }
 
-        return this.mtime(file) !== collection[ file ].mtime;
+        const criteria: keyof FilePrint = this.criteria === 'mtime' ? 'mtime' : 'criteria';
+        return !this.isSameComparator(file, collection[ file ][ criteria ]);
     }
 
     public deleteFile(file: string, collectionName: string = 'default') {
