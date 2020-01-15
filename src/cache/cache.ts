@@ -4,7 +4,7 @@ import { Files, GlobFiles } from './glob-files';
 import { isDefined } from '@upradata/util/lib';
 
 
-export type CacheOptions = StoreOptions;
+export class CacheOptions extends StoreOptions { };
 
 export class Cache {
     public store: Store;
@@ -45,7 +45,7 @@ export class Cache {
     }
 
 
-    public addOrUpdateFile(collectionName: string = 'default', ...files: Files) {
+    public addOrUpdateFile(collectionName: string, ...files: Files) {
         this.loop({
             files: files ? files : this.store.fileNames(collectionName),
             method: 'addOrUpdateFile',
@@ -55,7 +55,7 @@ export class Cache {
         return this;
     }
 
-    public deleteFile(collectionName: string = 'default', ...files: Files) {
+    public deleteFile(collectionName: string, ...files: Files) {
         this.loop({
             files,
             method: 'rmFile',
@@ -81,11 +81,11 @@ export class Cache {
         return changedCollections;
     }
 
-    public changedFiles(collectionName: string = 'default', ...files: Files) {
+    public changedFiles(collectionName: string, ...files: Files) {
         const ret = [];
 
         this.loop({
-            files: files.length || files.length > 0 ? files : this.store.fileNames(collectionName),
+            files: Array.isArray(files) && files.length > 0 ? files : this.store.fileNames(collectionName),
             method: 'changedFiles',
             action: file => {
                 const isChanged = this.store.fileHasChanged(file, collectionName);
@@ -96,7 +96,7 @@ export class Cache {
         return ret;
     }
 
-    public isChangedFiles(collectionName: string = 'default', ...files: Files) {
+    public isChangedFiles(collectionName: string, ...files: Files) {
         if (this.store.files(collectionName).length === 0)
             return true;
 

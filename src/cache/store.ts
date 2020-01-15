@@ -68,7 +68,8 @@ export class Store extends StoreOptions {
             this.criteriaFunc = this.criteria;
 
         if (isUndefined(this.isSameComparator))
-            this.isSameComparator = (path, criteria) => this.criteriaFunc(path).toString() === criteria;
+            this.isSameComparator = (path, criteria) => this.criteriaFunc(path).toString() === criteria.toString();
+
         // this.createCollectionIfNotExist('default');
     }
 

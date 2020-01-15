@@ -2,9 +2,10 @@ import path from 'path';
 import glob, { IOptions as GlobOptions } from 'glob';
 import { isPlainObject, assignRecursive, isArray } from '@upradata/util';
 
-export type GlobFile = { pattern: string; options?: GlobOptions; };
+export type GlobFilesOptions = GlobOptions & { noGlob?: boolean; };
+export type GlobFile = { pattern: string; options?: GlobFilesOptions; };
 export type File = string | GlobFile;
-export type FilesWithGlobalOptions = { files: (File | File[]), options?: GlobOptions; };
+export type FilesWithGlobalOptions = { files: (File | File[]), options?: GlobFilesOptions; };
 export type Files = File[] | FilesWithGlobalOptions[];
 
 // the last array is there just to be able to have function f(...files:Files)
@@ -32,7 +33,7 @@ export class GlobFiles {
         const plainFiles: GlobFile[] = [];
 
         let filesList: File[] = undefined;
-        let globalOptions: GlobOptions = {};
+        let globalOptions: GlobFilesOptions = {};
 
         if (isFilesWithGlobalOptions(this.files)) {
             const f = this.files[ 0 ].files;
@@ -60,17 +61,22 @@ export class GlobFiles {
         for (const { pattern, options } of this.globFiles) {
             try {
 
-                const filesList = glob.sync(pattern, options).map(file => {
-                    if (file.startsWith('/'))
-                        return file;
+                if (!options.noGlob) {
+                    const filesList = glob.sync(pattern, options).map(file => {
+                        if (file.startsWith('/'))
+                            return file;
 
-                    return path.join(options.cwd || '.', file);
-                });
+                        return path.join(options.cwd || '.', file);
+                    });
 
-                if (filesList.length === 0)
-                    noFiles.push({ pattern });
-                else
-                    allFiles.push(...filesList);
+                    if (filesList.length === 0)
+                        noFiles.push({ pattern });
+                    else
+                        allFiles.push(...filesList);
+
+                } else {
+                    allFiles.push(pattern);
+                }
 
             } catch (err) {
                 noFiles.push({ pattern, err });
