@@ -46,7 +46,7 @@ describe('Test suite template string styles', () => {
             .toBe('[31mcaca [33mYELLOW[31m est [47m[34mSURPRISE[31m[49m bon[39m');
 
         const s = new Style();
-        const stylish = s.style([ COLORS_SAFE.red, COLORS_SAFE.bold, COLORS_SAFE.bgWhite ]).$;
+        const stylish = s.add([ COLORS_SAFE.red, COLORS_SAFE.bold, COLORS_SAFE.bgWhite ]).$;
         expect(stylish`caca est bon`).toBe('[47m[1m[31mcaca est bon[39m[22m[49m');
 
         expect(styles.yellow.bold.bgWhite.$`caca est bon2`).toBe('[47m[1m[33mcaca est bon2[39m[22m[49m');

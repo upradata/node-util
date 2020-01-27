@@ -1,9 +1,10 @@
-import { ObjectOf, chain, isUndefined, isDefined } from '@upradata/util';
-import findUp from 'find-up';
+import { isUndefined, isDefined, ensureArray, chain } from '@upradata/util';
 import path from 'path';
 import fs from 'fs-extra';
 import crypto from 'crypto';
 import { warn } from './common';
+import { StoreCollection, isFilePrint, FilePrint, FileIterate } from './store-collection';
+import { findUpDir } from '../useful';
 
 
 const ENCODING = 'utf8';
@@ -15,14 +16,9 @@ export interface Stringable {
 export type Criteria = (path: string) => Stringable;
 export type IsSameComparator = (path: string, criteria: Stringable) => boolean;
 
-export interface FilePrint {
-    mtime: number;
-    criteria?: string | number;
+export class CacheChangeOptions {
+    onlyExistingFiles?: boolean = false;
 }
-
-export type Collection = ObjectOf<FilePrint>;
-
-
 
 export class StoreOptions {
     path: string;
@@ -33,11 +29,7 @@ export class StoreOptions {
         Object.assign(this, options);
 
         if (isUndefined(this.path)) {
-            const root = findUp.sync(directory => {
-                const hasPackageJson = findUp.sync.exists(path.join(directory, 'package.json'));
-                return hasPackageJson && directory;
-            }, { cwd: __dirname, type: 'directory' });
-
+            const root = findUpDir('package.json');
             this.path = path.join(root || process.cwd(), '_cache.json');
         }
     }
@@ -45,19 +37,18 @@ export class StoreOptions {
 
 
 export class Store extends StoreOptions {
-    store: ObjectOf<Collection>;
+    storeCollection: StoreCollection;
     criteriaFunc: Criteria;
 
     constructor(options: Partial<StoreOptions> = {}) {
         super(options);
+        this.storeCollection = new StoreCollection(this.path);
         this.init();
     }
 
     private init() {
         if (fs.existsSync(this.path)) {
-            this.store = this.load();
-        } else {
-            this.store = {};
+            this.storeCollection.load();
         }
 
         if (this.criteria === 'mtime')
@@ -69,14 +60,15 @@ export class Store extends StoreOptions {
 
         if (isUndefined(this.isSameComparator))
             this.isSameComparator = (path, criteria) => this.criteriaFunc(path).toString() === criteria.toString();
-
-        // this.createCollectionIfNotExist('default');
     }
 
-    private load() {
-        return JSON.parse(fs.readFileSync(this.path, { encoding: ENCODING }));
+    public getCollection(...collectionName: string[]) {
+        try {
+            return this.storeCollection.getCollection(...collectionName);
+        } catch (e) {
+            return undefined;
+        }
     }
-
 
     public md5(filePath: string, size: number = 16) {
         const isDirectory = fs.statSync(filePath).isDirectory();
@@ -94,124 +86,132 @@ export class Store extends StoreOptions {
     }
 
 
-    public createCollectionIfNotExist(collectionName: string = 'default') {
-        if (!this.store[ collectionName ])
-            this.store[ collectionName ] = {};
-
-        return this.store[ collectionName ];
+    public createCollectionIfNotExist(...collectionName: string[]) {
+        return this.storeCollection.createCollectionIfNotExist(...collectionName);
     }
 
-    public collectionExists(collectionName: string = 'default') {
-        return this.store[ collectionName ];
+    public collectionExists(...collectionName: string[]) {
+        return isDefined(this.storeCollection.getCollection(...collectionName));
     }
 
-    public fileExists(file: string, collectionName: string = 'default') {
-        return this.collectionExists(collectionName) && this.store[ collectionName ][ file ];
+    public fileExists(file: string, ...collectionName: string[]) {
+        return this.storeCollection.fileExists(file, ...collectionName);
     }
 
-    public files(collectionName: string = 'default') {
-        const collection = this.store[ collectionName ];
-        return isUndefined(collection) ? [] : Object.entries(collection).map(([ file, print ]) => ({ file, ...print }));
+    public files(...collectionName: string[]): FileIterate[] {
+        if (collectionName.length === 0)
+            return [ ...this.filePrintIterator() ];
+
+        const storeCollection = this.getCollection(...collectionName);
+
+        return isUndefined(storeCollection) ? undefined : Object.entries(storeCollection.collection)
+            .filter(([ key, value ]) => isFilePrint(value))
+            .map(([ key, value ]) => {
+                const fileprint = value as FilePrint;
+
+                return {
+                    filepath: key,
+                    fileprint,
+                    collectionName: this.storeCollection.mergeCollectNames(...collectionName),
+                    collection: storeCollection
+                };
+            });
     }
 
-    public fileNames(collectionName: string = 'default') {
-        const collection = this.store[ collectionName ];
-        return isUndefined(collection) ? [] : Object.keys(collection);
+    public fileNames(...collectionName: string[]) {
+        return (this.files(...collectionName) || []).map(f => f.filepath);
     }
 
-    public addFile(file: string, collectionName: string = 'default') {
-        let collection = this.store[ collectionName ];
-
-        if (isUndefined(collection))
-            collection = this.createCollectionIfNotExist(collectionName);
+    public addFile(file: string, ...collectionName: string[]) {
 
         const print: FilePrint = {
             mtime: this.mtime(file),
-            criteria: this.criteriaFunc(file).toString()
-        };
-
-        collection[ file ] = {
-            mtime: this.mtime(file)
         };
 
         if (this.criteria !== 'mtime')
-            collection[ file ].criteria = print.criteria;
+            print.criteria = this.criteriaFunc(file).toString();
+
+        this.storeCollection.addFilePrint(file, print, ...collectionName);
 
         return this;
     }
 
-    public filePrint(file: string, options: { type?: keyof FilePrint, collectionName?: string; } = {}) {
-        const { collectionName = 'default', type } = options;
+    public filePrint(file: string, options: { fileprintProp?: keyof FilePrint; collectionName?: string | string[]; } = {}) {
+        const { collectionName, fileprintProp } = options;
 
-        if (!this.collectionExists(collectionName))
-            return undefined;
+        const fileprint = chain(() => this.getCollection(...ensureArray(collectionName)).collection[ file ]);
 
-        const print = this.store[ collectionName ][ file ];
-
-        if (isUndefined(file) || isUndefined(print)) {
+        if (!isFilePrint(fileprint)) {
             return undefined;
         }
 
-        return isUndefined(type) ? print : print[ type ];
+        return isUndefined(fileprintProp) ? fileprint : fileprint[ fileprintProp ];
     }
 
-    public fileHasChanged(file: string, collectionName: string = 'default') {
-        const collection = this.store[ collectionName ] || {};
+    public fileHasChanged(filepath: string, collectionName: string[] = [], options?: CacheChangeOptions) {
+        const opts = Object.assign(new CacheChangeOptions(), options);
+        const files = this.files(...collectionName);
 
-        if (isUndefined(collection[ file ])) {
+        if (isUndefined(files))
+            return true;
+
+        const file = files.find(f => f.filepath === filepath);
+        if (!file) {
             // warn(`[check] No such file in collection: ${file}`);
-            return true; // if doesn not exist yet ==> has changed because new one
+            return opts.onlyExistingFiles ? false : true; // if doesn not exist yet ==> has changed because new one
         }
 
         const criteria: keyof FilePrint = this.criteria === 'mtime' ? 'mtime' : 'criteria';
-        return !this.isSameComparator(file, collection[ file ][ criteria ]);
+        return !this.isSameComparator(filepath, file.fileprint[ criteria ]);
     }
 
-    public deleteFile(file: string, collectionName: string = 'default') {
-        const collection = chain(() => this.store[ collectionName ], {});
+    public deleteFile(file: string, ...collectionName: string[]) {
+        const collection = chain(() => this.storeCollection.getCollection(...collectionName).collection);
 
-        if (isUndefined(collection[ file ]))
-            warn(`[rmFile] No such file in collection: ${file}`);
-
-        delete collection[ file ];
+        if (isDefined(collection))
+            delete collection[ file ];
+        else
+            warn(`[deleteFile] No such file in collection: ${file}`);
     }
 
     public collectionNames() {
-        return Object.keys(this.store);
+        return [ ...this.collectionIterator() ].map(c => c.name);
     }
 
-    public deleteCollection(collectionName: string = 'default') {
-        if (isDefined(this.store[ collectionName ]))
-            this.store[ collectionName ] = {};
+    public deleteCollection(...collectionName: string[]) {
+        const collectionNameSplit = this.storeCollection.mergeCollectNames(...collectionName).split('.');
+
+        const storeCollection = this.storeCollection.getCollection(...collectionNameSplit.slice(0, -1));
+        const name = collectionNameSplit[ collectionNameSplit.length - 1 ];
+
+        if (isDefined(storeCollection.collection[ name ]))
+            delete storeCollection.collection[ name ];
 
         return this;
     }
 
-    public rmAll() {
-        this.store = {};
+    public deleteAll() {
+        this.storeCollection = new StoreCollection(this.path);
     }
 
     public save() {
-        fs.outputFileSync(this.path, JSON.stringify(this.store), { encoding: ENCODING });
+        this.storeCollection.save();
         return this;
     }
 
-    public *[ Symbol.iterator ](): Iterator<{ name: string; collection: Collection; }> {
-        for (const [ name, collection ] of Object.entries(this.store))
-            yield { name, collection };
+
+    public * filePrintIterator(...collectionName: string[]) {
+        const collection = this.storeCollection.getCollection(...collectionName);
+
+        if (isDefined(collection))
+            yield* collection.filePrintIterator();
     }
 
-    public *iterator(): Iterator<{ name: string; collection: Collection; }> {
-        yield* this;
-    }
+    public * collectionIterator(...collectionName: string[]) {
+        const collection = this.storeCollection.getCollection(...collectionName);
 
-    public *collectionIterator(collectionName: string = 'default') {
-        const collection = this.store[ collectionName ];
-
-        if (isDefined(collection)) {
-            for (const [ file, print ] of Object.entries(collection))
-                yield { file, print };
-        }
+        if (isDefined(collection))
+            yield* collection.collectionIterator();
 
     }
 }

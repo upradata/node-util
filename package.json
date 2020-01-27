@@ -51,17 +51,23 @@
         "yargs-parser": "^16.1.0"
     },
     "devDependencies": {
-        "@types/table": "^4.0.7",
-        "@types/yargs": "^13.0.3",
         "@types/fs-extra": "^8.0.1",
         "@types/glob": "^7.1.1",
         "@types/jest": "^24.0.23",
+        "@types/memory-fs": "^0.3.2",
         "@types/node": "^12.12.17",
+        "@types/table": "^4.0.7",
+        "@types/vinyl": "^2.0.4",
+        "@types/yargs": "^13.0.3",
+        "graceful-fs": "^4.2.3",
         "jest": "^24.9.0",
+        "jest-environment-node": "^24.9.0",
+        "memory-fs": "^0.5.0",
         "shx": "^0.3.2",
-        "ts-jest": "^24.2.0",
+        "ts-jest": "^24.3.0",
         "ts-node": "^8.5.4",
-        "tslint": "^5.20.1"
+        "tslint": "^5.20.1",
+        "vinyl": "^2.2.0"
     },
     "publishConfig": {
         "access": "public"

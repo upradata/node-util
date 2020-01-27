@@ -1,8 +1,6 @@
-import * as ts from 'typescript';
-import tmp from 'tmp';
-import fs from 'fs';
+import ts from 'typescript';
 import path from 'path';
-import * as tsconfig from 'tsconfig';
+import tsconfig from 'tsconfig';
 import { TsConfig } from './tsconfig.json';
 
 export class TscCompiler {
@@ -11,13 +9,15 @@ export class TscCompiler {
     static compileAndEmit(fileNames: string[], options?: ts.CompilerOptions) {
         const tsConfig: { path?: string; config: TsConfig; } = tsconfig.loadSync(__dirname);
         if (!tsConfig.path)
-            throw new Error('cannot find Milotti Webpack project tsconfig.json');
+            throw new Error('cannot find project with tsconfig.json');
+
+        const projectDir = path.dirname(tsConfig.path);
 
         const compilerOptions = options || {
             noEmitOnError: false, noImplicitAny: false, listEmittedFiles: true,
             target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
-            outDir: tmp.dirSync({ dir: process.cwd(), prefix: '.webpack-config-tmp-' }).name,
-            baseUrl: path.join(path.dirname(tsConfig.path), tsConfig.config.compilerOptions.baseUrl),
+            outDir: path.join(projectDir, 'dist'),
+            baseUrl: path.join(projectDir, tsConfig.config.compilerOptions.baseUrl),
             paths: tsConfig.config.compilerOptions.paths
         };
 
@@ -49,26 +49,25 @@ export class TscCompiler {
         // process.exit(exitCode);
     }
 
-    static compileStringOutput(source: string, options?: ts.CompilerOptions) {
-        const compilerOptions = options || {
-            noEmitOnError: true, noImplicitAny: true,
-            target: ts.ScriptTarget.ES2018, module: ts.ModuleKind.CommonJS,
-        };
+    static compileModuleFromString(source: string, options?: ts.CompilerOptions & { useTsconfig?: boolean; }) {
+
+        let compilerOptions: ts.CompilerOptions = undefined;
+
+        if (options && options.useTsconfig) {
+            const tsConfig: { path?: string; config: TsConfig; } = tsconfig.loadSync(__dirname);
+            if (!tsConfig.path)
+                throw new Error('cannot find project with tsconfig.json');
+
+            compilerOptions = tsConfig.config.compilerOptions;
+        } else {
+            compilerOptions = options || {
+                noEmitOnError: true, noImplicitAny: true,
+                target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
+            };
+        }
 
         const result = ts.transpileModule(source, { compilerOptions });
-        const tmpFile = tmp.fileSync();
-        fs.writeFileSync(tmpFile.name, result.outputText);
-        /*   console.log('File: ', tmpobj.name);
-          console.log('Filedescriptor: ', tmpobj.fd); */
-
-
-
-        // If we don't need the file anymore we could manually call the removeCallback
-        // But that is not necessary if we didn't pass the keep option because the library
-        // will clean after itself.
-        // tmpFile.removeCallback();
-
-        return tmpFile.name; // result.outputText;
+        return result;
     }
 }
 

@@ -2,23 +2,18 @@ import JSON5 from 'json5';
 import { readFileSync, readFile } from 'fs-extra';
 import { JSONSchemaForNPMPackageJsonFiles } from '@schemastore/package';
 
+export type ReadJson<T> = {
+    sync: (filename: string) => T;
+    async: (filename: string) => Promise<T>;
+};
 
-export function readJson(filename: string, mode: 'sync' | 'async'): Promise<JSONSchemaForNPMPackageJsonFiles> | JSONSchemaForNPMPackageJsonFiles {
 
-    const normalizeData = data => data === '' ? {} : JSON5.parse(data);
+const normalizeData = (data: string) => data === '' ? {} : JSON5.parse(data);
 
-    if (mode === 'sync') {
-        const data = readFileSync(filename, 'utf8');
-        return normalizeData(data);
-    }
+export const readJson = {
+    sync: <T>(filename: string) => normalizeData(readFileSync(filename, 'utf8')) as T[],
+    async: <T>(filename: string) => readFile(filename, 'utf8').then(normalizeData) as Promise<T[]>
+};
 
-    return readFile(filename, 'utf8').then(normalizeData);
-}
 
-export function readJsonSync(filename: string): JSONSchemaForNPMPackageJsonFiles {
-    return readJson(filename, 'sync') as JSONSchemaForNPMPackageJsonFiles;
-}
-
-export function readJsonAsync(filename: string): Promise<JSONSchemaForNPMPackageJsonFiles> {
-    return readJson(filename, 'async') as Promise<JSONSchemaForNPMPackageJsonFiles>;
-}
+export const readPackageJson = readJson as ReadJson<JSONSchemaForNPMPackageJsonFiles>;

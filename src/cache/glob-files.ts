@@ -4,20 +4,21 @@ import { isPlainObject, assignRecursive, isArray } from '@upradata/util';
 
 export type GlobFilesOptions = GlobOptions & { noGlob?: boolean; };
 export type GlobFile = { pattern: string; options?: GlobFilesOptions; };
-export type File = string | GlobFile;
-export type FilesWithGlobalOptions = { files: (File | File[]), options?: GlobFilesOptions; };
-export type Files = File[] | FilesWithGlobalOptions[];
+export type FilePath = string | GlobFile;
+export type FilesWithGlobalOptions = { files: (FilePath | FilePath[]), options?: GlobFilesOptions; };
+export type File = FilePath | FilesWithGlobalOptions;
+
 
 // the last array is there just to be able to have function f(...files:Files)
 // Files has to be an array. But if we have { files: File[], options: GlobOptions; }
 // it will always be an array of 1 element
 
 
-export function isGlobFile(file: File): file is GlobFile {
+export function isGlobFile(file: FilePath): file is GlobFile {
     return isPlainObject(file);
 }
 
-export function isFilesWithGlobalOptions(files: Files): files is FilesWithGlobalOptions[] {
+export function isFilesWithGlobalOptions(files: File[]): files is FilesWithGlobalOptions[] {
     return files.length === 1 && isPlainObject(files[ 0 ]) && (files[ 0 ] as any).files;
 }
 
@@ -25,14 +26,14 @@ export class GlobFiles {
 
     public globFiles: GlobFile[];
 
-    constructor(public files: Files) {
+    constructor(public files: File[]) {
         this.globFiles = this.toGlobFiles();
     }
 
     toGlobFiles(): GlobFile[] {
         const plainFiles: GlobFile[] = [];
 
-        let filesList: File[] = undefined;
+        let filesList: FilePath[] = undefined;
         let globalOptions: GlobFilesOptions = {};
 
         if (isFilesWithGlobalOptions(this.files)) {
@@ -41,7 +42,7 @@ export class GlobFiles {
             filesList = isArray(f) ? f : [ f ];
             globalOptions = this.files[ 0 ].options;
         } else {
-            filesList = this.files;
+            filesList = this.files as FilePath[];
         }
 
         for (const file of filesList) {
