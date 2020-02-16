@@ -1,4 +1,5 @@
 import { TableUserConfig, ColumnConfig, table } from 'table';
+import * as alignString from 'table/dist/alignString';
 import makeConfig from 'table/dist/makeConfig';
 import stringWidth from 'string-width';
 import { assignDefaultOption, assignRecursive, PartialRecursive } from '@upradata/util';
@@ -34,6 +35,28 @@ export interface TableStringOption {
 
 
 
+const oldAlignString = alignString.default;
+alignString.default = (subject: string, containerWidth: number, alignment: 'center' | 'left' | 'right') => {
+    if (alignment === 'center')
+        return alignCenter(subject, containerWidth - stringWidth(subject));
+
+    return oldAlignString(subject, containerWidth, alignment);
+};
+
+// Fix bug in table.alignCenter where instead of whiteSpaces % 2 there was halfWidth % 2!!
+const alignCenter = (subject: string, whiteSpaces: number) => {
+    let halfWidth;
+
+    halfWidth = whiteSpaces / 2;
+
+    if (whiteSpaces % 2 === 0)
+        return ' '.repeat(halfWidth) + subject + ' '.repeat(halfWidth);
+
+    halfWidth = Math.floor(halfWidth);
+    return ' '.repeat(halfWidth) + subject + ' '.repeat(halfWidth + 1);
+};
+
+
 
 export class TableString {
     userConfig: PartialRecursive<TableConfig>;
@@ -47,7 +70,7 @@ export class TableString {
             columnDefault: { truncate: 200 }
         }, option.tableConfig);
 
-        this.maxWidth = option.maxWidth || { cell: 80 };
+        this.maxWidth = option.maxWidth || { row: { width: process.stdout.columns || 80 } };
     }
 
     get(data: TableRows) {

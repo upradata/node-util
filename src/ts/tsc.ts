@@ -1,25 +1,33 @@
 import ts from 'typescript';
 import path from 'path';
+import { readFile, readFileSync, readdirSync } from 'fs-extra';
 import tsconfig from 'tsconfig';
 import { TsConfig } from './tsconfig.json';
+import { tmpFileName } from '../useful.js';
+
 
 export class TscCompiler {
     constructor() { }
 
     static compileAndEmit(fileNames: string[], options?: ts.CompilerOptions) {
-        const tsConfig: { path?: string; config: TsConfig; } = tsconfig.loadSync(__dirname);
-        if (!tsConfig.path)
-            throw new Error('cannot find project with tsconfig.json');
+        let compilerOptions = options;
 
-        const projectDir = path.dirname(tsConfig.path);
+        if (!compilerOptions) {
+            const tsConfig: { path?: string; config: TsConfig; } = tsconfig.loadSync(__dirname);
+            if (!tsConfig.path)
+                throw new Error('cannot find project with tsconfig.json');
 
-        const compilerOptions = options || {
-            noEmitOnError: false, noImplicitAny: false, listEmittedFiles: true,
-            target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
-            outDir: path.join(projectDir, 'dist'),
-            baseUrl: path.join(projectDir, tsConfig.config.compilerOptions.baseUrl),
-            paths: tsConfig.config.compilerOptions.paths
-        };
+            const projectDir = path.dirname(tsConfig.path);
+
+            compilerOptions = {
+                noEmitOnError: false, noImplicitAny: false, listEmittedFiles: true,
+                target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
+                esModuleInterop: true, allowSyntheticDefaultImports: true,
+                outDir: path.join(projectDir, 'dist'),
+                baseUrl: path.join(projectDir, tsConfig.config.compilerOptions.baseUrl),
+                paths: tsConfig.config.compilerOptions.paths
+            };
+        }
 
         const program = ts.createProgram(fileNames, compilerOptions);
         const emitResult = program.emit();
@@ -44,7 +52,7 @@ export class TscCompiler {
         }
 
         const exitCode = emitResult.emitSkipped ? 1 : 0;
-        return { emittedFiles: emitResult.emittedFiles, outDir: compilerOptions.outDir };
+        return { emittedFiles: emitResult.emittedFiles, outDir: compilerOptions.outDir, exitCode };
         // console.log(`Process exiting with code '${exitCode}'.`);
         // process.exit(exitCode);
     }
@@ -68,6 +76,20 @@ export class TscCompiler {
 
         const result = ts.transpileModule(source, { compilerOptions });
         return result;
+    }
+
+    static compileAndLoadModule(filepath: string, options?: ts.CompilerOptions) {
+        const tmpDir = tmpFileName();
+
+        const compilerOptions = options || {
+            noEmitOnError: false, noImplicitAny: false, listEmittedFiles: true,
+            target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
+            esModuleInterop: true, allowSyntheticDefaultImports: true,
+            outDir: tmpDir
+        };
+
+        const { emittedFiles } = TscCompiler.compileAndEmit([ filepath ], compilerOptions);
+        return require(emittedFiles[ 0 ]);
     }
 }
 

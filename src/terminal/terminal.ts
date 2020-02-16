@@ -1,5 +1,6 @@
 import { TableRows, TableRow, TableString, TableItem, TableStringOption } from './table';
 import { StyleTemplate, colors } from '../style/style';
+import { chain } from '@upradata/util';
 
 
 export interface TitleOption {
@@ -25,14 +26,14 @@ export class Terminal {
 
     get lineWidth() {
         const { maxWidth } = this.tableString;
-        return maxWidth.cell || maxWidth.row.width;
+        return chain(() => maxWidth.row.width) || Terminal.width;
     }
 
     fullWidth(text: string, style: StyleTemplate) {
         return style`${text}`.repeat(Terminal.width);
     }
 
-    title(title: string, option: TitleOption): string {
+    title(title: string, option: TitleOption = {}): string {
         const { color = colors.none.$, isBig = false } = option;
         const lineWidth = this.lineWidth;
 
@@ -49,7 +50,11 @@ export class Terminal {
         return s;
     }
 
-    public table({ data, header }: TableOption): string {
+    logTitle(title: string, option?: TitleOption) {
+        console.log(this.title(title, option));
+    }
+
+    table({ data, header }: TableOption): string {
         const d: TableItem[][] = header ? [ header ] : [];
 
         if (Array.isArray(data[ 0 ]))
@@ -61,8 +66,11 @@ export class Terminal {
         return this.tableString.get(d);
     }
 
+    logTable(option: TableOption) {
+        console.log(this.table(option));
+    }
 
-    private alignCenter(s: string, size: number): string {
+    alignCenter(s: string, size: number): string {
 
         const trim = s.trim();
         const whitespaceWidth = size - trim.length;
@@ -76,4 +84,11 @@ export class Terminal {
 
         return ' '.repeat(beginL) + trim + ' '.repeat(endL);
     }
+
+    logAlignCenter(s: string, size: number) {
+        this.alignCenter(s, size);
+    }
 }
+
+
+export const terminal = new Terminal();
