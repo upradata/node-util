@@ -104,7 +104,7 @@ export class Store extends StoreOptions {
 
         const storeCollection = this.getCollection(...collectionName);
 
-        return isUndefined(storeCollection) ? undefined : Object.entries(storeCollection.collection)
+        return isUndefined(storeCollection) ? [] : Object.entries(storeCollection.collection)
             .filter(([ key, value ]) => isFilePrint(value))
             .map(([ key, value ]) => {
                 const fileprint = value as FilePrint;
@@ -119,7 +119,7 @@ export class Store extends StoreOptions {
     }
 
     public fileNames(...collectionName: string[]) {
-        return (this.files(...collectionName) || []).map(f => f.filepath);
+        return this.files(...collectionName).map(f => f.filepath);
     }
 
     public addFile(file: string, ...collectionName: string[]) {
@@ -152,7 +152,7 @@ export class Store extends StoreOptions {
         const opts = Object.assign(new CacheChangeOptions(), options);
         const files = this.files(...collectionName);
 
-        if (isUndefined(files))
+        if (files.length === 0)
             return true;
 
         const file = files.find(f => f.filepath === filepath);

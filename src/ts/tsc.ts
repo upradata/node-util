@@ -1,9 +1,9 @@
 import ts from 'typescript';
 import path from 'path';
-import { readFile, readFileSync, readdirSync } from 'fs-extra';
+// import { readFile, readFileSync, readdirSync } from 'fs-extra';
 import tsconfig from 'tsconfig';
 import { TsConfig } from './tsconfig.json';
-import { tmpFileName } from '../useful.js';
+import { tmpFileName } from '../useful';
 
 
 export class TscCompiler {
