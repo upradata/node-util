@@ -47,8 +47,13 @@ class _ParseArgs<T> {
 
         if (options.alias) {
             const aliases = typeof options.alias === 'string' ? [ options.alias ] : options.alias;
-            for (const alias of aliases)
+            for (const alias of aliases) {
                 this.supportedArgs.push(alias);
+
+                const camelAlias = camelcase(alias);
+                if (camelAlias !== alias)
+                    this.supportedArgs.push(camelAlias);
+            }
         }
 
         return this;
