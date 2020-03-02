@@ -3,7 +3,7 @@ import path from 'path';
 // import { readFile, readFileSync, readdirSync } from 'fs-extra';
 import tsconfig from 'tsconfig';
 import { TsConfig } from './tsconfig.json';
-import { tmpFileName } from '../useful';
+import { tmpFileName } from '../tmpfile';
 
 
 export class TscCompiler {
@@ -79,7 +79,7 @@ export class TscCompiler {
     }
 
     static compileAndLoadModule(filepath: string, options?: ts.CompilerOptions) {
-        const tmpDir = tmpFileName();
+        const tmpDir = tmpFileName.sync();
 
         const compilerOptions = options || {
             noEmitOnError: false, noImplicitAny: false, listEmittedFiles: true,

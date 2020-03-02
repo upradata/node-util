@@ -3,8 +3,12 @@ import { warn } from './common';
 import { File, GlobFiles } from './glob-files';
 import { isDefined, ensureArray, isUndefined } from '@upradata/util';
 
+export class CacheOpts {
+    verbose?: boolean = false;
+}
 
-export class CacheOptions extends StoreOptions { }
+export type CacheOptions = CacheOpts & StoreOptions & CacheChangeOptions;
+
 
 export interface LoopArguments {
     files: File | File[];
@@ -12,10 +16,14 @@ export interface LoopArguments {
     action: (file: string) => any;
 }
 
+
 export class Cache {
     public store: Store;
+    public options: CacheOpts;
+
 
     constructor(options?: Partial<CacheOptions>) {
+        this.options = Object.assign(new CacheOpts(), options);
         this.store = new Store(options);
     }
 
@@ -32,7 +40,7 @@ export class Cache {
         const globFiles = new GlobFiles(ensureArray(files));
         const { files: fileNames, missed } = globFiles.getFiles();
 
-        if (method) {
+        if (method && this.options.verbose) {
             for (const { pattern, err } of missed) {
                 if (isDefined(err))
                     warn(`[${method}] Pattern parse fail for ${pattern}: ${err.message}`);
@@ -51,15 +59,15 @@ export class Cache {
     }
 
     private fileNamesInCollectionIfExistElseFiles(collectionName: string | string[], files: string[]) {
-        return this.store.getCollection(...collectionName) ? this.fileNamesInCollection(collectionName, files) : files;
+        return this.store.getCollection(...ensureArray(collectionName)) ? this.fileNamesInCollection(collectionName, files) : files;
     }
 
 
     public addOrUpdateFile(collectionName: string | string[], ...files: File[]) {
         const fileNames = this.processGlobs(files, 'addOrUpdateFile');
-        const collectionFiles = this.fileNamesInCollectionIfExistElseFiles(collectionName, fileNames);
+        // const collectionFiles = this.fileNamesInCollectionIfExistElseFiles(collectionName, fileNames);
 
-        for (const file of collectionFiles)
+        for (const file of fileNames)
             this.store.addFile(file, ...ensureArray(collectionName));
 
         return this;
@@ -89,22 +97,21 @@ export class Cache {
         const changedCollections: string[] = [];
 
         for (const { name } of collection.collectionIterator()) {
-            if (this.changedFiles(name))
+            if (this.isChangedFiles(name))
                 changedCollections.push(name);
         }
 
         return changedCollections;
     }
 
-    public changedFiles(collectionName?: string | string[], files: File[] = [], options?: CacheChangeOptions) {
-        const collName = ensureArray(collectionName) || [];
-        const allCollections = collName.length === 0;
+    public changedFiles(collectionName?: string | string[], files: File[] = [], options?: CacheChangeOptions): string[] {
+        const collName = ensureArray(collectionName);
 
         const fileNames = this.processGlobs(files, 'changedFiles');
         const collection = this.store.getCollection(...collName);
 
-        if (!allCollections && isUndefined(collection))
-            return files;
+        if (isUndefined(collection))
+            return fileNames;
 
         if (files.length > 0)
             return fileNames.filter(file => this.store.fileHasChanged(file, collName, options));
@@ -114,10 +121,10 @@ export class Cache {
             .map(file => file.filepath);
     }
 
-    public isChangedFiles(collectionName: string | string[], ...files: File[]) {
-        if (this.store.files(...ensureArray(collectionName)).length === 0)
-            return true;
+    public isChangedFiles(collectionName: string | string[], files?: File[], options?: CacheChangeOptions) {
+        /* if (this.store.files(...ensureArray(collectionName)).length === 0)
+            return true; */
 
-        return this.changedFiles(collectionName, files).length !== 0;
+        return this.changedFiles(collectionName, files, options).length !== 0;
     }
 }

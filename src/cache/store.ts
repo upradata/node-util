@@ -18,14 +18,20 @@ export type IsSameComparator = (path: string, criteria: Stringable) => boolean;
 
 export class CacheChangeOptions {
     onlyExistingFiles?: boolean = false;
+    recursive?: boolean = false;
+
+    constructor(options: Partial<CacheChangeOptions> = {}) {
+        Object.assign(this, options);
+    }
 }
 
-export class StoreOptions {
+export class StoreOptions extends CacheChangeOptions {
     path: string;
     criteria?: Criteria | 'mtime' | 'md5' = 'mtime';
     isSameComparator?: IsSameComparator;
 
-    constructor(options: Partial<StoreOptions>) {
+    constructor(options: Partial<StoreOptions & CacheChangeOptions>) {
+        super(options);
         Object.assign(this, options);
 
         if (isUndefined(this.path)) {
@@ -36,30 +42,33 @@ export class StoreOptions {
 }
 
 
-export class Store extends StoreOptions {
+export class Store {
     storeCollection: StoreCollection;
     criteriaFunc: Criteria;
+    public options: StoreOptions;
 
     constructor(options: Partial<StoreOptions> = {}) {
-        super(options);
-        this.storeCollection = new StoreCollection(this.path);
+        this.options = new StoreOptions(options);
+        this.storeCollection = new StoreCollection(this.options.path);
         this.init();
     }
 
     private init() {
-        if (fs.existsSync(this.path)) {
+        const { path, criteria, isSameComparator } = this.options;
+
+        if (fs.existsSync(path)) {
             this.storeCollection.load();
         }
 
-        if (this.criteria === 'mtime')
+        if (criteria === 'mtime')
             this.criteriaFunc = path => this.mtime(path);
-        else if (this.criteria === 'md5')
+        else if (criteria === 'md5')
             this.criteriaFunc = path => this.md5(path);
         else
-            this.criteriaFunc = this.criteria;
+            this.criteriaFunc = criteria;
 
-        if (isUndefined(this.isSameComparator))
-            this.isSameComparator = (path, criteria) => this.criteriaFunc(path).toString() === criteria.toString();
+        if (isUndefined(isSameComparator))
+            this.options.isSameComparator = (path, criteria) => this.criteriaFunc(path).toString() === criteria.toString();
     }
 
     public getCollection(...collectionName: string[]) {
@@ -128,7 +137,7 @@ export class Store extends StoreOptions {
             mtime: this.mtime(file),
         };
 
-        if (this.criteria !== 'mtime')
+        if (this.options.criteria !== 'mtime')
             print.criteria = this.criteriaFunc(file).toString();
 
         this.storeCollection.addFilePrint(file, print, ...collectionName);
@@ -149,20 +158,32 @@ export class Store extends StoreOptions {
     }
 
     public fileHasChanged(filepath: string, collectionName: string[] = [], options?: CacheChangeOptions) {
-        const opts = Object.assign(new CacheChangeOptions(), options);
-        const files = this.files(...collectionName);
+        const opts = Object.assign(this.options, options);
 
-        if (files.length === 0)
-            return true;
+        const collections = opts.recursive ?
+            [ ...this.getCollection(...collectionName).collectionIterator() ].map(c => collectionName.concat(c.name)) :
+            [ collectionName ];
 
-        const file = files.find(f => f.filepath === filepath);
-        if (!file) {
+        for (const collName of collections) {
+            const files = this.files(...collName);
+
+            if (files.length === 0)
+                continue; // return true;
+
+            const file = files.find(f => f.filepath === filepath);
+            if (!file)
+                continue;
+
+            // if (!file) {
             // warn(`[check] No such file in collection: ${file}`);
-            return opts.onlyExistingFiles ? false : true; // if doesn not exist yet ==> has changed because new one
+            // return opts.onlyExistingFiles ? false : true; // if doesn not exist yet ==> has changed because new one
+            // }
+
+            const criteria: keyof FilePrint = this.options.criteria === 'mtime' ? 'mtime' : 'criteria';
+            return !this.options.isSameComparator(filepath, file.fileprint[ criteria ]);
         }
 
-        const criteria: keyof FilePrint = this.criteria === 'mtime' ? 'mtime' : 'criteria';
-        return !this.isSameComparator(filepath, file.fileprint[ criteria ]);
+        return opts.onlyExistingFiles ? false : true;
     }
 
     public deleteFile(file: string, ...collectionName: string[]) {
@@ -191,7 +212,7 @@ export class Store extends StoreOptions {
     }
 
     public deleteAll() {
-        this.storeCollection = new StoreCollection(this.path);
+        this.storeCollection = new StoreCollection(this.options.path);
     }
 
     public save() {

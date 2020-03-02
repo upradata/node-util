@@ -1,11 +1,8 @@
 import findUp from 'find-up';
-import os from 'os';
 import path from 'path';
-import { readFileSync } from 'fs-extra';
 import { readJson } from './json/read-json5';
 import { TscCompiler } from './ts/tsc';
 import { red } from './style/basic-styles';
-import { guid } from '@upradata/util';
 
 
 export const findUpDir = (file: string, startDirectory: string = process.cwd()) => findUp.sync(directory => {
@@ -23,9 +20,6 @@ export const fromRootIfRel = (...paths: string[]) => path.isAbsolute(paths[ 0 ])
 export const fromCwd = (...paths: string[]) => path.join(process.cwd(), ...paths);
 export const fromCwdIfRel = (...paths: string[]) => path.isAbsolute(paths[ 0 ]) ? path.join(...paths) : fromCwd(...paths);
 
-export const fromHere = (...paths: string[]) => path.join(__dirname, ...paths);
-export const fromHereIfRel = (...paths: string[]) => path.isAbsolute(paths[ 0 ]) ? path.join(...paths) : fromHere(...paths);
-
 
 export function requireModule(filepath: string) {
     switch (path.extname(filepath)) {
@@ -41,5 +35,13 @@ export function importDefault(mod: any) {
     return mod && mod.__esModule ? mod.default : mod;
 }
 
+export const isDev = (process.env.NODE_ENV || 'development').trim().toLowerCase() !== 'production';
 
-export const tmpFileName = () => path.join(os.tmpdir(), guid());
+
+export class SyncAsync<T = any> {
+    sync: T = undefined;
+    async: Promise<T> = undefined;
+}
+
+
+export const syncAsync = Object.keys(new SyncAsync());

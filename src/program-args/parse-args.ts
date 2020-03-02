@@ -41,9 +41,7 @@ class _ParseArgs<T> {
         if (decamelArg !== name)
             args.push(decamelArg);
 
-        for (const arg of args) {
-            this.supportedArgs.push(arg);
-        }
+        this.supportedArgs.push(...args);
 
         if (options.alias) {
             const aliases = typeof options.alias === 'string' ? [ options.alias ] : options.alias;
