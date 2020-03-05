@@ -89,7 +89,15 @@ export class TscCompiler {
         };
 
         const { emittedFiles } = TscCompiler.compileAndEmit([ filepath ], compilerOptions);
-        return require(emittedFiles[ 0 ]);
+        // emittedFiles is all emitted file, but we want only filepath file to be required
+
+        const stem = (file: string) => {
+            const rel = file.replace(/^\.\//, '');
+            return rel.replace(/\..*$/, '');
+        };
+
+        const compiledFile = emittedFiles.find(file => stem(path.relative(tmpDir, file)) === stem(filepath));
+        return require(compiledFile);
     }
 }
 

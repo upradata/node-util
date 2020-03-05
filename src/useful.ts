@@ -1,5 +1,7 @@
 import findUp from 'find-up';
 import path from 'path';
+import fs from 'fs';
+import { promisify } from 'util';
 import { readJson } from './json/read-json5';
 import { TscCompiler } from './ts/tsc';
 import { red } from './style/basic-styles';
@@ -45,3 +47,4 @@ export class SyncAsync<T = any> {
 
 
 export const syncAsync = Object.keys(new SyncAsync());
+export const readFileAsync = promisify(fs.readFile);
