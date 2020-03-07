@@ -58,9 +58,9 @@ export class Cache {
         return files.length === 0 ? filesInCollection : filesInCollection.filter(file => files.find(f => f === file));
     }
 
-    private fileNamesInCollectionIfExistElseFiles(collectionName: string | string[], files: string[]) {
+    /* private fileNamesInCollectionIfExistElseFiles(collectionName: string | string[], files: string[]) {
         return this.store.getCollection(...ensureArray(collectionName)) ? this.fileNamesInCollection(collectionName, files) : files;
-    }
+    } */
 
 
     public addOrUpdateFile(collectionName: string | string[], ...files: File[]) {
@@ -113,11 +113,11 @@ export class Cache {
         if (isUndefined(collection))
             return fileNames;
 
-        if (files.length > 0)
+        if (isDefined(files) && files.length > 0)
             return fileNames.filter(file => this.store.fileHasChanged(file, collName, options));
 
-        return this.store.files(...collName)
-            .filter(file => this.store.fileHasChanged(file.filepath, [ file.collectionName ], options))
+        return this.store.files(collName, options)
+            .filter(file => this.store.fileHasChanged(file.filepath, [ file.collectionName ]))
             .map(file => file.filepath);
     }
 

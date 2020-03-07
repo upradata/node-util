@@ -107,9 +107,14 @@ export class Store {
         return this.storeCollection.fileExists(file, ...collectionName);
     }
 
-    public files(...collectionName: string[]): FileIterate[] {
+    public files(collectionName: string[], options: { recursive?: boolean; } = {}): FileIterate[] {
         if (collectionName.length === 0)
             return [ ...this.filePrintIterator() ];
+
+        const { recursive } = Object.assign(this.options, options);
+
+        if (recursive)
+            return [ ...this.filePrintIterator(...collectionName) ];
 
         const storeCollection = this.getCollection(...collectionName);
 
@@ -128,7 +133,7 @@ export class Store {
     }
 
     public fileNames(...collectionName: string[]) {
-        return this.files(...collectionName).map(f => f.filepath);
+        return this.files(collectionName).map(f => f.filepath);
     }
 
     public addFile(file: string, ...collectionName: string[]) {
@@ -164,8 +169,12 @@ export class Store {
             [ ...this.getCollection(...collectionName).collectionIterator() ].map(c => collectionName.concat(c.name)) :
             [ collectionName ];
 
+
+        /*  if (this.options.recursive)
+             console.log('RECURSIVE', collections); */
+
         for (const collName of collections) {
-            const files = this.files(...collName);
+            const files = this.files(collName);
 
             if (files.length === 0)
                 continue; // return true;
@@ -225,7 +234,7 @@ export class Store {
         const collection = this.storeCollection.getCollection(...collectionName);
 
         if (isDefined(collection))
-            yield* collection.filePrintIterator();
+            yield* collection.filePrintIterator(this.storeCollection.mergeCollectNames(...collectionName));
     }
 
     public * collectionIterator(...collectionName: string[]) {

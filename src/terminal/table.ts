@@ -1,5 +1,6 @@
 import { TableUserConfig, ColumnConfig, table } from 'table';
 import * as alignString from 'table/dist/alignString';
+import * as calculateCellWidthIndex from 'table/dist/calculateCellWidthIndex';
 import makeConfig from 'table/dist/makeConfig';
 import stringWidth from 'string-width';
 import { assignDefaultOption, assignRecursive, PartialRecursive } from '@upradata/util';
@@ -34,7 +35,6 @@ export interface TableStringOption {
 
 
 
-
 const oldAlignString = alignString.default;
 alignString.default = (subject: string, containerWidth: number, alignment: 'center' | 'left' | 'right') => {
     if (alignment === 'center')
@@ -54,6 +54,15 @@ const alignCenter = (subject: string, whiteSpaces: number) => {
 
     halfWidth = Math.floor(halfWidth);
     return ' '.repeat(halfWidth) + subject + ' '.repeat(halfWidth + 1);
+};
+
+
+// I use makeConfig in this class and I use it with string|number while it is intending to use it with string only
+// I just convert value to value + ''
+calculateCellWidthIndex.default = (cells: TableRow) => {
+    return cells.map(value => {
+        return Math.max(...(value + '').split('\n').map(line => stringWidth(line)));
+    });
 };
 
 
