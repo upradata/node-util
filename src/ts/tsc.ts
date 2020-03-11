@@ -4,30 +4,51 @@ import path from 'path';
 import tsconfig from 'tsconfig';
 import { TsConfig } from './tsconfig.json';
 import { tmpFileName } from '../tmpfile';
+import { assignRecursive, AssignOptions } from '@upradata/util';
 
+
+function loadTsConfig(tsconfigPath?: string): { path: string; config: TsConfig; } {
+    const tsConfig: { path?: string; config: TsConfig; } = tsconfig.loadSync(__dirname, tsconfigPath);
+
+    if (!tsConfig.path)
+        throw new Error('cannot find project with tsconfig.json');
+
+    return tsConfig as any;
+}
 
 export class TscCompiler {
     constructor() { }
 
-    static compileAndEmit(fileNames: string[], options?: ts.CompilerOptions) {
-        let compilerOptions = options;
+    static compileAndEmit(fileNames: string[], options: ts.CompilerOptions & { useTsConfig?: boolean | string; } = {}) {
+        let compilerOptions: ts.CompilerOptions;
 
-        if (!compilerOptions) {
-            const tsConfig: { path?: string; config: TsConfig; } = tsconfig.loadSync(__dirname);
-            if (!tsConfig.path)
-                throw new Error('cannot find project with tsconfig.json');
+        const { useTsConfig } = options;
 
-            const projectDir = path.dirname(tsConfig.path);
+        if (useTsConfig) {
+            const tsconfigPath = typeof useTsConfig === 'string' ? useTsConfig : undefined;
+            compilerOptions = loadTsConfig(tsconfigPath).config.compilerOptions;
 
-            compilerOptions = {
+        } else {
+
+            compilerOptions = assignRecursive({
                 noEmitOnError: false, noImplicitAny: false, listEmittedFiles: true,
                 target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
                 esModuleInterop: true, allowSyntheticDefaultImports: true,
-                outDir: path.join(projectDir, 'dist'),
-                baseUrl: path.join(projectDir, tsConfig.config.compilerOptions.baseUrl),
-                paths: tsConfig.config.compilerOptions.paths
-            };
+            }, options);
         }
+
+        assignRecursive(compilerOptions, options, new AssignOptions({ arrayMode: 'replace' }));
+
+        /* if (!compilerOptions.outDir) {
+            const { path: tsconfigPath, config } = loadTsConfig();
+            const projectDir = path.dirname(tsconfigPath);
+
+            assignRecursive(compilerOptions, {
+                outDir: path.join(projectDir, 'dist'),
+                baseUrl: path.join(projectDir, config.compilerOptions.baseUrl),
+                paths: config.compilerOptions.paths
+            });
+        } */
 
         const program = ts.createProgram(fileNames, compilerOptions);
         const emitResult = program.emit();
@@ -78,15 +99,16 @@ export class TscCompiler {
         return result;
     }
 
-    static compileAndLoadModule(filepath: string, options?: ts.CompilerOptions) {
+
+    static compileAndEmitInTmpDir(filepath: string, options?: ts.CompilerOptions) {
         const tmpDir = tmpFileName.sync();
 
-        const compilerOptions = options || {
+        const compilerOptions = assignRecursive({
             noEmitOnError: false, noImplicitAny: false, listEmittedFiles: true,
             target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
             esModuleInterop: true, allowSyntheticDefaultImports: true,
             outDir: tmpDir
-        };
+        }, options);
 
         const { emittedFiles } = TscCompiler.compileAndEmit([ filepath ], compilerOptions);
         // emittedFiles is all emitted file, but we want only filepath file to be required
@@ -96,7 +118,20 @@ export class TscCompiler {
             return rel.replace(/\..*$/, '');
         };
 
-        const compiledFile = emittedFiles.find(file => stem(path.relative(tmpDir, file)) === stem(filepath));
+        const isAbs = path.isAbsolute(filepath);
+
+        const compiledFile = emittedFiles.find(file => {
+            if (!isAbs)
+                return stem(path.relative(tmpDir, file)) === stem(filepath);
+
+            return stem(filepath).endsWith(stem(path.relative(tmpDir, file)));
+        });
+
+        return { tmpDir, emittedFiles, compiledFile };
+    }
+
+    static compileAndLoadModule(filepath: string, options?: ts.CompilerOptions) {
+        const { compiledFile } = TscCompiler.compileAndEmitInTmpDir(filepath, options);
         return require(compiledFile);
     }
 }

@@ -1,6 +1,6 @@
-import { TableRows, TableRow, TableString, TableItem, TableStringOption } from './table';
+import { TableRows, TableRow, TableString, TableItem, TableStringOption, TableConfig } from './table';
 import { StyleTemplate, colors } from '../style/style';
-import { chain } from '@upradata/util';
+import { chain, PartialRecursive } from '@upradata/util';
 
 
 export interface TitleOption {
@@ -9,7 +9,7 @@ export interface TitleOption {
 }
 
 
-export interface TableOption {
+export interface TableData {
     data: TableRows;
     header?: TableRow;
 }
@@ -54,7 +54,7 @@ export class Terminal {
         console.log(this.title(title, option));
     }
 
-    table({ data, header }: TableOption): string {
+    table({ data, header }: TableData, config?: PartialRecursive<TableConfig>): string {
         const d: TableItem[][] = header ? [ header ] : [];
 
         if (Array.isArray(data[ 0 ]))
@@ -63,11 +63,11 @@ export class Terminal {
             d.push([ data as any ]);
 
 
-        return this.tableString.get(d);
+        return this.tableString.get(d, config);
     }
 
-    logTable(option: TableOption) {
-        console.log(this.table(option));
+    logTable(data: TableData, config?: PartialRecursive<TableConfig>) {
+        console.log(this.table(data, config));
     }
 
     alignCenter(s: string, size: number): string {

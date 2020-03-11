@@ -11,7 +11,7 @@ export function requireAndCompileIfNecesseray(filenameNoExt: string) {
 
     file = `${filenameNoExt}.ts`;
     if (fs.existsSync(file)) {
-        const fileContent = fs.readFileSync(file, 'utf8');
+        // const fileContent = fs.readFileSync(file, 'utf8');
         const { emittedFiles, outDir } = TscCompiler.compileAndEmit([ file ]);
         const required = require(emittedFiles[ 0 ]); // path.join(outTmpDir, path.basename(filenameNoExt) + '.js')
         rimraf/* .sync */(outDir, () => { });

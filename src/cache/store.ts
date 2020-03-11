@@ -183,10 +183,9 @@ export class Store {
             if (!file)
                 continue;
 
-            // if (!file) {
-            // warn(`[check] No such file in collection: ${file}`);
-            // return opts.onlyExistingFiles ? false : true; // if doesn not exist yet ==> has changed because new one
-            // }
+            // if file has been deleted
+            if (!fs.existsSync(filepath))
+                return true;
 
             const criteria: keyof FilePrint = this.options.criteria === 'mtime' ? 'mtime' : 'criteria';
             return !this.options.isSameComparator(filepath, file.fileprint[ criteria ]);

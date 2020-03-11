@@ -13,14 +13,20 @@ export const findUpDir = (file: string, startDirectory: string = process.cwd()) 
 }, { type: 'directory', cwd: startDirectory });
 
 
+
 export const lookupRoot = (startDirectory?: string) => findUpDir('package.json', startDirectory);
 export const root = lookupRoot();
 
-export const fromRoot = (...paths: string[]) => path.join(root, ...paths);
-export const fromRootIfRel = (...paths: string[]) => path.isAbsolute(paths[ 0 ]) ? path.join(...paths) : fromRoot(...paths);
 
-export const fromCwd = (...paths: string[]) => path.join(process.cwd(), ...paths);
-export const fromCwdIfRel = (...paths: string[]) => path.isAbsolute(paths[ 0 ]) ? path.join(...paths) : fromCwd(...paths);
+export const fromDir = (dir: string) => (...paths: string[]) => path.join(dir, ...paths);
+export const fromDirIfRel = (dir: string) => (...paths: string[]) => path.isAbsolute(paths[ 0 ]) ? path.join(...paths) : path.join(dir, ...paths);
+
+export const fromRoot = fromDir(root);
+export const fromRootIfRel = fromDirIfRel(root);
+
+export const fromCwd = fromDir(process.cwd());
+export const fromCwdIfRel = fromDirIfRel(process.cwd());
+
 
 
 export function requireModule(filepath: string) {

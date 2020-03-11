@@ -14,7 +14,7 @@ export type TableRows = TableRow[];
 export type TableColumns = { [ index: number ]: ColumnConfig; };
 
 export type TableConfig = TableUserConfig & { singleLine: boolean; };
-
+export type TableColumnConfig = ColumnConfig;
 
 export interface MaxRowWidth {
     width: number;
@@ -69,7 +69,6 @@ calculateCellWidthIndex.default = (cells: TableRow) => {
 
 export class TableString {
     userConfig: PartialRecursive<TableConfig>;
-    tableConfig: TableConfig;
     maxWidth: Partial<ColumnsMaxWidth>;
 
 
@@ -82,15 +81,16 @@ export class TableString {
         this.maxWidth = option.maxWidth || { row: { width: process.stdout.columns || 80 } };
     }
 
-    get(data: TableRows) {
+    get(data: TableRows, options?: PartialRecursive<TableConfig>) {
         // we compute it to get tableConfig.columns value computed to have paddingLeft, paddingRight
         // needed in this.getColumnsWidth
-        this.tableConfig = makeConfig(data, this.userConfig) as TableConfig;
+        const opts = assignRecursive(this.userConfig, options);
+        const builtConfig = makeConfig(data, opts) as TableConfig;
 
 
         const config = assignRecursive(
-            { columns: this.getColumnsWidth(data) },
-            this.userConfig
+            { columns: this.getColumnsWidth(data, builtConfig) },
+            opts
         ) as TableConfig;
 
         return table(data, config);
@@ -102,7 +102,7 @@ export class TableString {
         );
     }
 
-    getColumnsWidth(table: TableRows): { [ index: number ]: ColumnConfig; } {
+    getColumnsWidth(table: TableRows, builtConfig: TableConfig): { [ index: number ]: ColumnConfig; } {
         const { cell: maxCellWidth, row: rowWidth } = this.maxWidth;
 
         const firstRow = table[ 0 ];
@@ -127,7 +127,7 @@ export class TableString {
             return columnsWidth.map(w => ({ width: Math.min(w, maxCellWidth) }));
 
         if (rowWidth)
-            this.resizeColumnsWidth(columnsWidth);
+            this.resizeColumnsWidth(columnsWidth, builtConfig);
 
         return columnsWidth.map(w => ({ width: w }));
     }
@@ -136,14 +136,14 @@ export class TableString {
         return array.reduce((max, w) => Math.max(max, w), 0);
     }
 
-    private resizeColumnsWidth(columnsWidth: number[]) {
+    private resizeColumnsWidth(columnsWidth: number[], builtConfig: TableConfig) {
         // tslint:disable-next-line: prefer-const
         const { width, indexToShrink } = this.maxWidth.row;
 
         const nbCol = columnsWidth.length;
         // const { paddingLeft, paddingRight } = this.config.columns[ 0 ];
-        const paddingLeft = this.maxValue(Object.values(this.tableConfig.columns).map(c => c.paddingLeft));
-        const paddingRight = this.maxValue(Object.values(this.tableConfig.columns).map(c => c.paddingRight));
+        const paddingLeft = this.maxValue(Object.values(builtConfig.columns).map(c => c.paddingLeft));
+        const paddingRight = this.maxValue(Object.values(builtConfig.columns).map(c => c.paddingRight));
 
         const totalPaddingCells = nbCol * (paddingLeft + paddingRight) + (nbCol + 1); // we assume all rows have same padding (we could )
 
@@ -165,7 +165,7 @@ export class TableString {
                 const maxShrinkWidth = columnsWidth[ index ] - 4;
 
                 columnsWidth[ index ] = maxShrinkWidth;
-                return this.resizeColumnsWidth(columnsWidth);
+                return this.resizeColumnsWidth(columnsWidth, builtConfig);
                 // tslint:disable-next-line: no-else-after-return
             } else
                 columnsWidth[ index ] = shrinkWidth;
