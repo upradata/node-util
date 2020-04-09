@@ -100,8 +100,8 @@ export class TscCompiler {
     }
 
 
-    static compileAndEmitInTmpDir(filepath: string, options?: ts.CompilerOptions) {
-        const tmpDir = tmpFileName.sync();
+    static compileAndEmitInTmpDir(filepath: string, options: ts.CompilerOptions & { tmpDirRoot?: string; tmpDir?: string; } = {}) {
+        const tmpDir = options.tmpDir || tmpFileName.sync(options.tmpDirRoot);
 
         const compilerOptions = assignRecursive({
             noEmitOnError: false, noImplicitAny: false, listEmittedFiles: true,
@@ -130,7 +130,7 @@ export class TscCompiler {
         return { tmpDir, emittedFiles, compiledFile };
     }
 
-    static compileAndLoadModule(filepath: string, options?: ts.CompilerOptions) {
+    static compileAndLoadModule(filepath: string, options?: ts.CompilerOptions & { tmpDirRoot?: string; tmpDir?: string; }) {
         const { compiledFile } = TscCompiler.compileAndEmitInTmpDir(filepath, options);
         return require(compiledFile);
     }

@@ -29,11 +29,11 @@ export const fromCwdIfRel = fromDirIfRel(process.cwd());
 
 
 
-export function requireModule(filepath: string) {
+export function requireModule(filepath: string, options: { tsCompilationDir?: string; } = {}) {
     switch (path.extname(filepath)) {
         case '.json': return readJson.sync(filepath);
         case '.js': return importDefault(require(filepath));
-        case '.ts': return importDefault(TscCompiler.compileAndLoadModule(filepath));
+        case '.ts': return importDefault(TscCompiler.compileAndLoadModule(filepath, { tmpDir: options.tsCompilationDir }));
         default:
             throw new Error(red`filepath has to be the path of a .json, .js or .ts file. Provided option was ${filepath}`);
     }

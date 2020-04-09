@@ -22,8 +22,11 @@ export type FileIterate = { filepath: string; collectionName: string; collection
 
 export class StoreCollection {
     collection: ObjectOf<StoreCollection | FilePrint> = {};
+    collectionName: string;
 
-    constructor(public path: string, public name: string = 'root') { }
+    constructor(public path: string, public name: string = '', fromCollectionName: string = '') {
+        this.collectionName = this.mergeNames(fromCollectionName, name);
+    }
 
     load() {
         const content = JSON.parse(fs.readFileSync(this.path, { encoding: 'utf8' })) as CollectionObject;
@@ -35,7 +38,7 @@ export class StoreCollection {
                 if (isFilePrint(value))
                     collection[ key ] = value;
                 else
-                    collection[ key ] = loadCollection(new StoreCollection(this.path, key), value);
+                    collection[ key ] = loadCollection(new StoreCollection(this.path, key, storeCollection.name), value);
             }
 
             return storeCollection;
@@ -115,7 +118,7 @@ export class StoreCollection {
             nodePath: collectionNames,
             actionBefore: ({ node, name }) => {
                 if (node instanceof StoreCollection && isUndefined(node.collection[ name ]))
-                    node.collection[ name ] = new StoreCollection(this.path, name);
+                    node.collection[ name ] = new StoreCollection(this.path, name, node.name);
                 else if (isFilePrint(node))
                     throw new Error(`"${name}" is not a collection in the cache store in ${this.path}`);
             },
@@ -152,7 +155,7 @@ export class StoreCollection {
                 const node = storeCollection.collection[ name ];
 
                 if (isUndefined(node))
-                    throw new Error(`node "${name}" does not exist in the StoreCollection (path: ${this.path})`);
+                    throw new Error(`node "${name}" does not exist in the StoreCollection (path: "${this.path}", currentCollection: "${this.collectionName}")`);
 
                 if (!isFilePrint(node))
                     walk(node, getNodePath(nodePath));
@@ -171,21 +174,22 @@ export class StoreCollection {
     }
 
 
-    * filePrintIterator(fromCollectionName: string = ''): IterableIterator<FileIterate> {
+    * filePrintIterator(): IterableIterator<FileIterate> {
 
         for (const [ key, node ] of Object.entries(this.collection)) {
             if (isFilePrint(node))
-                yield { filepath: key, fileprint: node, collectionName: fromCollectionName, collection: this };
+                yield { filepath: key, fileprint: node, collectionName: this.collectionName, collection: this };
             else
-                yield* node.filePrintIterator(this.mergeNames(fromCollectionName, key));
+                yield* node.filePrintIterator();
         }
     }
 
-    * collectionIterator(fromCollectionName: string = ''): IterableIterator<{ name: string; collection: StoreCollection; }> {
+    * collectionIterator(): IterableIterator<{ name: string; collection: StoreCollection; }> {
+
         for (const [ key, node ] of Object.entries(this.collection)) {
             if (!isFilePrint(node)) {
-                yield { name: this.mergeNames(fromCollectionName, key), collection: node };
-                yield* node.collectionIterator(this.mergeNames(fromCollectionName, key));
+                yield { name: this.collectionName, collection: node };
+                yield* node.collectionIterator();
             }
         }
     }

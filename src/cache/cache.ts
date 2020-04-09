@@ -121,7 +121,7 @@ export class Cache {
             .map(file => file.filepath);
     }
 
-    public isChangedFiles(collectionName: string | string[], files?: File[], options?: CacheChangeOptions) {
+    public isChangedFiles(collectionName?: string | string[], files?: File[], options?: CacheChangeOptions) {
         /* if (this.store.files(...ensureArray(collectionName)).length === 0)
             return true; */
         if (isUndefined(this.store.getCollection(...ensureArray(collectionName))))

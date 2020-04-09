@@ -60,6 +60,11 @@ export class Store {
             this.storeCollection.load();
         }
 
+        for (const file of this.filePrintIterator()) {
+            if (!fs.existsSync(file.filepath))
+                this.deleteFile(file.filepath, file.collectionName);
+        }
+
         if (criteria === 'mtime')
             this.criteriaFunc = path => this.mtime(path);
         else if (criteria === 'md5')
@@ -166,12 +171,11 @@ export class Store {
         const opts = Object.assign(this.options, options);
 
         const collections = opts.recursive ?
-            [ ...this.getCollection(...collectionName).collectionIterator() ].map(c => collectionName.concat(c.name)) :
+            chain(() => [ ...this.getCollection(...collectionName).collectionIterator() ].map(c => collectionName.concat(c.name)), []) :
             [ collectionName ];
 
-
-        /*  if (this.options.recursive)
-             console.log('RECURSIVE', collections); */
+        if (opts.recursive)
+            collections.push(collectionName);
 
         for (const collName of collections) {
             const files = this.files(collName);
@@ -233,7 +237,7 @@ export class Store {
         const collection = this.storeCollection.getCollection(...collectionName);
 
         if (isDefined(collection))
-            yield* collection.filePrintIterator(this.storeCollection.mergeCollectNames(...collectionName));
+            yield* collection.filePrintIterator();
     }
 
     public * collectionIterator(...collectionName: string[]) {

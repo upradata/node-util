@@ -9,7 +9,7 @@ import { SyncAsync } from './useful';
 
 const existsFile = promisify(fs.exists);
 
-const getFile = (mode: keyof SyncAsync): TT$<string> => {
+const getFile = (mode: keyof SyncAsync, tmpDirRoot: string = os.tmpdir()): TT$<string> => {
     const tmpFile = (name: string, exist: boolean) => {
         if (!exist)
             return name;
@@ -17,12 +17,12 @@ const getFile = (mode: keyof SyncAsync): TT$<string> => {
         return getFile(mode);
     };
 
-    const name = path.join(os.tmpdir(), guid());
+    const name = path.join(tmpDirRoot, guid());
     return mode === 'sync' ? tmpFile(name, fs.existsSync(name)) : existsFile(name).then(exist => tmpFile(name, exist));
 };
 
 
 export const tmpFileName = {
-    sync: () => getFile('sync') as string,
-    async: () => getFile('async') as Promise<string>
+    sync: (tmpDirRoot?: string) => getFile('sync', tmpDirRoot) as string,
+    async: (tmpDirRoot?: string) => getFile('async', tmpDirRoot) as Promise<string>
 };
