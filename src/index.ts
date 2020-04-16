@@ -8,3 +8,6 @@ export * from './cache';
 export * from './tmpfile';
 export * from './fs';
 export * from './useful';
+export * from './stats';
+export * from './find';
+export * from './require';

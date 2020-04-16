@@ -1,9 +1,8 @@
 import ts from 'typescript';
+import fs from 'fs-extra';
 import path from 'path';
-// import { readFile, readFileSync, readdirSync } from 'fs-extra';
 import tsconfig from 'tsconfig';
 import { TsConfig } from './tsconfig.json';
-import { tmpFileName } from '../tmpfile';
 import { assignRecursive, AssignOptions } from '@upradata/util';
 
 
@@ -19,7 +18,7 @@ function loadTsConfig(tsconfigPath?: string): { path: string; config: TsConfig; 
 export class TscCompiler {
     constructor() { }
 
-    static compileAndEmit(fileNames: string[], options: ts.CompilerOptions & { useTsConfig?: boolean | string; } = {}) {
+    static compile(fileNames: string[], options: ts.CompilerOptions & { useTsConfig?: boolean | string; } = {}) {
         let compilerOptions: ts.CompilerOptions;
 
         const { useTsConfig } = options;
@@ -31,7 +30,8 @@ export class TscCompiler {
         } else {
 
             compilerOptions = assignRecursive({
-                noEmitOnError: false, noImplicitAny: false, listEmittedFiles: true,
+                noEmitOnError: false, noErrorTruncation: true, noImplicitAny: false, listEmittedFiles: true, downlevelIteration: true,
+                experimentalDecorators: true, emitDecoratorMetadata: true,
                 target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
                 esModuleInterop: true, allowSyntheticDefaultImports: true,
             }, options);
@@ -100,17 +100,16 @@ export class TscCompiler {
     }
 
 
-    static compileAndEmitInTmpDir(filepath: string, options: ts.CompilerOptions & { tmpDirRoot?: string; tmpDir?: string; } = {}) {
-        const tmpDir = options.tmpDir || tmpFileName.sync(options.tmpDirRoot);
+    static compileAndEmit(filepath: string, options: ts.CompilerOptions) {
 
         const compilerOptions = assignRecursive({
-            noEmitOnError: false, noImplicitAny: false, listEmittedFiles: true,
+            noEmitOnError: false, noErrorTruncation: true, noImplicitAny: false, listEmittedFiles: true, downlevelIteration: true,
+            experimentalDecorators: true, emitDecoratorMetadata: true,
             target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
-            esModuleInterop: true, allowSyntheticDefaultImports: true,
-            outDir: tmpDir
+            esModuleInterop: true, allowSyntheticDefaultImports: true
         }, options);
 
-        const { emittedFiles } = TscCompiler.compileAndEmit([ filepath ], compilerOptions);
+        const { emittedFiles } = TscCompiler.compile([ filepath ], compilerOptions);
         // emittedFiles is all emitted file, but we want only filepath file to be required
 
         const stem = (file: string) => {
@@ -122,19 +121,28 @@ export class TscCompiler {
 
         const compiledFile = emittedFiles.find(file => {
             if (!isAbs)
-                return stem(path.relative(tmpDir, file)) === stem(filepath);
+                return stem(path.relative(options.outDir, file)) === stem(filepath);
 
-            return stem(filepath).endsWith(stem(path.relative(tmpDir, file)));
+            return stem(filepath).endsWith(stem(path.relative(options.outDir, file)));
         });
 
-        return { tmpDir, emittedFiles, compiledFile };
+
+        return { emittedFiles, compiledFile };
     }
 
-    static compileAndLoadModule(filepath: string, options?: ts.CompilerOptions & { tmpDirRoot?: string; tmpDir?: string; }) {
-        const { compiledFile } = TscCompiler.compileAndEmitInTmpDir(filepath, options);
-        return require(compiledFile);
+    static compileAndLoadModule(filepath: string, options?: ts.CompilerOptions & { outDir: ts.CompilerOptions[ 'outDir' ]; deleteOutDir?: boolean; }) {
+        const { compiledFile } = TscCompiler.compileAndEmit(filepath, options);
+        const requiredModule = require(compiledFile);
+
+        Object.assign(options, { deleteOutDir: true });
+
+        if (options.deleteOutDir)
+            fs.removeSync(options.outDir);
+
+        return requiredModule;
     }
 }
+
 
 
 /* compile(process.argv.slice(2), {

@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import crypto from 'crypto';
 import { warn } from './common';
 import { StoreCollection, isFilePrint, FilePrint, FileIterate } from './store-collection';
-import { findUpDir } from '../useful';
+import { findUpDir } from '../find';
 
 
 const ENCODING = 'utf8';

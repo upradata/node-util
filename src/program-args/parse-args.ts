@@ -23,7 +23,18 @@ class _ParseArgs<T> {
             proto = Object.getPrototypeOf(proto);
         }
         Object.setPrototypeOf(proto, this.yargs);
+        (this.yargs as any).customYargs = this;
 
+        this.yargs.middleware((((argv, yargs) => {
+            Object.defineProperty(argv, 'yargs', {
+                value: yargs.customYargs,
+                writable: false,
+                configurable: false,
+                enumerable: false
+            });
+
+            return argv;
+        }) as any));
     }
 
     public option(name: string, options?: Options) {
@@ -80,7 +91,7 @@ class _ParseArgs<T> {
 
         if (invalidParams.length > 0) {
             for (const { parameter, reason } of invalidParams)
-                console.error(red`  - parameter ${parameter}: ${reason}`);
+                console.error(red`  - parameter "${parameter}": ${reason}`);
 
             console.log();
             this.yargs.showHelp();
@@ -91,3 +102,4 @@ class _ParseArgs<T> {
 
 export type ParseArgs<T> = _ParseArgs<T> & Argv<T>;
 export const ParseArgs = _ParseArgs;
+export type CustomArgs<T> = Argv<T> & { customYargs: ParseArgs<T>; };

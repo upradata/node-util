@@ -1,0 +1,139 @@
+
+import { ObjectOf } from '@upradata/util';
+import { yellow, highlightMagenta, green, red } from '../style';
+import { Terminal, TableColumnConfig } from '../terminal';
+import { Stat, StatCtor, StatFail } from './stat';
+
+type Statistics<S extends Stat> = ObjectOf<S | Statistics<S>>;
+
+type Name = string;
+type All = number | string;
+type Processed = number | string;
+type Successes = number | string;
+type Fails = number | string;
+
+interface StatsData {
+    stats: Array<[ Name, All, Processed, Successes, Fails ]>;
+    successes: ObjectOf<string[]>;
+    fails: ObjectOf<StatFail[]>;
+}
+
+export class Stats<S extends Stat> {
+    stats: Statistics<S> = {};
+
+    constructor(public statsName: string, public statClass: StatCtor<S>) { }
+
+    private isStat(s: any): s is S {
+        return s instanceof this.statClass;
+    }
+
+    add(stat: S, ...names: string[]) {
+        let stats: Statistics<S> = this.stats[ names[ 0 ] ] as Statistics<S> || {};
+        this.stats[ names[ 0 ] ] = stats;
+
+        for (const name of names.slice(1, -1)) {
+            stats[ name ] = stats[ name ] || {};
+            stats = stats[ name ] as Statistics<S>;
+        }
+
+        stats[ names.slice(-1)[ 0 ] ] = stat;
+
+        return stat;
+    }
+
+
+    create(...names: string[]): S {
+        return this.add(new this.statClass(names.join(' ')), ...names);
+    }
+
+    get(...names: string[]) {
+        let stat: Stat | Statistics<S> = this.stats[ names[ 0 ] ];
+
+        for (const name of names.slice(1)) {
+            if (!this.stats[ name ])
+                return undefined;
+
+            stat = stat[ name ];
+        }
+
+        return stat;
+    }
+
+
+
+    log(...names: string[]) {
+        const stats = names.length === 0 ? this.stats : this.get(...names);
+
+        const datas: StatsData = { stats: [], successes: {}, fails: {} };
+
+        const addData = (name: string, stat: S) => {
+            const nbOutOf = (nb: number) => nb === 0 ? '' : `${nb} / ${stat.all.length}`;
+
+            datas.stats.push(
+                [
+                    name,
+                    stat.all.length,
+                    yellow`${nbOutOf(stat.processed.length)}`,
+                    green`${nbOutOf(stat.successes.length)}`,
+                    red`${nbOutOf(stat.fails.length)}` ]
+            );
+
+            datas.successes[ name ] = stat.successes;
+            datas.fails[ name ] = stat.fails;
+        };
+
+
+        const buildData = (parentName: string, stats: Statistics<S>) => {
+            const statsData = datas || { stats: [], successes: {}, fails: {} };
+
+            const mergeNames = (name1: string, name2: string) => name1 === '' ? name2 : name1 + '.' + name2;
+
+            for (const [ name, stat ] of Object.entries(stats)) {
+                const mergeName = mergeNames(parentName, name);
+
+                if (this.isStat(stat))
+                    addData(mergeName, stat);
+                else
+                    buildData(mergeName, stat);
+            }
+
+            return statsData;
+        };
+
+        const terminal = new Terminal();
+
+        if (this.isStat(stats))
+            addData(stats.name, stats);
+        else
+            buildData('', stats as Statistics<S>);
+
+        terminal.logTitle(`"${this.statsName}" summary`, { isBig: true, color: highlightMagenta });
+
+        for (const [ name, files ] of Object.entries(datas.successes)) {
+            if (files.length > 0) {
+                terminal.logTable({
+                    data: files.map((file, i) => [ i === 0 ? name : '', file ]),
+                    header: [ 'name', green`file` ]
+                });
+            }
+        }
+
+        for (const [ name, fails ] of Object.entries(datas.fails)) {
+            if (fails.length > 0) {
+                terminal.logTable({
+                    data: fails.map((fail, i) => [ i === 0 ? name : '', fail.file, fail.reason ]),
+                    header: [ 'name', red`fails`, 'reason' ]
+                });
+            }
+        }
+
+        const columns: ObjectOf<TableColumnConfig> = Array(5).fill('').reduce((colls, _, i) => { colls[ i + 1 ] = { alignment: 'center' }; return colls; }, {});
+
+        terminal.logTable({
+            data: datas.stats,
+            header: [ 'name', 'total', 'processed (hits)', 'successes', 'fails' ]
+        }, { columns });
+
+        return this;
+    }
+}

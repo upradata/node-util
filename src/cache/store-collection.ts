@@ -38,7 +38,7 @@ export class StoreCollection {
                 if (isFilePrint(value))
                     collection[ key ] = value;
                 else
-                    collection[ key ] = loadCollection(new StoreCollection(this.path, key, storeCollection.name), value);
+                    collection[ key ] = loadCollection(new StoreCollection(this.path, key, storeCollection.collectionName), value);
             }
 
             return storeCollection;
@@ -118,7 +118,7 @@ export class StoreCollection {
             nodePath: collectionNames,
             actionBefore: ({ node, name }) => {
                 if (node instanceof StoreCollection && isUndefined(node.collection[ name ]))
-                    node.collection[ name ] = new StoreCollection(this.path, name, node.name);
+                    node.collection[ name ] = new StoreCollection(this.path, name, node.collectionName);
                 else if (isFilePrint(node))
                     throw new Error(`"${name}" is not a collection in the cache store in ${this.path}`);
             },
