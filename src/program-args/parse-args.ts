@@ -10,9 +10,12 @@ export interface InvalidParameter {
     reason: string;
 }
 
+export type MiddlewareCallback<T, U> = (argv: Arguments<T>, yargs: _ParseArgs<T>) => Arguments<U>;
+
 class _ParseArgs<T> {
     public supportedArgs = [ '$0', '_', 'version', 'help' ];
     public yargs: Argv<T>;
+    public customYargs: _ParseArgs<T>; //  just for type (it will live in this.yargs)
 
     constructor() {
         // set inheritance
@@ -23,9 +26,10 @@ class _ParseArgs<T> {
             proto = Object.getPrototypeOf(proto);
         }
         Object.setPrototypeOf(proto, this.yargs);
+
         (this.yargs as any).customYargs = this;
 
-        this.yargs.middleware((((argv, yargs) => {
+        this.middleware((argv, yargs) => {
             Object.defineProperty(argv, 'yargs', {
                 value: yargs.customYargs,
                 writable: false,
@@ -34,7 +38,11 @@ class _ParseArgs<T> {
             });
 
             return argv;
-        }) as any));
+        });
+    }
+
+    public middleware<U>(callback: MiddlewareCallback<T, U> | MiddlewareCallback<T, U>[], applyBeforeValidation?: boolean) {
+        return this.yargs.middleware(callback as any, applyBeforeValidation);
     }
 
     public option(name: string, options?: Options) {

@@ -1,4 +1,4 @@
-import { isUndefined, isDefined, ensureArray, chain } from '@upradata/util';
+import { isUndefined, isDefined, ensureArray, chain, PartialRecursive } from '@upradata/util';
 import path from 'path';
 import fs from 'fs-extra';
 import crypto from 'crypto';
@@ -15,6 +15,8 @@ export interface Stringable {
 
 export type Criteria = (path: string) => Stringable;
 export type IsSameComparator = (path: string, criteria: Stringable) => boolean;
+export type Extra = (path: string) => any;
+
 
 export class CacheChangeOptions {
     onlyExistingFiles?: boolean = false;
@@ -25,12 +27,15 @@ export class CacheChangeOptions {
     }
 }
 
-export class StoreOptions extends CacheChangeOptions {
-    path: string;
-    criteria?: Criteria | 'mtime' | 'md5' = 'mtime';
-    isSameComparator?: IsSameComparator;
+export type StoreOptions = PartialRecursive<StoreOptions_>;
 
-    constructor(options: Partial<StoreOptions & CacheChangeOptions>) {
+export class StoreOptions_ extends CacheChangeOptions {
+    path: string;
+    criteria: Criteria | 'mtime' | 'md5' = 'mtime';
+    isSameComparator: IsSameComparator;
+    extra?: Extra;
+
+    constructor(options: StoreOptions) {
         super(options);
         Object.assign(this, options);
 
@@ -45,10 +50,10 @@ export class StoreOptions extends CacheChangeOptions {
 export class Store {
     storeCollection: StoreCollection;
     criteriaFunc: Criteria;
-    public options: StoreOptions;
+    public options: StoreOptions_;
 
-    constructor(options: Partial<StoreOptions> = {}) {
-        this.options = new StoreOptions(options);
+    constructor(options: StoreOptions = {}) {
+        this.options = new StoreOptions_(options);
         this.storeCollection = new StoreCollection(this.options.path);
         this.init();
     }
@@ -150,21 +155,19 @@ export class Store {
         if (this.options.criteria !== 'mtime')
             print.criteria = this.criteriaFunc(file).toString();
 
+        if (isDefined(this.options.extra))
+            print.extra = this.options.extra(file);
+
+
         this.storeCollection.addFilePrint(file, print, ...collectionName);
 
         return this;
     }
 
-    public filePrint(file: string, options: { fileprintProp?: keyof FilePrint; collectionName?: string | string[]; } = {}) {
-        const { collectionName, fileprintProp } = options;
-
+    public filePrint(file: string, collectionName: string | string[]) {
         const fileprint = chain(() => this.getCollection(...ensureArray(collectionName)).collection[ file ]);
 
-        if (!isFilePrint(fileprint)) {
-            return undefined;
-        }
-
-        return isUndefined(fileprintProp) ? fileprint : fileprint[ fileprintProp ];
+        return isFilePrint(fileprint) ? fileprint : undefined;
     }
 
     public fileHasChanged(filepath: string, collectionName: string[] = [], options?: CacheChangeOptions) {

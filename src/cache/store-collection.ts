@@ -1,10 +1,10 @@
 import { ObjectOf, isUndefined, isDefined } from '@upradata/util';
 import fs from 'fs-extra';
-import { warn } from './common';
 
 export interface FilePrint {
     mtime: number;
     criteria?: string | number;
+    extra?: any;
 }
 
 

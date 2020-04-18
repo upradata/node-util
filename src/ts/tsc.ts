@@ -32,7 +32,7 @@ export class TscCompiler {
             compilerOptions = assignRecursive({
                 noEmitOnError: false, noErrorTruncation: true, noImplicitAny: false, listEmittedFiles: true, downlevelIteration: true,
                 experimentalDecorators: true, emitDecoratorMetadata: true,
-                target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
+                /* lib: [ 'ESNext' ], */ target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
                 esModuleInterop: true, allowSyntheticDefaultImports: true,
             }, options);
         }
@@ -105,7 +105,7 @@ export class TscCompiler {
         const compilerOptions = assignRecursive({
             noEmitOnError: false, noErrorTruncation: true, noImplicitAny: false, listEmittedFiles: true, downlevelIteration: true,
             experimentalDecorators: true, emitDecoratorMetadata: true,
-            target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
+            /* lib: [ 'ESNext' ], */ target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
             esModuleInterop: true, allowSyntheticDefaultImports: true
         }, options);
 
@@ -134,12 +134,12 @@ export class TscCompiler {
         const { compiledFile } = TscCompiler.compileAndEmit(filepath, options);
         const requiredModule = require(compiledFile);
 
-        Object.assign(options, { deleteOutDir: true });
+        const opts = Object.assign({ deleteOutDir: true }, options);
 
-        if (options.deleteOutDir)
+        if (opts.deleteOutDir)
             fs.removeSync(options.outDir);
 
-        return requiredModule;
+        return { module: requiredModule, filepath: compiledFile };
     }
 }
 
