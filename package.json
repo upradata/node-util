@@ -55,7 +55,7 @@
         "@types/glob": "^7.1.1",
         "@types/jest": "^24.0.23",
         "@types/memory-fs": "^0.3.2",
-        "@types/node": "^12.12.17",
+        "@types/node": "^13.13.2",
         "@types/table": "^4.0.7",
         "@types/vinyl": "^2.0.4",
         "@types/yargs": "^13.0.3",
