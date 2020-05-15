@@ -1,4 +1,4 @@
-import { TableUserConfig, ColumnConfig, table } from 'table';
+import { TableUserConfig, table } from 'table';
 import * as alignString from 'table/dist/alignString';
 import * as calculateCellWidthIndex from 'table/dist/calculateCellWidthIndex';
 import makeConfig from 'table/dist/makeConfig';
@@ -11,10 +11,10 @@ export type TableRow = TableItem[];
 export type TableRows = TableRow[];
 
 
-export type TableColumns = { [ index: number ]: ColumnConfig; };
+export type TableColumnConfig = TableUserConfig[ 'columns' ];;
+export type TableColumns = { [ index: number ]: TableColumnConfig; };
 
 export type TableConfig = TableUserConfig & { singleLine: boolean; };
-export type TableColumnConfig = ColumnConfig;
 
 export interface MaxRowWidth {
     width: number;
@@ -102,7 +102,7 @@ export class TableString {
         );
     }
 
-    getColumnsWidth(table: TableRows, builtConfig: TableConfig): { [ index: number ]: ColumnConfig; } {
+    getColumnsWidth(table: TableRows, builtConfig: TableConfig): TableColumnConfig {
         const { cell: maxCellWidth, row: rowWidth } = this.maxWidth;
 
         const firstRow = table[ 0 ];

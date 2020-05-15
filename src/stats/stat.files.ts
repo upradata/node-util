@@ -42,7 +42,7 @@ export class StatFiles implements Stat {
                 data: [
                     collectionName,
                     this.all.length,
-                    yellow`${this.nbOutOf(this.processed.length)}`,
+                    yellow`${this.nbOutOf(this.all.length - this.processed.length)}`,
                     green`${this.nbOutOf(this.successes.length)}`,
                     red`${this.nbOutOf(this.fails.length)}`
                 ],

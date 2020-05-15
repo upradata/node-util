@@ -11,3 +11,4 @@ export * from './useful';
 export * from './stats';
 export * from './find';
 export * from './require';
+export * from './stream';
