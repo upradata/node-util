@@ -3,11 +3,26 @@ import path from 'path';
 import fs from 'fs-extra';
 import crypto from 'crypto';
 import { warn } from './common';
-import { StoreCollection, isFilePrint, FilePrint, FileIterate } from './store-collection';
+import { StoreCollection, isFilePrint, FilePrint, FileIteration } from './store-collection';
 import { findUpDir } from '../find';
 
-
 const ENCODING = 'utf8';
+
+export function md5(filePath: string, size: number = 16) {
+    const isDirectory = fs.statSync(filePath).isDirectory();
+
+    return crypto.createHash('md5').update(
+        isDirectory ?
+            fs.readdirSync(filePath).join() :
+            fs.readFileSync(filePath, { encoding: ENCODING }),
+        ENCODING
+    ).digest('hex').slice(0, size);
+}
+
+export function mtime(filePath: string) {
+    return fs.statSync(filePath).mtime.getTime();
+}
+
 
 export interface Stringable {
     toString(): string;
@@ -71,9 +86,9 @@ export class Store {
         }
 
         if (criteria === 'mtime')
-            this.criteriaFunc = path => this.mtime(path);
+            this.criteriaFunc = path => mtime(path);
         else if (criteria === 'md5')
-            this.criteriaFunc = path => this.md5(path);
+            this.criteriaFunc = path => md5(path);
         else
             this.criteriaFunc = criteria;
 
@@ -89,22 +104,6 @@ export class Store {
         }
     }
 
-    public md5(filePath: string, size: number = 16) {
-        const isDirectory = fs.statSync(filePath).isDirectory();
-
-        return crypto.createHash('md5').update(
-            isDirectory ?
-                fs.readdirSync(filePath).join() :
-                fs.readFileSync(filePath, { encoding: ENCODING }),
-            ENCODING
-        ).digest('hex').slice(0, size);
-    }
-
-    public mtime(filePath: string) {
-        return fs.statSync(filePath).mtime.getTime();
-    }
-
-
     public createCollectionIfNotExist(...collectionName: string[]) {
         return this.storeCollection.createCollectionIfNotExist(...collectionName);
     }
@@ -117,11 +116,11 @@ export class Store {
         return this.storeCollection.fileExists(file, ...collectionName);
     }
 
-    public files(collectionName: string[], options: { recursive?: boolean; } = {}): FileIterate[] {
+    public files(collectionName: string[], options: { recursive?: boolean; } = {}): FileIteration[] {
         if (collectionName.length === 0)
             return [ ...this.filePrintIterator() ];
 
-        const { recursive } = Object.assign(this.options, options);
+        const { recursive } = Object.assign({}, this.options, options);
 
         if (recursive)
             return [ ...this.filePrintIterator(...collectionName) ];
@@ -149,7 +148,7 @@ export class Store {
     public addFile(file: string, ...collectionName: string[]) {
 
         const print: FilePrint = {
-            mtime: this.mtime(file),
+            mtime: mtime(file),
         };
 
         if (this.options.criteria !== 'mtime')
@@ -171,14 +170,11 @@ export class Store {
     }
 
     public fileHasChanged(filepath: string, collectionName: string[] = [], options?: CacheChangeOptions) {
-        const opts = Object.assign(this.options, options);
+        const opts = Object.assign({}, this.options, options);
 
         const collections = opts.recursive ?
-            chain(() => [ ...this.getCollection(...collectionName).collectionIterator() ].map(c => collectionName.concat(c.name)), []) :
+            chain(() => [ ...this.getCollection(...collectionName).collectionIterator() ].map(c => collectionName.concat(c.name)), [ collectionName ]) :
             [ collectionName ];
-
-        if (opts.recursive)
-            collections.push(collectionName);
 
         for (const collName of collections) {
             const files = this.files(collName);

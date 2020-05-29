@@ -84,7 +84,7 @@ export class TableString {
     get(data: TableRows, options?: PartialRecursive<TableConfig>) {
         // we compute it to get tableConfig.columns value computed to have paddingLeft, paddingRight
         // needed in this.getColumnsWidth
-        const opts = assignRecursive(this.userConfig, options);
+        const opts = assignRecursive({}, this.userConfig, options);
         const builtConfig = makeConfig(data, opts) as TableConfig;
 
 

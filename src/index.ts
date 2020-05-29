@@ -12,3 +12,4 @@ export * from './stats';
 export * from './find';
 export * from './require';
 export * from './stream';
+export * from './graceful-watcher';

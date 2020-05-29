@@ -5,6 +5,13 @@ import tsconfig from 'tsconfig';
 import { TsConfig } from './tsconfig.json';
 import { assignRecursive, AssignOptions } from '@upradata/util';
 
+export const defaultTscOptions = (): ts.CompilerOptions => ({
+    noEmitOnError: false, noErrorTruncation: true, noImplicitAny: false, listEmittedFiles: true, downlevelIteration: true,
+    experimentalDecorators: true, emitDecoratorMetadata: true,
+            /* lib: [ 'ESNext' ], */ target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
+    esModuleInterop: true, allowSyntheticDefaultImports: true
+});
+
 
 function loadTsConfig(tsconfigPath?: string): { path: string; config: TsConfig; } {
     const tsConfig: { path?: string; config: TsConfig; } = tsconfig.loadSync(__dirname, tsconfigPath);
@@ -29,12 +36,7 @@ export class TscCompiler {
 
         } else {
 
-            compilerOptions = assignRecursive({
-                noEmitOnError: false, noErrorTruncation: true, noImplicitAny: false, listEmittedFiles: true, downlevelIteration: true,
-                experimentalDecorators: true, emitDecoratorMetadata: true,
-                /* lib: [ 'ESNext' ], */ target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
-                esModuleInterop: true, allowSyntheticDefaultImports: true,
-            }, options);
+            compilerOptions = assignRecursive(defaultTscOptions(), options);
         }
 
         assignRecursive(compilerOptions, options, new AssignOptions({ arrayMode: 'replace' }));
@@ -102,12 +104,7 @@ export class TscCompiler {
 
     static compileAndEmit(filepath: string, options: ts.CompilerOptions) {
 
-        const compilerOptions = assignRecursive({
-            noEmitOnError: false, noErrorTruncation: true, noImplicitAny: false, listEmittedFiles: true, downlevelIteration: true,
-            experimentalDecorators: true, emitDecoratorMetadata: true,
-            /* lib: [ 'ESNext' ], */ target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
-            esModuleInterop: true, allowSyntheticDefaultImports: true
-        }, options);
+        const compilerOptions = assignRecursive(defaultTscOptions(), options);
 
         const { emittedFiles } = TscCompiler.compile([ filepath ], compilerOptions);
         // emittedFiles is all emitted file, but we want only filepath file to be required

@@ -47,7 +47,7 @@ export class GlobFiles {
 
         for (const file of filesList) {
             if (isGlobFile(file))
-                plainFiles.push({ pattern: file.pattern, options: assignRecursive(globalOptions, file.options) });
+                plainFiles.push({ pattern: file.pattern, options: assignRecursive({}, globalOptions, file.options) });
             else
                 plainFiles.push({ pattern: file, options: globalOptions });
         }

@@ -18,7 +18,7 @@ export type WalkActionAfter<R> = (args: { parentCollection: StoreCollection; nod
 
 export type CollectionObject = ObjectOf<CollectionObject | FilePrint>;
 
-export type FileIterate = { filepath: string; collectionName: string; collection: StoreCollection; fileprint: FilePrint; };
+export type FileIteration = { filepath: string; collectionName: string; collection: StoreCollection; fileprint: FilePrint; };
 
 export class StoreCollection {
     collection: ObjectOf<StoreCollection | FilePrint> = {};
@@ -143,7 +143,7 @@ export class StoreCollection {
         const mergedNodePath = isPathMode ? this.mergeCollectNames(...args.nodePath).split('.') : [];
 
         const walk = (storeCollection: StoreCollection, nodePath: string[]) => {
-            const nodeNames = isPathMode ? (nodePath.length === 0 ? [] : [ nodePath.shift() ]) : Object.keys(this.collection);
+            const nodeNames = isPathMode ? (nodePath.length === 0 ? [] : [ nodePath.shift() ]) : Object.keys(storeCollection.collection);
 
             for (const name of nodeNames) {
                 const isLast = isPathMode && nodePath.length === 0;
@@ -174,7 +174,7 @@ export class StoreCollection {
     }
 
 
-    * filePrintIterator(): IterableIterator<FileIterate> {
+    * filePrintIterator(): IterableIterator<FileIteration> {
 
         for (const [ key, node ] of Object.entries(this.collection)) {
             if (isFilePrint(node))
@@ -184,11 +184,11 @@ export class StoreCollection {
         }
     }
 
-    * collectionIterator(): IterableIterator<{ name: string; collection: StoreCollection; }> {
+    * collectionIterator(): IterableIterator<{ fromName: string; name: string; collection: StoreCollection; }> {
 
         for (const [ key, node ] of Object.entries(this.collection)) {
             if (!isFilePrint(node)) {
-                yield { name: this.collectionName, collection: node };
+                yield { fromName: this.collectionName, name: node.collectionName, collection: node };
                 yield* node.collectionIterator();
             }
         }
