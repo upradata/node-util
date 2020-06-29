@@ -1,11 +1,11 @@
 
 
-import { guid, TT$ } from '@upradata/util';
+import { TT$ } from '@upradata/util';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { promisify } from 'util';
-import { SyncAsync } from './useful';
+import { SyncAsync, guid } from './useful';
 
 const existsFile = promisify(fs.exists);
 

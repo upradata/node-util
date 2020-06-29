@@ -12,10 +12,11 @@
     "version": "2.0.3",
     "description": "",
     "main": "lib",
-    "types": "lib",
-    "module": "lib",
+    "types": "lib-esm",
+    "module": "lib-esm",
     "files": [
-        "lib"
+        "lib",
+        "lib-esm"
     ],
     "scripts": {
         "clean": "shx rm -rf dist lib-esm",
