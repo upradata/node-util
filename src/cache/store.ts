@@ -173,7 +173,7 @@ export class Store {
         const opts = Object.assign({}, this.options, options);
 
         const collections = opts.recursive ?
-            chain(() => [ ...this.getCollection(...collectionName).collectionIterator() ].map(c => collectionName.concat(c.name)), [ collectionName ]) :
+            chain(() => [ ...this.getCollection(...collectionName).collectionIterator() ].map(c => [ c.name ] /* collectionName.concat(c.name) */), [ collectionName ]) :
             [ collectionName ];
 
         for (const collName of collections) {

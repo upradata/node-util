@@ -75,10 +75,13 @@ export const getDependencies = (sourceFiles: string[], options?: { compiler?: ts
             // or a real source file (.ts).
             //  const isCodeModule = declaration.kind === ts.SyntaxKind.SourceFile && !sourceFile.isDeclarationFile;
             const filepath = declaration.getSourceFile().fileName;
-            const filepathJs = filepath.replace(/(\.d)?\.ts/, '.js');
+            const stem = filepath.replace(/(\.d)?\.ts/, '');
+            const filepathJsAndTs = [ 'js', 'ts' ].map(ext => `${stem}.${ext}`);
 
-            if (opts.filter(filepath) && fs.existsSync(filepathJs))
-                deps.push(filepathJs);
+            for (const file of filepathJsAndTs) {
+                if (opts.filter(filepath) && fs.existsSync(file))
+                    deps.push(file);
+            }
             // console.log(`   --> ${declaration.getSourceFile().fileName}  (isCodeModule = ${isCodeModule})`);
         };
     };
