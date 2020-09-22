@@ -1,3 +1,4 @@
+import ts from 'typescript';
 import path from 'path';
 import fs from 'fs-extra';
 import { readJson } from './json/read-json5';
@@ -6,7 +7,7 @@ import { Cache } from './cache';
 import { red, yellow } from './style/basic-styles';
 
 
-export function requireModule(filepath: string, options: { outDir: string; cache?: boolean; cacheFile?: string; deleteOutDir?: boolean; }) {
+export function requireModule(filepath: string, options: { outDir: string; cache?: boolean; cacheFile?: string; deleteOutDir?: boolean; tsconfig?: ts.CompilerOptions; }) {
     switch (path.extname(filepath)) {
         case '.json': return readJson.sync(filepath);
         case '.js': return importDefault(require(filepath));
@@ -25,7 +26,12 @@ export function requireModule(filepath: string, options: { outDir: string; cache
 
             console.log(yellow`Compiling "${filepath}"`);
 
-            const jsFile = TscCompiler.compileAndLoadModule(filepath, { deleteOutDir: false, ...options });
+            const jsFile = TscCompiler.compileAndLoadModule(filepath, {
+                ...options.tsconfig,
+                outDir: options.outDir,
+                deleteOutDir: options.deleteOutDir || false
+            });
+
             cache.store.options.extra = file => jsFile.filepath; // add js compiled file path to get if cache hit
 
             if (options.cache || options.cacheFile) {
