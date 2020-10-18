@@ -2,6 +2,7 @@ import stream from 'stream';
 import VinylFile from 'vinyl';
 import PluginError from 'plugin-error';
 import through from 'through2';
+import path from 'path';
 import { assignRecursive, PartialRecursive, AssignOptions } from '@upradata/util';
 import { Cache, CacheOptions } from '../../cache';
 
@@ -20,11 +21,11 @@ export class StreamCacheConfig {
 
 export class StreamCacheOptions {
     streamCache: StreamCacheConfig = new StreamCacheConfig();
-    cacheOptions: CacheOptions = { path: './cache.json' };
+    cacheOptions?: CacheOptions = { path: './cache.json' };
     cache?: Cache;
 }
 
-export class StreamCache {
+/* export */ class StreamCache {
     public pluginName = this.constructor.name;
     public cache: Cache;
     public options: StreamCacheOptions;
@@ -92,7 +93,7 @@ export class StreamCache {
             const file = new VinylFile({
                 contents: Buffer.from(JSON.stringify(this.cache.store.storeCollection)),
                 base: process.cwd(),
-                path: process.cwd() + '/' + emitName || this.cache.store.options.path
+                path: path.join(process.cwd(), emitName) || this.cache.store.options.path
             });
 
             stream.push(file);
