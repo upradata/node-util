@@ -7,7 +7,7 @@ export function csvToJson(file: string, delimiter: string = ';') {
 
 // export type Row = ObjectOf<string>;
 
-export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: keyof T; nbKeys?: number; } = {}) {
+export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: Array<keyof T>; nbKeys?: number; } = {}) {
     const { csvColumnKeys, nbKeys } = options;
 
     let header: string[] = csvColumnKeys ? csvColumnKeys as any : [];
