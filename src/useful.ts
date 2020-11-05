@@ -14,5 +14,6 @@ export class SyncAsync<T = any> {
 
 export const syncAsync = Object.keys(new SyncAsync());
 export const readFileAsync = promisify(fs.readFile);
+export const writeFileAsync = promisify(fs.writeFile);
 
 export const guid = guidGenerator(crypto.randomFillSync.bind(crypto));
