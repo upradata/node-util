@@ -4,5 +4,7 @@ export * from './pass-through';
 export * from './wait-flush';
 export * from './concat';
 export * from './if';
+export * from './if-passthrough';
+export * from './empty';
 export * from './common';
 export * from './types';

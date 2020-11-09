@@ -3,7 +3,6 @@ import VinylFile from 'vinyl';
 import minimatch from 'minimatch';
 import stream from 'stream';
 
-
 export interface StatFilterCondition {
     isDirectory?: boolean;
     isFile?: boolean;
