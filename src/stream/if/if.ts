@@ -6,8 +6,9 @@ import through2 from 'through2';
 import sink from 'lead';
 import { passThrough } from '../pass-through'; */
 
-export const ifthen = <Data, ConcatMode extends Mode>(options: IfOptions<Data, ConcatMode>) => ternary({ ...options, stream: { objectMode: false, ...options.stream } });
-ifthen.vinyl = <ConcatMode extends Mode>(options: IfOptions<VinylFile, ConcatMode>) => ternary({ ...options, stream: { ...options.stream, objectMode: true } });
+export const ifthen = <Data, ConcatMode extends Mode, Options extends IfOptions<Data, ConcatMode>>(options: Options) => ternary({ ...options, stream: { objectMode: false, ...options.stream } });
+ifthen.vinyl = <ConcatMode extends Mode>(options: IfOptions<VinylFile, ConcatMode>) => ternary({ ...options, stream: { ...options.stream, objectMode: true, highWaterMark: 16 } });
+
 
 /*
 const make = (n: number) => Array(n).fill(1).map((_, i) => i);

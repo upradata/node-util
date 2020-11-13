@@ -1,6 +1,7 @@
+import stream from 'stream';
 import { isConcatGeneratorFunction, ConcatStreamGenerator, ConcatStreamGenerators, PipeStreamGenerator, isPipeGeneratorFunction } from './types';
 import { ReadableStream, Stream } from '../types';
-import { isDefined, TT$, ensureArray, ensurePromise } from '@upradata/util';
+import { TT$, ensureArray, ensurePromise } from '@upradata/util';
 import mergeStream from 'merge2';
 import { isReadable } from '../common';
 import { ConcatOptions, ConcatOptionsType } from './stream.concat.options';
@@ -44,11 +45,11 @@ export class ConcatStreams {
         };
 
         const streams = await build(generators) as ReadableStream[];
-        return mergeStream(...streams);
-        // return Promise.all(await build(generators)).then(streams => {
-        //     return /* streams.length === 1 ? streams[ 0 ] : */ mergeStream(...streams as any);
-        // });
 
+        if (streams.length === 1 && streams[ 0 ] instanceof stream.Stream)
+            return streams[ 0 ];
+
+        return mergeStream(...streams);
     }
 
     concat(options: ConcatOptionsType) {

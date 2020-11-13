@@ -28,7 +28,7 @@ export class TernaryConditionOptions<Data> {
         const test = await this.options.condition;
 
         if (typeof test === 'boolean') {
-            this.test = (data: Data) => new Promise(async (res, rej) => res(test));
+            this.test = (data: Data) => Promise.resolve(test);
 
         } else if (test.length === 2) {
 

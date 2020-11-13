@@ -9,6 +9,7 @@ export type ConditionAction = TT$<Stream | Function0<TT$<Stream>>>;
 export type ConditionActions<ConcatMode extends Mode> = ConcatMode extends 'concat' ? ConcatOptionsType : ConditionAction | ConditionAction[];
 
 export type Mode = 'pipe' | 'concat';
+export type SyncMode = 'sync' | 'async';
 
 
 export class IfOptions<Data, ConcatMode extends Mode> {
@@ -17,6 +18,7 @@ export class IfOptions<Data, ConcatMode extends Mode> {
     false?: ConditionActions<ConcatMode>;
     stream?: stream.DuplexOptions = {};
     mode?: Mode = 'pipe';
+    sync?: SyncMode = 'sync';
 
     constructor(options?: IfOptions<Data, ConcatMode>) {
         Object.assign(this, options);
@@ -27,21 +29,21 @@ export class IfOptions<Data, ConcatMode extends Mode> {
 }
 
 
-export const getActionStreams = async (conditionActions: ConditionActions<'pipe'>): Promise<Stream[]> => {
+export const getActionStreamsAsync = async (conditionActions: ConditionActions<'pipe'>): Promise<Stream[]> => {
     if (!conditionActions)
         return [];
 
     const actions = ensureArray(await conditionActions);
 
-    return Promise.all(actions.map(async conditionAction => {
-        const action = await conditionAction;
-        let stream: Stream = undefined;
+    return Promise.all(getActionStreamsSync(await Promise.all(actions)));
+};
 
-        if (typeof action === 'function')
-            stream = await action() as any;
-        else
-            stream = action as any;
 
-        return stream;
-    }));
+export const getActionStreamsSync = (conditionActions: ConditionActions<'pipe'>): Stream[] => {
+    if (!conditionActions)
+        return [];
+
+    const actions = ensureArray(conditionActions);
+
+    return actions.map(action => typeof action === 'function' ? action() : action as any);
 };
