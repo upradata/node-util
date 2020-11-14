@@ -20,8 +20,12 @@ export function requireModule(filepath: string, options: { outDir: string; cache
             const collectionName = 'tsc';
 
             if (options.cache || options.cacheFile) {
-                if (!cache.isChangedFiles(collectionName, [ filepath ]))
-                    return importDefault(require(cache.store.filePrint(filepath, collectionName).extra));
+                if (!cache.isChangedFiles(collectionName, [ filepath ])) {
+                    const compiledFile = cache.store.filePrint(filepath, collectionName).extra;
+                    // check if file still exists in the cache directory
+                    if (fs.existsSync(compiledFile))
+                        return importDefault(require(cache.store.filePrint(filepath, collectionName).extra));
+                }
             }
 
             console.log(yellow`Compiling "${filepath}"`);

@@ -4,6 +4,7 @@ import camelcase from 'camelcase';
 import decamelize from 'decamelize';
 import { ObjectOf } from '@upradata/util';
 import { red } from '../style/basic-styles';
+import { CommandModule } from './types';
 
 export interface InvalidParameter {
     parameter: string;
@@ -12,6 +13,7 @@ export interface InvalidParameter {
 
 export type MiddlewareCallback<T, U> = (argv: Arguments<T>, yargs: _ParseArgs<T>) => Arguments<U>;
 
+// tslint:disable-next-line: class-name
 class _ParseArgs<T> {
     public supportedArgs = [ '$0', '_', 'version', 'help' ];
     public yargs: Argv<T>;
@@ -111,3 +113,5 @@ class _ParseArgs<T> {
 export type ParseArgs<T> = _ParseArgs<T> & Argv<T>;
 export const ParseArgs = _ParseArgs;
 export type CustomArgs<T> = Argv<T> & { customYargs: ParseArgs<T>; };
+
+export type CustomCommandModule<T = {}, U = T> = CommandModule<T, U, { customYargs: ParseArgs<T>; }, { yargs: ParseArgs<T>; }>;

@@ -68,7 +68,7 @@ export abstract class TernaryStreams<Data, ConcatMode extends Mode>{
         // });
     }
 
-    public init() {
+    public create() {
         if (this.options.sync === 'sync') {
             this.initSync();
             return this.done();
@@ -171,5 +171,5 @@ export const ternary = <Data, ConcatMode extends Mode, Options extends IfOptions
     else
         ternaryStreams = new TernaryStreamsConcat(options as IfOptions<Data, 'concat'>);
 
-    return ternaryStreams.init() as any;
+    return ternaryStreams.create() as any;
 };
