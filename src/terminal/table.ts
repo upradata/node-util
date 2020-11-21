@@ -61,7 +61,7 @@ const alignCenter = (subject: string, whiteSpaces: number) => {
 // I just convert value to value + ''
 calculateCellWidthIndex.default = (cells: TableRow) => {
     return cells.map(value => {
-        return Math.max(...(value + '').split('\n').map(line => stringWidth(line)));
+        return Math.max(...(`${value}`).split('\n').map(line => stringWidth(line)));
     });
 };
 
@@ -98,7 +98,7 @@ export class TableString {
 
     getCellsRowWidth(row: TableRow) {
         return row.map(cell =>
-            Math.max(...(cell + '').split('\n').map(line => stringWidth(line)))
+            Math.max(...(`${cell}`).split('\n').map(line => stringWidth(line)))
         );
     }
 

@@ -14,3 +14,4 @@ export * from './require';
 export * from './stream';
 export * from './graceful-watcher';
 export * from './csv';
+export * from './files';

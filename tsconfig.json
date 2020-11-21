@@ -20,18 +20,21 @@
         "outDir": "lib",
         "baseUrl": ".",
         "paths": {
-            "@root/*": [
+            /*  "@root/*": [
                 "./src/*"
-            ],
+            ] */ /* ,
             "*": [
                 "./node_modules",
-                "./typings/*"
-            ] // https://github.com/microsoft/TypeScript/issues/13581#issuecomment-273923793
-        }
+                "src/typings/*"
+            ] */ // https://github.com/microsoft/TypeScript/issues/13581#issuecomment-273923793
+        },
+        "typeRoots": [
+            "src/@types",
+            "node_modules/@types"
+        ]
     },
     "include": [
-        "src",
-        "typings"
+        "src"
     ],
     "exclude": [
         "node_modules",
