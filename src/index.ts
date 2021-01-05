@@ -11,6 +11,7 @@ export * from './useful';
 export * from './stats';
 export * from './find';
 export * from './require';
+export * from './require-override';
 export * from './stream';
 export * from './graceful-watcher';
 export * from './csv';

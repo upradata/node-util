@@ -45,5 +45,5 @@ export const getActionStreamsSync = (conditionActions: ConditionActions<'pipe'>)
 
     const actions = ensureArray(conditionActions);
 
-    return actions.map(action => typeof action === 'function' ? action() : action as any);
+    return actions.map(action => typeof action === 'function' && action.length === 0 ? action() : action as any);
 };

@@ -1,3 +1,4 @@
-interface NodeRequireFunction {
+/* interface NodeRequireFunction {
     (id: string): any;
 }
+ */

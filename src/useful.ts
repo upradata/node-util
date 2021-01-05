@@ -1,6 +1,7 @@
 import fs from 'fs';
 import crypto from 'crypto';
 import { promisify } from 'util';
+import { exec } from 'child_process';
 import { guidGenerator } from '@upradata/util';
 
 export const isDev = (process.env.NODE_ENV || 'development').trim().toLowerCase() !== 'production';
@@ -15,5 +16,6 @@ export class SyncAsync<T = any> {
 export const syncAsync = Object.keys(new SyncAsync());
 export const readFileAsync = promisify(fs.readFile);
 export const writeFileAsync = promisify(fs.writeFile);
+export const execAsync = promisify(exec);
 
 export const guid = guidGenerator(crypto.randomFillSync.bind(crypto));

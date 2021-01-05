@@ -6,11 +6,21 @@ import { TscCompiler } from './ts/tsc';
 import { Cache } from './cache';
 import { red, yellow } from './style/basic-styles';
 
+export interface RequireOptions {
+    outDir: string;
+    cache?: boolean;
+    cacheFile?: string;
+    deleteOutDir?: boolean;
+    tsconfig?: ts.CompilerOptions;
+}
 
-export function requireModule(filepath: string, options: { outDir: string; cache?: boolean; cacheFile?: string; deleteOutDir?: boolean; tsconfig?: ts.CompilerOptions; }) {
+
+export const requireModuleDefault = (filepath: string, options: RequireOptions) => importDefault(requireModule(filepath, options));
+
+export function requireModule(filepath: string, options: RequireOptions): any {
     switch (path.extname(filepath)) {
         case '.json': return readJson.sync(filepath);
-        case '.js': return importDefault(require(filepath));
+        case '.js': return require(filepath);
         case '.ts':
             const cache = new Cache({
                 path: options.cacheFile || 'cache.json',
@@ -24,7 +34,7 @@ export function requireModule(filepath: string, options: { outDir: string; cache
                     const compiledFile = cache.store.filePrint(filepath, collectionName).extra;
                     // check if file still exists in the cache directory
                     if (fs.existsSync(compiledFile))
-                        return importDefault(require(cache.store.filePrint(filepath, collectionName).extra));
+                        return require(cache.store.filePrint(filepath, collectionName).extra);
                 }
             }
 
@@ -43,10 +53,7 @@ export function requireModule(filepath: string, options: { outDir: string; cache
                 cache.save();
             }
 
-            if (options.deleteOutDir)
-                fs.removeSync(options.outDir);
-
-            return importDefault(jsFile.module);
+            return jsFile.module;
         default:
             throw new Error(red`filepath has to be the path of a .json, .js or .ts file. Provided option was ${filepath}`);
     }

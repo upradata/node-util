@@ -1,3 +1,4 @@
+import { createCompilerHost } from './compiler-host';
 import ts from 'typescript';
 import fs from 'fs-extra';
 import path from 'path';
@@ -6,10 +7,19 @@ import { TsConfig } from './tsconfig.json';
 import { assignRecursive, AssignOptions } from '@upradata/util';
 
 export const defaultTscOptions = (): ts.CompilerOptions => ({
-    noEmitOnError: false, noErrorTruncation: true, noImplicitAny: false, listEmittedFiles: true, downlevelIteration: true,
-    experimentalDecorators: true, emitDecoratorMetadata: true,
-            /* lib: [ 'ESNext' ], */ target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
-    esModuleInterop: true, allowSyntheticDefaultImports: true
+    noEmitOnError: false,
+    noErrorTruncation: true,
+    noImplicitAny: false,
+    listEmittedFiles: true,
+    downlevelIteration: true,
+    experimentalDecorators: true,
+    emitDecoratorMetadata: true,
+    /* lib: [ 'ESNext' ], */
+    target: ts.ScriptTarget.ESNext,
+    module: ts.ModuleKind.CommonJS,
+    esModuleInterop: true,
+    allowSyntheticDefaultImports: true,
+    resolveJsonModule: true
 });
 
 
@@ -51,8 +61,10 @@ export class TscCompiler {
                 paths: config.compilerOptions.paths
             });
         } */
+        /* debugger;
+        const host = createCompilerHost(compilerOptions, {}); */
+        const program = ts.createProgram(fileNames, compilerOptions/* , host */);
 
-        const program = ts.createProgram(fileNames, compilerOptions);
         const emitResult = program.emit();
 
         const allDiagnostics = ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics);

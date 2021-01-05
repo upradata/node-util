@@ -67,6 +67,7 @@ export class TernaryForksStream<Data> extends stream.Writable {
 
         const resume = () => {
             if (this.resume) {
+                // when there is not space in the readable stream, we wait until the readable stream says so
                 const res = this.resume;
                 this.resume = null;
                 res.call(null);
@@ -106,7 +107,7 @@ export class TernaryForksStream<Data> extends stream.Writable {
             if (streamSelected.push(data))
                 return callback();
 
-            this.resume = callback;
+            this.resume = callback; // to much data, wait to resume
         } catch (e) {
             callback(e);
         }

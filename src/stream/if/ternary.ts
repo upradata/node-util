@@ -114,13 +114,15 @@ export class TernaryStreamsPipe<Data> extends TernaryStreams<Data, 'pipe'>{
 
     protected async connectTernaryForkStreamsAsync() {
         await this.addActions(this.options);
-        return this.connectTernaryForkStreamsSync(false);
+        return this.connect();
     }
 
-    protected connectTernaryForkStreamsSync(addActions: boolean = true) {
-        if (addActions)
-            this.addActions(this.options);
+    protected connectTernaryForkStreamsSync() {
+        this.addActions(this.options);
+        return this.connect();
+    }
 
+    private connect() {
         const { true: trueStreams, false: falseStreams } = this;
 
         const isTrueStreams = (streams: Stream[], isTrue: boolean) => streams.map(s => ({ stream: s, isTrue }));
