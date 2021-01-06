@@ -22,6 +22,8 @@ export const defaultTscOptions = (): ts.CompilerOptions => ({
     resolveJsonModule: true
 });
 
+export type TsCompileOptions = ts.CompilerOptions & { useTsConfig?: boolean | string; host?: ts.CompilerHost; };
+
 
 function loadTsConfig(tsconfigPath?: string): { path: string; config: TsConfig; } {
     const tsConfig: { path?: string; config: TsConfig; } = tsconfig.loadSync(__dirname, tsconfigPath);
@@ -35,10 +37,10 @@ function loadTsConfig(tsconfigPath?: string): { path: string; config: TsConfig; 
 export class TscCompiler {
     constructor() { }
 
-    static compile(fileNames: string[], options: ts.CompilerOptions & { useTsConfig?: boolean | string; } = {}) {
+    static compile(fileNames: string[], options: TsCompileOptions = {}) {
         let compilerOptions: ts.CompilerOptions;
 
-        const { useTsConfig } = options;
+        const { useTsConfig, host } = options;
 
         if (useTsConfig) {
             const tsconfigPath = typeof useTsConfig === 'string' ? useTsConfig : undefined;
@@ -63,7 +65,8 @@ export class TscCompiler {
         } */
         /* debugger;
         const host = createCompilerHost(compilerOptions, {}); */
-        const program = ts.createProgram(fileNames, compilerOptions/* , host */);
+        // const host = createCompilerHost(compilerOptions, {});
+        const program = ts.createProgram(fileNames, compilerOptions, host);
 
         const emitResult = program.emit();
 

@@ -35,11 +35,12 @@ export const createCompilerHost = (options: ts.CompilerOptions, extraOptions: { 
     }
 
     function getSourceFile(fileName: string, languageVersion: ts.ScriptTarget, onError?: (message: string) => void) {
-        const sourceText = ts.sys.readFile(fileName);
+        const sourceText = readFile(fileName);
         return sourceText !== undefined ? ts.createSourceFile(fileName, sourceText, languageVersion) : undefined;
     }
 
     function resolveModuleNames(moduleNames: string[], containingFile: string): ts.ResolvedModule[] {
+
         const resolvedModules: ts.ResolvedModule[] = [];
 
         for (const moduleName of moduleNames) {
