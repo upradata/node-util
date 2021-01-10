@@ -1,7 +1,7 @@
 
 import * as fs from '../mocks/fs.mock';
 import { CacheMock } from '../mocks/cache.mock';
-import { Store } from '../../src/cache/store';
+import { md5, Store } from '../../src/cache/store';
 import VinylFile from 'vinyl';
 
 
@@ -48,7 +48,7 @@ describe('Test suite for cache', () => {
     it('should use md5 criteria', () => {
         const cacheMock = new CacheMock({
             cache: { criteria: 'md5' },
-            mock: { criteria: (i, file) => new Store().md5(file.path) }
+            mock: { criteria: (i, file) => md5(file.path) }
         });
 
         const { cache } = cacheMock.populateCache();

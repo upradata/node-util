@@ -1,5 +1,5 @@
 import { TableRows, TableRow, TableString, TableItem, TableStringOption, TableConfig } from './table';
-import { StyleTemplate, colors } from '../style/style';
+import { StyleTemplate, colors } from '../style';
 import { chain, PartialRecursive } from '@upradata/util';
 
 

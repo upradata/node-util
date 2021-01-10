@@ -3,7 +3,7 @@ import { Argv, Options, Arguments } from 'yargs';
 import camelcase from 'camelcase';
 import decamelize from 'decamelize';
 import { ObjectOf } from '@upradata/util';
-import { red } from '../style/basic-styles';
+import { red } from '../style';
 import { CommandModule } from './types';
 
 export interface InvalidParameter {

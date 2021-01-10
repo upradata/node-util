@@ -1,2 +1,4 @@
 export * from './style';
-export * from './basic-styles';
+export * from './styles';
+export * from './styles-factory';
+export * from './helpers';

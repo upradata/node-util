@@ -1,5 +1,4 @@
-import { styles, Style, COLORS_SAFE } from '../../src/style';
-import { BasicStyleList } from '../../src/style/basic-style-list';
+import { styles, Style, COLORS_SAFE, BasicStyleList } from '../../src/style';
 
 describe('Test suite template string styles', () => {
 

@@ -1,13 +1,12 @@
-import colorsSafe from 'colors/safe';
-import { BasicStyleList } from './basic-style-list';
+import { BasicStyleList } from './styles/basic-style-list';
 import { recreateString, KeyType } from './template-string';
 import { isNil } from '@upradata/util';
+
 
 export type StringTransform = (arg: string) => string;
 export type StyleMode = 'args' | 'full';
 
-export const COLORS_SAFE = colorsSafe as typeof colorsSafe & { none: (s: string) => string; };
-COLORS_SAFE.none = s => s;
+
 export type StyleTemplate = (strings: TemplateStringsArray, ...keys: KeyType[]) => string;
 
 
@@ -72,29 +71,6 @@ export class Style {
 }
 
 
-class StyleList extends Style {
-    static init() {
-        for (const k of Object.keys(new BasicStyleList())) {
-
-            Object.defineProperty(StyleList.prototype, k, {
-                // tslint:disable-next-line:object-literal-shorthand
-                get: function () {
-                    return this.add([ COLORS_SAFE[ k ] ], new StyleList());
-                }
-            });
-        }
-    }
-}
-
-StyleList.init();
-
-export type BasicStyleListRecursive = {
-    [ K in keyof BasicStyleList ]: BasicStyleListRecursive & Style;
-};
-
-export const styles = new StyleList() as unknown as BasicStyleListRecursive;
-
-
 
 // backward compatible
 
@@ -103,5 +79,3 @@ export type ColorType = ColorsSafe & Style;
 export type ColorsSafe = {
     [ k in keyof BasicStyleList ]: ColorType;
 };
-
-export const colors = styles; 

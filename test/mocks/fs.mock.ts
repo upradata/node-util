@@ -1,7 +1,7 @@
 import MemoryFs from 'memory-fs';
 import fs from 'fs-extra'; // will be mocked
 import VinylFile from 'vinyl';
-import { ObjectOf, assignRecursive, isUndefined } from '@upradata/util';
+import { ObjectOf, assignRecursive, Function2 } from '@upradata/util';
 
 export let files: ObjectOf<VinylFile> = {};
 (MemoryFs as any).__files__ = files;
@@ -33,35 +33,38 @@ export function clean() {
     (MemoryFs as any).__files__ = files = {};
 }
 
-jest.mock('fs', () => {
+
+jest.mock('fs', () => { // 'fs-extra' is using 'graceful-fs' under the hood that is using 'fs'. Here we will use an in-memory filesystem
+    const makeAsync = (fn: string | Function2<string, any>) => {
+        function make(path: string, callback: Function2<Error, any>);
+        function make(path: string, option: any, callback: Function2<Error, any>);
+        function make(path: string, optionOrCb: Function2<Error, any> | any, callback?: Function2<Error, any>) {
+            let cb = callback;
+            let opts = optionOrCb;
+
+            if (!cb) {
+                cb = optionOrCb;
+                opts = undefined;
+            }
+
+            try {
+                const result = typeof fn === 'string' ? this[ `${fn}Sync` ](path, opts) : fn.call(this, path, opts);
+                setImmediate(() => cb(null, result));
+            } catch (e) {
+                setImmediate(() => cb(e, null));
+            }
+        };
+
+        return make;
+    };
+
     const MemoryFsAny = MemoryFs as any;
 
     if (MemoryFsAny.__instance__)
         return MemoryFsAny.__instance__;
 
     const accessSync = (path, mode) => { };
-    const access = function (path, optArg, callback) {
-        let cb = callback;
-        let opts = optArg;
-
-        if (!cb) {
-            cb = optArg;
-            opts = undefined;
-        }
-        let result;
-        try {
-            result = accessSync(path, opts);
-        } catch (e) {
-            setImmediate(function () {
-                cb(e);
-            });
-
-            return;
-        }
-        setImmediate(function () {
-            cb(null, result);
-        });
-    };
+    const access = makeAsync(accessSync);
 
     MemoryFsAny.prototype.access = access;
     MemoryFsAny.prototype.accessSync = accessSync;
@@ -75,7 +78,6 @@ jest.mock('fs', () => {
 
         try {
             stats = oldStatSync.call(fs, path);
-
         } catch (e) { }
 
         // jest will hoist the mock, so we need to recover the variable this way
@@ -83,46 +85,30 @@ jest.mock('fs', () => {
         return assignRecursive(stats || {}, files[ path ] && files[ path ].stat);
     };
 
+    // MemoryFs does not implement the options parameter
+    // fsExtra is calling mkdirSync with { recursive: true } in fsExtra.outputFileSync
+    const oldMkdirSync = MemoryFs.prototype.mkdirSync;
+    MemoryFs.prototype.mkdirSync = function (this: MemoryFs, path: string, options: fs.MakeDirectoryOptions = {}) {
+        if (options.recursive)
+            return this.mkdirpSync(path);
+
+        return oldMkdirSync.call(this, path);
+    };
+
+    MemoryFs.prototype.mkdir = makeAsync(MemoryFs.prototype.mkdirSync);
+
     MemoryFsAny.__instance__ = new MemoryFs();
-    return MemoryFsAny.__instance__;
-});
+    MemoryFsAny.__instance__.debug = 'MemoryFs';
 
-jest.mock('fs-extra', () => {
-    const fsExtra = jest.requireActual('fs-extra');
-    const fs = require('fs');// mocked one
-    // here fs is an instance of MemoryFs
-    // the problem is that it is an es6 class and when an instance is created, the method in the prototype are 
-    // not enumerable. So, when fs-extra is created and try to copy all 'fs' method, it cannot parse the methods
-    // of fs.__proto__. So I am obliged to recreate it by hand
+    // fs is mocked as MemoryFs, that is a class. The problem is that it is an es6 class and when an instance is created, the method in the prototype are
+    // not enumerable. So, when fs-extra is created, it is calling graceful-js that is calling "patch(clone(fs))"
+    // and try to copy all 'fs' method, it cannot parse the methods of fs.__proto__ (even prototype is not enumerable - no Object.keys or whatever).
+    // So I am obliged to recreate it by hand
 
-    const api = [
-        'stat',
-        'readdir',
-        'mkdirp',
-        'mkdir',
-        'rmdir',
-        'unlink',
-        'readlink',
-        'readFile',
-        'access',
-        'lstat',
-        'exists',
-        'writeFile'
-    ];
-
-    api.forEach(k => api.push(k + 'Sync'));
-
-    api.push(
-        'createReadStream',
-        'createWriteStream',
-        'realpath'
-    );
-
-    for (const key of api) {
-        if (typeof fsExtra[ key ] === 'undefined') {
-            fsExtra[ key ] = fs[ key ].bind(fs);
-        }
+    for (const k of Object.getOwnPropertyNames(MemoryFsAny.prototype)) {
+        if (MemoryFsAny.__instance__[ k ])
+            MemoryFsAny.__instance__[ k ] = MemoryFsAny.__instance__[ k ];
     }
 
-    return fsExtra;
+    return MemoryFsAny.__instance__;
 });

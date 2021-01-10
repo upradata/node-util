@@ -1,0 +1,36 @@
+{
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        // "allowJs": true,
+        "declaration": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "lib": [
+            "ESNext",
+            "DOM" // for jsdom
+        ],
+        "module": "umd",
+        "moduleResolution": "node",
+        "sourceMap": true,
+        // "target": "es2015",
+        // "target": "es5",
+        "target": "ESNext",
+        "traceResolution": false,
+        "outDir": "lib",
+        "baseUrl": ".",
+        "paths": {
+            /*  "@root/*": [
+                "./src/*"
+            ] */ /* ,
+            "*": [
+                "./node_modules",
+                "src/typings/*"
+            ] */ // https://github.com/microsoft/TypeScript/issues/13581#issuecomment-273923793
+        },
+        "typeRoots": [
+            "src/@types",
+            "node_modules/@types"
+        ]
+    }
+}
