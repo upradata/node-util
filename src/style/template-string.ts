@@ -1,6 +1,6 @@
-export type KeyType = { toString(): string };
+export type ToString = { toString(): string; };
 
-export function recreateString(strings: TemplateStringsArray, ...keys: KeyType[]) {
+export function recreateString(strings: TemplateStringsArray, ...keys: ToString[]) {
     const parameters = [ ...keys, '' ];
 
     let res = '';

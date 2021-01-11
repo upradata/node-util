@@ -89,7 +89,7 @@ const populateStoreCollection = () => {
 };
 
 
-describe.only('Test suite for StoreCollection', () => {
+describe('Test suite for StoreCollection', () => {
     it('should add a FilePrint in a new shallow collection', () => {
         const storeCollection = createStoreCollection();
         const filePrint: FilePrint = { mtime: 123465789, criteria: 'bonjour' };
