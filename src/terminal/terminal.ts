@@ -1,6 +1,6 @@
 import { TableRows, TableRow, TableString, TableItem, TableStringOption, TableConfig } from './table';
-import { StyleTemplate, colors } from '../style';
-import { chain, PartialRecursive } from '@upradata/util';
+import { colors } from '../template-style';
+import { chain, PartialRecursive, StyleTemplate } from '@upradata/util';
 
 
 export interface TitleOption {

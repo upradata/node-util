@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import { execSync } from 'child_process';
 import { oneLineTrim } from 'common-tags';
-import { yellow, green } from '../style';
+import { yellow, green } from '../template-style';
 import { tmpFileName } from '../tmpfile';
 
 export class OdsConvertOptions {

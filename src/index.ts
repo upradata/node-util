@@ -1,5 +1,5 @@
 export * from './path-normalize';
-export * from './style';
+export * from './template-style';
 export * from './ts';
 export * from './json';
 export * from './terminal';

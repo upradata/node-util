@@ -3,7 +3,7 @@
 // const styleList = (colorsSafe as any).styles as { [k: string]: { open: string; close: string; closeRe: RegExp } };
 // Object.keys(require('colorsSafe').styles) gives the following (we are obliged to get the strings at compile time for the TypeScript Type)
 
-export class BasicStyleList<T = any> {
+export class ColorsStyle<T = any> {
     none: T = undefined;
     reset: T = undefined;
     bold: T = undefined;

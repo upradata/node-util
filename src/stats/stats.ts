@@ -1,6 +1,6 @@
 
 import { ObjectOf, isArray } from '@upradata/util';
-import { yellow, highlightMagenta, green, red } from '../style';
+import { highlightMagenta } from '../template-style';
 import { Terminal, TableColumnConfig, TableRows, TableRow } from '../terminal';
 import { Stat, StatCtor, StatData } from './stat';
 

@@ -1,80 +1,8 @@
-import { styles, Style, COLORS_SAFE, BasicStyleList, CommonTagStyleList, recreateString } from '../../src/style';
-import * as commonTags from 'common-tags';
-import { keys } from '@upradata/util';
+import { recreateString, Style } from '@upradata/util';
+import { styles, COLORS_SAFE } from '../../src/template-style';
+
 
 describe('Test suite template string styles', () => {
-
-    it('all basic styles should be initialized', () => {
-        for (const k of keys(new BasicStyleList())) {
-            expect(styles[ k ]).toBeDefined();
-            expect(styles[ k ]).toBeInstanceOf(Style);
-            expect(styles[ k ].transforms.length).toEqual(2);
-            expect(styles[ k ].transforms[ 0 ]).toBeInstanceOf(Style);
-            expect(styles[ k ].transforms[ 1 ].toString()).toEqual(COLORS_SAFE[ k ].toString());
-        }
-    });
-
-    it('all common tags styles should be initialized', () => {
-        for (const k of keys(new CommonTagStyleList())) {
-            expect(styles[ k ]).toBeDefined();
-            expect(styles[ k ]).toBeInstanceOf(Style);
-            expect(styles[ k ].transforms.length).toEqual(2);
-            expect(styles[ k ].transforms[ 0 ]).toBeInstanceOf(Style);
-            expect(styles[ k ].transforms[ 1 ].toString()).toEqual(commonTags[ k ].toString());
-        }
-    });
-
-
-    it('should cumulate styles', () => {
-        const s1 = styles.yellow;
-        const s2 = s1.blueBG;
-        const s3 = s2.blue;
-        const s4 = s3.bgCyan;
-        const s5 = s4.red;
-
-        expect(s1.transforms.length).toEqual(2);
-        expect(s1[ 'getTransforms' ]().length).toEqual(1);
-
-        expect(s2.transforms.length).toEqual(2);
-        expect(s2[ 'getTransforms' ]().length).toEqual(2);
-
-        expect(s3.transforms.length).toEqual(2);
-        expect(s3[ 'getTransforms' ]().length).toEqual(3);
-
-        expect(s4.transforms.length).toEqual(2);
-        expect(s4[ 'getTransforms' ]().length).toEqual(4);
-
-        expect(s5.transforms.length).toEqual(2);
-        expect(s5[ 'getTransforms' ]().length).toEqual(5);
-
-        expect(styles.red).not.toBe(styles.red.red);
-    });
-
-    it('shoudl generate the right mode', () => {
-        expect(styles.red.bold.bgWhite[ 'getTransforms' ]()).toMatchObject([
-            { mode: 'full' }, { mode: 'full' }, { mode: 'full' },
-        ]);
-
-        expect(styles.red.bold.bgWhite.args[ 'getTransforms' ]()).toMatchObject([
-            { mode: 'args' }, { mode: 'args' }, { mode: 'args' },
-        ]);
-
-        expect(styles.red.bold.args.bgWhite.yellow.both.magenta[ 'getTransforms' ]()).toMatchObject([
-            { mode: 'args' }, { mode: 'args' },
-            { mode: 'both' }, { mode: 'both' },
-            { mode: 'full' }
-        ]);
-
-        expect(styles.red.bold.args.bgWhite.yellow[ 'getTransforms' ]()).toMatchObject([
-            { mode: 'args' }, { mode: 'args' },
-            { mode: 'full' }, { mode: 'full' },
-        ]);
-
-        expect(styles.red.bold.bgWhite.args.oneLineTrim.yellow.full[ 'getTransforms' ]()).toMatchObject([
-            { mode: 'args' }, { mode: 'args' }, { mode: 'args' },
-            { mode: 'full' }, { mode: 'full' },
-        ]);
-    });
 
     it('should display the good color', () => {
 
@@ -118,13 +46,6 @@ describe('Test suite template string styles', () => {
                     ${22} 
                     bon`).toBe('caca [47m[1m[31m11[39m[22m[49m est [47m[1m[31m22[39m[22m[49m bon');
 
-        /*   const s = new Style();
-          const stylish = s.add([ recreateString, COLORS_SAFE.red, COLORS_SAFE.bold, COLORS_SAFE.bgWhite ]).$;
-          expect(stylish`caca est bon`).toBe('[47m[1m[31mcaca est bon[39m[22m[49m');
-  
-          const s2 = new Style({ flatten: recreateString });
-          const stylish2 = s2.add([ COLORS_SAFE.red, COLORS_SAFE.bold, COLORS_SAFE.bgWhite ]).$;
-          expect(stylish2`caca est bon`).toBe('[47m[1m[31mcaca est bon[39m[22m[49m'); */
 
         expect(styles.yellow.bold.bgWhite.$`caca est bon2`).toBe('[47m[1m[33mcaca est bon2[39m[22m[49m');
 
@@ -139,17 +60,5 @@ describe('Test suite template string styles', () => {
 
 
         expect(styles.red.$$('As a function')).toBe('[31mAs a function[39m');
-    });
-
-    it('should be the common tag output', () => {
-        expect(styles.oneLineTrim.$`a
-                b
-        c`).toBe(commonTags.oneLineTrim`a
-                b
-        c`);
-
-        expect(styles.oneLineCommaListsOr.$`a ${[ 1, 2, 3, 4 ]}
-        b`).toBe(commonTags.oneLineCommaListsOr`a ${[ 1, 2, 3, 4 ]}
-        b`);
     });
 });

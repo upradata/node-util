@@ -4,7 +4,7 @@ import fs from 'fs-extra';
 import { readJson } from './json/read-json5';
 import { TscCompiler } from './ts/tsc';
 import { Cache } from './cache';
-import { red, yellow } from './style';
+import { red, yellow } from './template-style';
 
 export interface RequireOptions {
     outDir: string;
