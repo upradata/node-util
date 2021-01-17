@@ -1,4 +1,5 @@
-import { buildStyle, DefinedStringTransforms, makeObject, recreateString, styles as s, Styles, StyleTransform, StyleOptions, Style, ToString, ensureArray, ObjectOf } from '@upradata/util';
+import { buildStyle, DefinedStringTransforms, makeObject, recreateString, styles as s, Styles, StyleTransform, StyleOptions, Style, ToString, ensureArray } from '@upradata/util';
+export * from '@upradata/util/lib/template-string/export';
 import { ColorsStyle } from './helpers/color-styles.type';
 import colorsSafe from 'colors/safe';
 import colorsStyles from 'colors/lib/styles';
@@ -20,7 +21,7 @@ export const colorsTransforms = makeObject(props, (k): StyleOptions => ({
 }));
 
 
-buildStyle(props, colorsTransforms/* , recreateString */);
+buildStyle(props, colorsTransforms);
 
 export const styles = s as Styles<DefinedStringTransforms & ColorsStringTranforms>;
 
