@@ -1,13 +1,15 @@
 
 import csv from 'csvtojson';
+import { CSVParseParam } from 'csvtojson/v2/Parameters';
+import { TransformOptions } from 'stream';
 
-export function csvToJson(file: string, delimiter: string = ';') {
-    return csv({ delimiter }).fromFile(file);
+export function csvToJson<R>(file: string, param?: Partial<CSVParseParam>, options?: TransformOptions): Promise<R[]> {
+    return csv({ delimiter: ';', ...param, }, options).fromFile(file) as any;
 }
 
 // export type Row = ObjectOf<string>;
 
-export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: Array<keyof T>; nbKeys?: number; } = {}) {
+export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: Array<keyof T>; nbKeys?: number; } = {}): string {
     const { csvColumnKeys, nbKeys } = options;
 
     let header: string[] = csvColumnKeys ? csvColumnKeys as any : [];
@@ -31,13 +33,12 @@ export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: Array<keyof T
         const fullRow = {};
 
         for (const h of header)
-            fullRow[ h ] = row[ h ] || '';
+            fullRow[ h ] = row[ h ] ?? '';
 
         csv += '\n' + Object.values(fullRow).join((';'));
     }
 
     return csv;
-
 }
 
 

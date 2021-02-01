@@ -9,10 +9,10 @@ type Statistics<S extends Stat> = ObjectOf<S | Statistics<S>>;
 export class Stats<S extends Stat> {
     stats: Statistics<S> = {};
 
-    constructor(public statsName: string, public statClass: StatCtor<S>) { }
+    constructor(public statsName: string, public StatClass: StatCtor<S>) { }
 
     private isStat(s: any): s is S {
-        return s instanceof this.statClass;
+        return s instanceof this.StatClass;
     }
 
     add(stat: S, ...names: string[]) {
@@ -26,7 +26,7 @@ export class Stats<S extends Stat> {
             stats[ name ] = stats[ name ] || {};
             stats = stats[ name ] as Statistics<S>;
 
-            if (stats instanceof this.statClass)
+            if (stats instanceof this.StatClass)
                 throw new Error(`${names.slice(0, i + 1).join('.')} is an existing Stat and not a Collection`);
         });
 
@@ -37,7 +37,7 @@ export class Stats<S extends Stat> {
 
 
     create(...names: string[]): S {
-        return this.add(new this.statClass(names.join('.')), ...names);
+        return this.add(new this.StatClass(names.join('.')), ...names);
     }
 
     get(...names: string[]) {
