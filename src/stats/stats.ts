@@ -63,7 +63,7 @@ export class Stats<S extends Stat> {
 
         const addData = (fullName: string, stat: S) => {
             for (const [ dataName, data ] of Object.entries(stat.datas(fullName))) {
-                if (data.data.length > 0) {
+                if (data.data?.length > 0) {
 
                     if (isGlobalStat(data)) {
                         const globalStat = datas[ dataName ] as GlobalStat || new GlobalStat();
