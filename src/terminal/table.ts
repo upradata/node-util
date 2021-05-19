@@ -11,8 +11,7 @@ export type TableRow = TableItem[];
 export type TableRows = TableRow[];
 
 
-export type TableColumnConfig = TableUserConfig[ 'columns' ];;
-export type TableColumns = { [ index: number ]: TableColumnConfig; };
+export type TableColumnConfig = TableUserConfig[ 'columns' ];
 
 export type TableConfig = TableUserConfig & { singleLine: boolean; };
 

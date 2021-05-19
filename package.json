@@ -19,14 +19,20 @@
         "lib",
         "lib-esm"
     ],
+    "esm": {
+        "mainFields": [
+            "module",
+            "main"
+        ]
+    },
     "scripts": {
         "clean": "shx rm -rf dist lib-esm",
         "build:watch": "npm run clean && tsc -w",
-        "prebuild": "npm run clean",
-        "build": "tsc && tsc -m es6 --outDir lib-esm && pnpm run copy:declaration",
+        "pre:build": "npm run clean",
+        "build": "concurrently 'tsc -p tsconfig.lib.json' 'tsc -p tsconfig.lib-esm.json' && pnpm run copy:declaration",
         "post:build": "npm run test && npm run e2e",
         "copy:declaration": "cp src/@types/webpack.d.ts lib/@types && cp src/@types/webpack.d.ts lib-esm/@types",
-        "watch": "concurrently 'tsc -w' 'tsc -w -m es6 --outDir lib-esm' 'pnpm run copy:declaration'",
+        "watch": "concurrently 'tsc -p tsconfig.lib.json -w' 'tsc -p tsconfig.lib-esm.json -w' 'pnpm run copy:declaration'",
         "test": "npx jest --verbose false --config jest-ut.config.js",
         "e2e": "npx jest --passWithNoTests --verbose false --config jest-e2e.config.js",
         "github-push": "npm run build && npm version patch && git push && git push --tags",

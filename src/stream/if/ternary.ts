@@ -97,7 +97,7 @@ export class TernaryStreamsPipe<Data> extends TernaryStreams<Data, 'pipe'>{
 
         if (this.options.sync === 'sync') {
             return actionsStreams.map(({ actions, streams }) => {
-                const streamsToAdd = getActionStreamsSync(actions);
+                const streamsToAdd = getActionStreamsSync(actions as any);
                 streams.push(...streamsToAdd);
             });
         }
