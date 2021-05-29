@@ -1,12 +1,18 @@
+import { absolutePath } from './util';
 import path from 'path';
 import fs from 'fs-extra';
-import { execSync } from 'child_process';
-import { oneLineTrim } from 'common-tags';
-import { yellow, green } from '../template-style';
+import { ifChained } from '@upradata/util';
+import { yellow, green, oneLineTrim } from '../template-style';
 import { tmpFileName } from '../tmpfile';
+import { odsToXlsx, xlsxToCsv, XslxToCsvOption } from './ods-xlsx.convert';
+import { execAsync } from '../useful';
+
 
 export class OdsConvertOptions {
     verbose: boolean = true;
+    sheetName: string;
+    outputFileName: string;
+    outputDir: string = '.';
     fieldSeparator: string = '59'; // ; (44 is ,) / 59/44 both
     textDelimiter: string = '34'; // "
     encoding: string = '76'; // utf-8
@@ -15,17 +21,19 @@ export class OdsConvertOptions {
     // https://wiki.openoffice.org/wiki/Framework/Article/Filter/FilterList_OOo_3_0
 }
 
-type ConvertType = 'csv' | 'ods';
 
-const convert = (src: string, options: Partial<OdsConvertOptions> & { from: ConvertType; to: ConvertType; }) => {
-    const { verbose, fieldSeparator, textDelimiter, encoding, firstRow, columnFormat, from, to } = Object.assign(new OdsConvertOptions(), options);
+type ConvertType = 'csv->ods' | 'ods->csv';
+const UNOCONV = 'UNOPATH=/usr/bin/libreoffice /usr/bin/python3.6 /usr/bin/unoconv';
 
-    const tmpDir = tmpFileName.sync();
-    const fromTmp = (...paths: string[]) => path.join(tmpDir, ...paths);
+const convert = async (filepath: string, options: Partial<OdsConvertOptions> & { conversionType: ConvertType; }) => {
 
-    const fileName = path.basename(src);
-    const dir = path.dirname(src);
-    const stem = path.basename(src, `.${from}`);
+    const {
+        verbose, fieldSeparator, textDelimiter, encoding, firstRow, columnFormat, conversionType, outputFileName, outputDir
+    } = Object.assign(new OdsConvertOptions(), options);
+
+
+    const filename = path.parse(outputFileName || filepath).name; // basename without extension
+    const outputFile = absolutePath({ dir: outputDir, filename });
 
     // The CSV export filter accepts various arguments
     // https://wiki.openoffice.org/wiki/Documentation/DevGuide/Spreadsheets/Filter_Options#Token_8.2C_csv_import
@@ -41,54 +49,53 @@ const convert = (src: string, options: Partial<OdsConvertOptions> & { from: Conv
     */
 
     let filterOptions = `${fieldSeparator},${textDelimiter},${encoding}`;
-    if (to === 'ods')
+    if (conversionType === 'ods->csv')
         filterOptions = `${filterOptions}${firstRow ? `,${firstRow}` : `${columnFormat ? ',' : ''}`}${columnFormat ? `,${columnFormat}` : ''}`;
 
 
-    let command: string = undefined;
+    await fs.ensureDir(outputDir);
+    await fs.copyFile(filepath, outputDir);
 
-    if (to === 'csv') {
-        command = oneLineTrim`
-                mkdir -p ${tmpDir} && 
-                cp ${src} ${tmpDir} && 
-                cd ${tmpDir} && 
-                UNOPATH=/usr/bin/libreoffice /usr/bin/python3.6 /usr/bin/unoconv -f csv -e FilterOptions=${filterOptions} ${fileName}
-                `; //  && mv ${fileNoExt}.csv ${csvFile})
-    } else {
-        command = oneLineTrim`
-                mkdir -p ${tmpDir} && 
-                cp ${src} ${tmpDir} && 
-                cd ${tmpDir} && 
-                UNOPATH=/usr/bin/libreoffice /usr/bin/python3.6 /usr/bin/unoconv -f ods -i FilterOptions=${filterOptions} ${fileName}
+
+    const unoconvCommand = ifChained()
+        .next({
+            if: conversionType === 'ods->csv',
+            then: `${UNOCONV} -f csv -e FilterOptions=${filterOptions} ${filename}`,
+            else: `${UNOCONV} -f ods -i FilterOptions=${filterOptions} ${filename}`
+        })
+        .value;
+
+
+    const command = oneLineTrim`
+                cd ${outputDir} && 
+                ${unoconvCommand}
                 `;
-    }
+
 
     if (verbose) {
-        console.log(yellow`Convert ${src} to ${to}`);
-        // console.log(yellow`command: ${command}`);
+        console.log(yellow`Converting ${filepath} to ${conversionType === 'csv->ods' ? 'ods' : 'csv'}`);
     }
 
     // unoconv is SOOOO good that only one process at a time can be executed. So we do it synchronously
-    execSync(command, { stdio: [ 0, 1, 2 ] });
-
-    const outputName = `${stem}.${to}`;
-    const output = path.join(dir, outputName);
-
-    execSync(`cp ${fromTmp(outputName)} ${output}`, { stdio: [ 0, 1, 2 ] });
+    await execAsync(command, { logOutput: options.verbose });
 
     if (verbose)
-        console.log(green`${outputName} generated`, '\n');
+        console.log(green`${outputFile} generated\n`);
 
-    fs.removeSync(tmpDir);
-    return output;
+    return outputFile;
 };
 
 
-export const odsToCsv = (odsFile: string, options?: Partial<OdsConvertOptions>) => {
-    return convert(odsFile, { ...options, from: 'ods', to: 'csv' });
+export const odsToCsv = async (odsFile: string, options?: Partial<OdsConvertOptions>) => {
+    if (options.sheetName) {
+        const xlsxFile = await odsToXlsx(odsFile, options);
+        return xlsxToCsv(xlsxFile, options as XslxToCsvOption);
+    }
+
+    return Promise.resolve(convert(odsFile, { ...options, conversionType: 'ods->csv' }));
 };
 
 
 export const csvToOds = (csvFile: string, options?: Partial<OdsConvertOptions>) => {
-    return convert(csvFile, { ...options, from: 'csv', to: 'ods' });
+    return convert(csvFile, { ...options, conversionType: 'csv->ods' });
 };

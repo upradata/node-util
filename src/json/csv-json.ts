@@ -2,13 +2,76 @@
 import csv from 'csvtojson';
 import { CSVParseParam } from 'csvtojson/v2/Parameters';
 import { TransformOptions } from 'stream';
+import { RowSplit, MultipleRowResult } from 'csvtojson/v2/rowSplit';
+import { Fileline } from 'csvtojson/v2/fileline';
+import { delayedPromise } from '@upradata/util';
 
-export function csvToJson<R>(file: string, param?: Partial<CSVParseParam>, options?: TransformOptions): Promise<R[]> {
-    return csv({ delimiter: ';', ...param, }, options).fromFile(file) as any;
+
+
+// To filter empty rows (row with all empty columns)
+// There is no option to skip empty lines
+// I found ti tick to enable it :)
+
+const enableSkipEmptyRows = () => {
+    const oldParseMultiLines = RowSplit.prototype.parseMultiLines;
+
+    RowSplit.prototype.parseMultiLines = function (lines: Fileline[]) {
+        const oldShift = lines.shift;
+        const self = this;
+
+        lines.shift = function () {
+            let line: string = '';
+
+            while (line === '' && lines.length > 0) {
+                line = oldShift.call(lines);
+                let delimiter: string;
+
+                if (self.conv.parseRuntime.delimiter instanceof Array || self.conv.parseRuntime.delimiter.toLowerCase() === 'auto') {
+                    delimiter = self.getDelimiter(line);
+                } else
+                    delimiter = self.conv.parseRuntime.delimiter;
+
+                const isOnlyEmptyCols = line.split(delimiter).find(c => c !== '') === undefined;
+
+                if (isOnlyEmptyCols)
+                    line = '';
+            }
+
+            return line || '';
+        };
+
+        const oldIignoreEmpty = this.conv.parseParam.ignoreEmpty;
+        this.conv.parseParam.ignoreEmpty = true;
+
+        const processedLines = oldParseMultiLines.call(this, lines) as MultipleRowResult;
+
+        this.conv.parseParam.ignoreEmpty = oldIignoreEmpty;
+        return processedLines;
+    };
+
+    return () => {
+        RowSplit.prototype.parseMultiLines = oldParseMultiLines;
+    };
+};
+
+
+// Converter.then is defined => we can use it like a promise :)
+export function csvToJson<R>(file: string, param?: Partial<CSVParseParam & { skipEmptyRows?: boolean; }>, options?: TransformOptions): Promise<R[]> {
+    const { promise, resolve, reject } = delayedPromise<R[]>();
+
+    const disableSkipRows = param?.skipEmptyRows ? enableSkipEmptyRows() : () => { };
+
+    // there is only "then" defined. It is better to get a real Promise and not a PromiseLike wihthout all methods
+    csv({ delimiter: ';', ...param, }, options).fromFile(file).then(resolve, reject);
+
+    return promise.then(json => {
+        disableSkipRows();
+        return json;
+    });
 }
 
-// export type Row = ObjectOf<string>;
 
+// export type Row = ObjectOf<string>;
 export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: Array<keyof T>; nbKeys?: number; } = {}): string {
     const { csvColumnKeys, nbKeys } = options;
 
@@ -40,6 +103,26 @@ export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: Array<keyof T
 
     return csv;
 }
+
+
+export const csvHeaders = <H extends string = string>(file: string, options: { delimiter?: string; } = {}) => {
+    const { promise, resolve, reject } = delayedPromise<H[]>();
+
+    let headers: H[] = [];
+
+    const csvStream = csv({ noheader: false, delimiter: options.delimiter || ';' }, { objectMode: true })
+        .fromFile(file)
+        .on('data', (line: {}) => {
+            headers = Object.keys(line) as H[];
+            csvStream.destroy();
+            resolve(headers);
+        })
+        .on('error', reject);
+
+    return promise;
+};
+
+
 
 
 // Not good if first row is not fully filled and so we cannot not deduce the header

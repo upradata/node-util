@@ -1,2 +1,2 @@
-export * from './color-styles';
-export * from './color-styles.type';
+export * from './terminal-styles';
+export * from './terminal-styles.type';

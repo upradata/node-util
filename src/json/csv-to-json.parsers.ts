@@ -1,5 +1,8 @@
+import { TransformOptions } from 'stream';
+import { makeObject, mergeRegexes, MergeRexesOptions, regexToString, compose, isUndefined, ifChained, isDefinedProp, keys, isDefined } from '@upradata/util';
+import { CSVParseParam } from 'csvtojson/v2/Parameters';
 import { csvToJson } from './csv-json';
-import { makeObject, mergeRegexes, MergeRexesOptions, regexToString, compose, isUndefined, ifChained, isDefinedProp } from '@upradata/util';
+
 
 export type Parser<D = string, N = unknown> = (data: D) => N;
 
@@ -26,13 +29,17 @@ export type ParsersOptions<O extends { default?: string; }> = { [ K in keyof O ]
 
 export type Parsers<O extends { default?: string; }> = Partial<Record<keyof O, Parser>>;
 
+
+// const numberToComma = (n: number | string) => `${n}`.replace('.', ',');
+const commaToNumber = (s: number | string) => isDefined(s) ? parseFloat(`${s}`.replace(',', '.')) : s;
+
 export const cellParsers = {
     boolean: (cellData: string | boolean) => typeof cellData === 'boolean' ? cellData : cellData === 'true' ? true : false,
     string: (cellData: string) => cellData,
-    number: (cellData: string) => parseFloat(cellData),
-    arrayString: (cellData: string) => cellData.replace(/[\[\]]/g, '').split(','),
-    arrayNumber: (cellData: string) => cellData.replace(/[\[\]]/g, '').split(',').map(parseFloat),
-    setEmptyCell: <T>(emptyCell: T) => (cellData: string) => cellData === '' ? emptyCell : cellData
+    number: (cellData: string) => commaToNumber(cellData),
+    arrayString: (cellData: string) => isDefined(cellData) ? cellData.replace(/[\[\]]/g, '').split(',') : cellData,
+    arrayNumber: (cellData: string) => isDefined(cellData) ? cellData.replace(/[\[\]]/g, '').split(',').map(commaToNumber) : cellData,
+    setEmptyCell: <T>(emptyCell: T) => (cellData: string | undefined) => cellData === '' || isUndefined(cellData) ? emptyCell : cellData
 };
 
 
@@ -82,7 +89,7 @@ export const autoParser = (emptyCell: any = '') => (cellData: string) => {
         .next(cellData => ({ then: cellParsers.string }))
         .value;
 
-    return compose([ parser, cellParsers.setEmptyCell(emptyCell) ], cellData);
+    return cellDataParser(parser, emptyCell);
 };
 
 export const cellDataParser = (parser: Parser<string, unknown>, emptyCell: any) => (cellData: string) => {
@@ -90,13 +97,13 @@ export const cellDataParser = (parser: Parser<string, unknown>, emptyCell: any) 
 };
 
 export const getParsers = <O extends { default?: string; }>(
-    headers: (keyof O)[] = [], defaultParserOptions: ParsersOptions<O> = {}, parsersOptions: Partial<ParsersOpts<O>> = {}
+    headers: (keyof O)[] = [], defaultParserOptions: ParsersOptions<O> = {}, parsersOptions: ParsersOpts<O> = {}
 ): Parsers<O> => {
 
     const names = ifChained()
         .next({ if: headers.length > 0, then: headers })
-        .next({ if: Object.keys(parsersOptions).length > 0, then: Object.keys(defaultParserOptions) })
-        .next({ if: Object.keys(defaultParserOptions).length > 0, then: Object.keys(defaultParserOptions), else: [] as string[] })
+        .next({ if: keys(parsersOptions).length > 0, then: keys(defaultParserOptions) })
+        .next({ if: keys(defaultParserOptions).length > 0, then: keys(defaultParserOptions), else: [] as string[] })
         .value as string[];
 
     const parsers = names.map(name => {
@@ -123,25 +130,61 @@ export const getParsers = <O extends { default?: string; }>(
 
 
 
-
-export interface CsvToJsonOptions<O extends { default?: string; }> {
-    headers?: (keyof O)[],
-    parsersOptions?: ParsersOpts<O>;
-}
+export type CsvOptions<O extends {} = {}> = Partial<Omit<CSVParseParam, 'headers'>> & { headers?: (keyof O & string)[]; };
 
 
+export const csvToJsonWithDefaultParsers = <O extends { default?: string; }>(defaultParserOptions: ParsersOptions<O> = {}) =>
+    <R>(file: string, csvOptions?: CsvOptions<O>, options: { stream?: TransformOptions, parsers?: ParsersOpts<O>; } = {}): Promise<R[]> => {
 
-export const csvToJsonWithDefaultOptions = <O extends { default?: string; }>(defaultParserOptions: ParsersOptions<O> = {}) =>
-    <R>(csvFile: string, options: CsvToJsonOptions<O>): Promise<R[]> => {
-
-        return csvToJson<R>(csvFile, {
-            colParser: getParsers(options.headers, defaultParserOptions, options.parsersOptions)
-
-        });
+        return csvToJson<R>(file, {
+            colParser: getParsers(csvOptions.headers, defaultParserOptions, options.parsers),
+            ...csvOptions
+        }, options.stream);
     };
 
 
-export const csvToJsonWithOptions = <O extends { default?: string; }, R>(csvFile: string, options: CsvToJsonOptions<O>): Promise<R[]> => {
+export const csvToJsonWithAutoParsers = <O extends { default?: string; }, R>(file: string, csvOptions?: CsvOptions<O>, options: { stream?: TransformOptions, parsers?: ParsersOpts<O>; } = {}): Promise<R[]> => {
 
-    return csvToJsonWithDefaultOptions()(csvFile, options as any);
+    return csvToJsonWithDefaultParsers<O>({
+        default:
+            { emptyCell: undefined, parser: autoParser(undefined) }
+    })(file, csvOptions, options);
 };
+
+
+/*
+
+EXAMPLE:
+
+interface CsvTextDataBase {
+    rootId: string;
+    path: string;
+    editorPath: string;
+    updated: boolean;
+    static: boolean;
+    type: TextDataType;
+}
+
+type CsvTextDataParsersOption = CsvTextDataBase & { default: string; };
+type CsvTextDataParsersOptions = ParsersOptions<CsvTextDataParsersOption>;
+
+const defaultParserOptions: CsvTextDataParsersOptions = {
+    rootId: { emptyCell: '', parser: cellParsers.string },
+    path: { emptyCell: '', parser: cellParsers.string },
+    editorPath: { emptyCell: '', parser: cellParsers.string },
+    updated: { emptyCell: false, parser: cellParsers.boolean },
+    static: { emptyCell: true, parser: cellParsers.boolean },
+    type: { emptyCell: 'normal', parser: cellParsers.string },
+    default: { emptyCell: '', parser: cellParsers.string }
+};
+
+
+const csvToJson = csvToJsonWithDefaultOptions(defaultParserOptions);
+
+const csvTextDataToJson = <R extends ImportedTextData>(csvFile: string, options: CsvToJsonOptions<CsvTextDataParsersOption> = {}) => {
+    return csvToJson<R>(csvFile, {
+        headers: textHeaders(), ...options
+    });
+};
+
+*/
