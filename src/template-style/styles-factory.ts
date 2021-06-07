@@ -3,6 +3,7 @@ export * from '@upradata/util/lib/template-string/export';
 import { TerminalStyleNames } from './helpers';
 import colorsSafe from 'colors/safe';
 import colorsStyles from 'colors/lib/styles';
+import { supportsColor } from 'colors/lib/system/supports-colors';
 
 type AllTerminalStyleNames = (keyof typeof colorsSafe) | TerminalStyleNames;
 type TerminalStyleStringTranforms = Record<AllTerminalStyleNames, StyleTransform> & { none: (s: string) => string; };
@@ -36,4 +37,13 @@ export type ColorType = ColorsSafe & Style;
 
 export type ColorsSafe = {
     [ k in keyof AllTerminalStyleNames ]: ColorType;
+};
+
+
+export const disableTTYStylesIfNotSupported = (stream = process.stdout) => {
+
+    const supports = supportsColor(stream);
+
+    if (!supports)
+        colorsSafe.disable();
 };

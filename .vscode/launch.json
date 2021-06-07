@@ -7,7 +7,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Cuurent",
+            "name": "Launch Current",
             "program": "${file}"
         },
         {
@@ -59,6 +59,17 @@
             "program": "${workspaceFolder}/lib/stream/if/if.js",
             "outFiles": [
                 "${workspaceFolder}/lib/**/*.js"
+            ],
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "node",
+            "name": "npmlocal",
+            "request": "launch",
+            "program": "/home/milottit/Libraries/LocalInstallation/bin/npmlocal",
+            "outFiles": [
+                "/home/milottit/Libraries/LocalInstallation/lib-esm/**/*.js"
             ],
             "args": [],
             "cwd": "${workspaceFolder}"

@@ -1,27 +1,38 @@
-
-import { readJsonSync } from '../json/read-json5';
-import findUp from 'find-up';
-import { ParseArgs, InvalidParameter } from './parse-args';
 import yargsParser from 'yargs-parser';
 import { Arguments } from 'yargs';
+import { readPackageJson } from '../json';
+import { lookupRoot } from '../find';
+import { ParseArgsFactory, InvalidParameter } from './parse-args';
 
-export interface LocalInstallOptions {
+export type Mode = '1' | '2';
 
-    projectDir: string;
-    installDir: string;
-    localPackages: string[];
-    help: boolean;
+export interface LocalPackage {
+    path: string;
+    mode: Mode;
 }
 
-export interface ProgramArgv extends LocalInstallOptions {
+
+export class LocalInstallOptions<LocalDep extends string | LocalPackage> {
+    localPackages: LocalDep[] = [];
+    projectDir?: string = './';
+    installDir?: string = 'node_modules';
+    verbose: number = 0;
+    force: boolean = false;
+    mode: Mode;
+    watch: boolean = false;
+}
+
+
+export interface ProgramArgv extends LocalInstallOptions<string> {
     'project-dir': string;
     'install-dir': string;
     help: boolean;
 }
 
 
-export class ParseNpmLocalArgs extends ParseArgs<ProgramArgv>{
-    private _localPackages: string[] = [];
+
+export class ParseNpmLocalArgs extends ParseArgsFactory<ProgramArgv>() {
+    private _localPackages: LocalPackage[] = [];
 
     constructor() {
         super();
@@ -32,9 +43,9 @@ export class ParseNpmLocalArgs extends ParseArgs<ProgramArgv>{
     }
 
     public processLocalPackages() {
-        const argv = (this.yargs.parsed as yargsParser.DetailedArguments).argv as any as Arguments<ProgramArgv>;
+        const argv = (this.parsed as yargsParser.DetailedArguments).argv as any as Arguments<ProgramArgv>;
 
-        const localPackages = argv.localPackages = argv.localPackages || argv._ || [];
+        const localPackages = argv.localPackages = argv.localPackages || argv._.map(d => d.toString()) || [];
         const invalidLocalPackages: InvalidParameter[] = [];
 
         for (let i = 0; i < argv.localPackages.length; ++i) {
@@ -42,14 +53,15 @@ export class ParseNpmLocalArgs extends ParseArgs<ProgramArgv>{
 
             localPackages[ i ] = local.trim();
             const [ path, mode ] = local.split(':');
-            if (mode) {
+
+            if (mode !== '1' && mode !== '2') {
                 invalidLocalPackages.push({
                     parameter: 'mode',
                     reason: `mode ${mode} in "${local}" is not a valid mode`
                 });
             }
 
-            this.localPackages.push(path);
+            this.localPackages.push({ mode: mode as Mode, path });
         }
 
         return invalidLocalPackages;
@@ -61,14 +73,14 @@ export class ParseNpmLocalArgs extends ParseArgs<ProgramArgv>{
     }
 }
 
-export function processArgs(): Arguments<LocalInstallOptions> {
-    const yargs = new ParseNpmLocalArgs() as (ParseNpmLocalArgs & ParseArgs<ProgramArgv>);
+export function processArgs(): Arguments<LocalInstallOptions<LocalPackage>> {
+    const yargs = new ParseNpmLocalArgs();
 
     // Does not work as expectd. To permissive
     // yargs.strict(true);
 
     yargs.command([ 'install', '$0' ], 'npmlocal install local dependencies');
-    yargs.version(readJsonSync(findUp.sync('package.json', { cwd: __dirname })).version);
+    yargs.version(readPackageJson.sync(lookupRoot()).version);
 
     yargs.option('local-packages', {
         type: 'array',
@@ -135,7 +147,7 @@ export function processArgs(): Arguments<LocalInstallOptions> {
     });
 
 
-    const argv = yargs.help().argv;
+    const argv = yargs.help().parse() as Arguments<LocalInstallOptions<string>>;
 
 
     console.log('Npm Local Install\n');

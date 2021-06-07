@@ -54,7 +54,7 @@ export class Terminal {
         console.log(this.title(title, option));
     }
 
-    table({ data, header }: TableData, config?: PartialRecursive<TableConfig>): string {
+    table({ data, header }: TableData, config?: TableConfig): string {
         const d: TableItem[][] = header ? [ header ] : [];
 
         if (Array.isArray(data[ 0 ]))
@@ -66,7 +66,7 @@ export class Terminal {
         return this.tableString.get(d, config);
     }
 
-    logTable(data: TableData, config?: PartialRecursive<TableConfig>) {
+    logTable(data: TableData, config?: TableConfig) {
         console.log(this.table(data, config));
     }
 

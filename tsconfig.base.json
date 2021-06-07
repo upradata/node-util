@@ -10,6 +10,7 @@
             "ESNext",
             "DOM" // for jsdom
         ],
+        "skipLibCheck": true,
         "moduleResolution": "node",
         "sourceMap": true,
         "target": "ESNext",

@@ -1,64 +1,67 @@
 import yargs from 'yargs/yargs';
-import { Argv, Options, Arguments } from 'yargs';
-import camelcase from 'camelcase';
-import decamelize from 'decamelize';
-import { ObjectOf } from '@upradata/util';
+import { Options, Arguments } from 'yargs';
+const { cjsPlatformShim } = require('yargs/build/index.cjs');
+import { YargsInstance } from './yargs-instance';
+import { Yargs as Yargss } from './yargs';
+import { ObjectOf, decamelize, camelize } from '@upradata/util';
 import { red } from '../template-style';
 import { CommandModule } from './types';
+
+
+export interface YargsCtor {
+    new(processArgs: any[], cwd: any, parentRequire: any, shim: any): YargsInstance;
+    // to get Yargs.prototype typing
+    readonly prototype: YargsInstance;
+}
+
+
+// As yargs/build/lib/yargs-factory where class YargsInstance is defined is a ESM module
+// I use this trick to get back the class from the CommonJS compilation from 'yargs/build/index.cjs'
+
+// yargs is defined a yargs = YargsFactory(cjsPlatformShim) and has type Argv. Calling it, it returns a YargsInstance instance
+const Yargs: YargsCtor = Object.getPrototypeOf(yargs()).constructor;
+
+const yargsMethods = Yargs.prototype;
+
 
 export interface InvalidParameter {
     parameter: string;
     reason: string;
 }
 
-export type MiddlewareCallback<T, U> = (argv: Arguments<T>, yargs: _ParseArgs<T>) => Arguments<U>;
 
-// tslint:disable-next-line: class-name
-class _ParseArgs<T> {
+
+// export type MiddlewareCallback<T, U> = (argv: Arguments<T>, yargs: _ParseArgs<T>) => Arguments<U>;
+
+export class CustomYargs extends Yargs {
+
     public supportedArgs = [ '$0', '_', 'version', 'help' ];
-    public yargs: Argv<T>;
-    public customYargs: _ParseArgs<T>; //  just for type (it will live in this.yargs)
 
     constructor() {
-        // set inheritance
-        this.yargs = yargs(process.argv.slice(2), undefined, require) as Argv<T>;
-        // yargs does not use a prototype
-        let proto = Object.getPrototypeOf(this);
-        while (_ParseArgs !== proto.constructor) {
-            proto = Object.getPrototypeOf(proto);
-        }
-        Object.setPrototypeOf(proto, this.yargs);
+        super(process.argv.slice(2), process.cwd(), require, cjsPlatformShim);
 
-        (this.yargs as any).customYargs = this;
-
-        this.middleware((argv, yargs) => {
-            Object.defineProperty(argv, 'yargs', {
-                value: yargs.customYargs,
-                writable: false,
-                configurable: false,
-                enumerable: false
-            });
-
-            return argv;
+        Object.getOwnPropertyNames(yargsMethods).forEach(key => {
+            if (typeof yargsMethods[ key ] === 'function' && key !== 'constructor')
+                yargsMethods[ key ] = yargsMethods[ key ].bind(this);
         });
     }
 
-    public middleware<U>(callback: MiddlewareCallback<T, U> | MiddlewareCallback<T, U>[], applyBeforeValidation?: boolean) {
+    /* public middleware<U>(callback: MiddlewareCallback<T, U> | MiddlewareCallback<T, U>[], applyBeforeValidation?: boolean) {
         return this.yargs.middleware(callback as any, applyBeforeValidation);
-    }
+    } */
 
     public option(name: string, options?: Options) {
         // yargs add camel case option name already
         // we add it just in supportedArgs
-        this.yargs.option(name, options);
+        yargsMethods.option(name, options);
 
         const args: string[] = [ name ];
 
-        const camelArg = camelcase(name);
+        const camelArg = camelize(name);
         if (camelArg !== name)
             args.push(camelArg);
 
-        const decamelArg = decamelize(camelArg, '-');
+        const decamelArg = decamelize(camelArg);
         if (decamelArg !== name)
             args.push(decamelArg);
 
@@ -69,7 +72,7 @@ class _ParseArgs<T> {
             for (const alias of aliases) {
                 this.supportedArgs.push(alias);
 
-                const camelAlias = camelcase(alias);
+                const camelAlias = camelize(alias);
                 if (camelAlias !== alias)
                     this.supportedArgs.push(camelAlias);
             }
@@ -104,14 +107,18 @@ class _ParseArgs<T> {
                 console.error(red`  - parameter "${parameter}": ${reason}`);
 
             console.log();
-            this.yargs.showHelp();
+            this.showHelp();
             process.exit(1);
         }
     }
-}
+};
 
-export type ParseArgs<T> = _ParseArgs<T> & Argv<T>;
-export const ParseArgs = _ParseArgs;
-export type CustomArgs<T> = Argv<T> & { customYargs: ParseArgs<T>; };
 
-export type CustomCommandModule<T = {}, U = T> = CommandModule<T, U, { customYargs: ParseArgs<T>; }, { yargs: ParseArgs<T>; }>;
+export type ParseArgs<T = {}> = CustomYargs & Yargss<T>;
+export type ParseArgsCtor<T = {}> = new () => ParseArgs<T>;
+
+export const ParseArgsFactory = <T = {}>() => CustomYargs as any as ParseArgsCtor<T>;
+export const ParseArgs = ParseArgsFactory();
+
+
+export type CustomCommandModule<T = {}, U = T> = CommandModule<T, U, {}, {}>;

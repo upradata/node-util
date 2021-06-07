@@ -89,7 +89,7 @@ export class Stats<S extends Stat> {
                 if (this.isStat(stat))
                     addData(mergeName, stat);
                 else
-                    buildData(mergeName, stat);
+                    buildData(mergeName, stat as Statistics<S>);
             }
         };
 

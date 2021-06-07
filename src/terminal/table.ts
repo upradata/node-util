@@ -1,10 +1,12 @@
-import { TableUserConfig, table } from 'table';
+import { TableUserConfig, table, Alignment } from 'table';
 import * as alignString from 'table/dist/alignString';
-import * as calculateCellWidthIndex from 'table/dist/calculateCellWidthIndex';
-import makeConfig from 'table/dist/makeConfig';
-import stringWidth from 'string-width';
-import { assignDefaultOption, assignRecursive, PartialRecursive } from '@upradata/util';
+import * as calculateCellWidths from 'table/dist/calculateCellWidths';
+import { makeTableConfig } from 'table/dist/makeTableConfig';
+import { assignDefaultOption, assignRecursive, PartialRecursive, stringWidth } from '@upradata/util';
 
+type RemoveReadOnly<T> = {
+    -readonly [ K in keyof T ]: T[ K ]
+};
 
 export type TableItem = string | number;
 export type TableRow = TableItem[];
@@ -13,7 +15,7 @@ export type TableRows = TableRow[];
 
 export type TableColumnConfig = TableUserConfig[ 'columns' ];
 
-export type TableConfig = TableUserConfig & { singleLine: boolean; };
+export type TableConfig = TableUserConfig & { singleLine?: boolean; };
 
 export interface MaxRowWidth {
     width: number;
@@ -34,8 +36,8 @@ export interface TableStringOption {
 
 
 
-const oldAlignString = alignString.default;
-alignString.default = (subject: string, containerWidth: number, alignment: 'center' | 'left' | 'right') => {
+const oldAlignString = alignString.alignString;
+(alignString as RemoveReadOnly<typeof alignString>).alignString = (subject: string, containerWidth: number, alignment: Alignment) => {
     if (alignment === 'center')
         return alignCenter(subject, containerWidth - stringWidth(subject));
 
@@ -44,7 +46,7 @@ alignString.default = (subject: string, containerWidth: number, alignment: 'cent
 
 // Fix bug in table.alignCenter where instead of whiteSpaces % 2 there was halfWidth % 2!!
 const alignCenter = (subject: string, whiteSpaces: number) => {
-    let halfWidth;
+    let halfWidth: number;
 
     halfWidth = whiteSpaces / 2;
 
@@ -58,7 +60,8 @@ const alignCenter = (subject: string, whiteSpaces: number) => {
 
 // I use makeConfig in this class and I use it with string|number while it is intending to use it with string only
 // I just convert value to value + ''
-calculateCellWidthIndex.default = (cells: TableRow) => {
+
+(calculateCellWidths as RemoveReadOnly<typeof calculateCellWidths>).calculateCellWidths = (cells: TableRow) => {
     return cells.map(value => {
         return Math.max(...(`${value}`).split('\n').map(line => stringWidth(line)));
     });
@@ -67,24 +70,24 @@ calculateCellWidthIndex.default = (cells: TableRow) => {
 
 
 export class TableString {
-    userConfig: PartialRecursive<TableConfig>;
+    userConfig: TableConfig;
     maxWidth: Partial<ColumnsMaxWidth>;
 
 
     constructor(option: TableStringOption = {}) {
 
-        this.userConfig = assignDefaultOption<PartialRecursive<TableConfig>>({
+        this.userConfig = assignDefaultOption<TableConfig>({
             columnDefault: { truncate: 200 }
         }, option.tableConfig);
 
         this.maxWidth = option.maxWidth || { row: { width: process.stdout.columns || 80 } };
     }
 
-    get(data: TableRows, options?: PartialRecursive<TableConfig>) {
+    get(data: TableRows, options?: TableConfig) {
         // we compute it to get tableConfig.columns value computed to have paddingLeft, paddingRight
         // needed in this.getColumnsWidth
         const opts = assignRecursive({}, this.userConfig, options);
-        const builtConfig = makeConfig(data, opts) as TableConfig;
+        const builtConfig = makeTableConfig(data, opts) as TableConfig;
 
 
         const config = assignRecursive(
