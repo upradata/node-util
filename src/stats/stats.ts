@@ -100,7 +100,7 @@ export class Stats<S extends Stat> {
         else
             buildData('', stats as Statistics<S>);
 
-        terminal.logTitle(`"${this.statsName}" summary`, { isBig: true, color: highlightMagenta });
+        terminal.logTitle(`"${this.statsName}" summary`, { type: 'band', style: highlightMagenta });
 
         for (const [ dataName, data ] of Object.entries(datas).filter(([ _, d ]) => !(d instanceof GlobalStat))) {
             for (const [ name, { header, data: rows } ] of Object.entries(data)) {

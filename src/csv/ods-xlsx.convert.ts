@@ -10,7 +10,7 @@ const execAndPoll = async (options: { command: string; outputFile: string; } & X
 
     return execAsync(command, { logOutput })
         .then(async () => poll(async () => ({
-            stop: await fileExists(outputFile),
+            stop: await fileExists.async(outputFile),
             success: '',
             error: new Error(oneLineTrim`
                 Error while command "${command}".

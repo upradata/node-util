@@ -3,14 +3,14 @@
     "author": {
         "name": "Thomas Milotti",
         "email": "thomas.milotti@gmail.com",
-        "url": "https://github.com/milottit"
+        "url": "https://github.com/upradata"
     },
     "repository": {
         "url": "https://github.com/mt-typescript/node-util.git"
     },
     "license": "MIT",
-    "version": "11.1.1",
-    "description": "",
+    "version": "12.0.1",
+    "description": "Set of typescript util tools working in NodeJs",
     "sideEffects": false,
     "main": "lib",
     "types": "lib-esm",
@@ -27,15 +27,15 @@
     },
     "scripts": {
         "clean": "shx rm -rf lib lib-esm",
-        "build:watch": "npm run clean && tsc -w",
         "pre:build": "npm run clean",
         "build": "concurrently 'tsc -p tsconfig.lib.json' 'tsc -p tsconfig.lib-esm.json' && pnpm run copy:declaration",
         "post:build": "npm run test && npm run e2e",
         "copy:declaration": "cp src/@types/webpack.d.ts lib/@types && cp src/@types/webpack.d.ts lib-esm/@types",
-        "watch": "concurrently 'tsc -p tsconfig.lib.json -w' 'tsc -p tsconfig.lib-esm.json -w' 'pnpm run copy:declaration'",
+        "watch": "pnpm run build:watch",
+        "build:watch": "concurrently 'tsc -p tsconfig.lib.json -w' 'tsc -p tsconfig.lib-esm.json -w'",
         "test": "npx jest --verbose false --config jest-ut.config.js",
         "e2e": "npx jest --passWithNoTests --verbose false --config jest-e2e.config.js",
-        "github-push": "npm run build && npm version patch && git push && git push --tags",
+        "github-push": "npm run build && npm version patch && git pushall && git pushall-tags",
         "npm-publish": "npm run build && npm publish --access public"
     },
     "dependencies": {

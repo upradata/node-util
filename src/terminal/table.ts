@@ -30,7 +30,6 @@ export interface ColumnsMaxWidth {
 
 export interface TableStringOption {
     maxWidth?: Partial<ColumnsMaxWidth>;
-
     tableConfig?: PartialRecursive<TableConfig>;
 }
 

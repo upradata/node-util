@@ -55,7 +55,7 @@ export class StoreOptions_ extends CacheChangeOptions {
         Object.assign(this, options);
 
         if (isUndefined(this.path)) {
-            const root = findUpDir('package.json');
+            const root = findUpDir.sync('package.json');
             this.path = path.join(root || process.cwd(), '_cache.json');
         }
     }

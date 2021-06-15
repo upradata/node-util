@@ -28,7 +28,6 @@
 
 import { DetailedArguments, Configuration } from 'yargs-parser';
 
-export type BuilderCallback<T, R> = ((args: Yargs<T>) => PromiseLike<Yargs<R>>) | ((args: Yargs<T>) => Yargs<R>) | ((args: Yargs<T>) => void);
 
 export type ParserConfigurationOptions = Configuration & {
     /** Sort commands alphabetically. Default is `false` */
@@ -142,11 +141,11 @@ export interface Yargs<T = {}> {
      * Note that when `void` is returned, the handler `Yargs` object type will not include command-specific arguments.
      * @param [handler] Function, which will be executed with the parsed `Yargs` object.
      */
-    command<U = T>(
+    command<V, U>(
         command: string | ReadonlyArray<string>,
         description: string,
         builder?: BuilderCallback<T, U>,
-        handler?: (args: Arguments<U>) => void,
+        handler?: (args: Arguments<V>) => void,
         middlewares?: MiddlewareFunction[],
         deprecated?: boolean | string,
     ): Yargs<U>;
@@ -158,23 +157,23 @@ export interface Yargs<T = {}> {
         middlewares?: MiddlewareFunction[],
         deprecated?: boolean | string,
     ): Yargs<T>;
-    command<U>(command: string | ReadonlyArray<string>, description: string, module: CommandModule<T, U>): Yargs<U>;
-    command<U = T>(
+    command<V, U>(command: string | ReadonlyArray<string>, description: string, module: CommandModule<T, V, U>): Yargs<U>;
+    command<V, U>(
         command: string | ReadonlyArray<string>,
         showInHelp: false,
         builder?: BuilderCallback<T, U>,
-        handler?: (args: Arguments<U>) => void,
+        handler?: (args: Arguments<V>) => void,
         middlewares?: MiddlewareFunction[],
         deprecated?: boolean | string,
-    ): Yargs<T>;
+    ): Yargs<U>;
     command<O extends { [ key: string ]: Options; }>(
         command: string | ReadonlyArray<string>,
         showInHelp: false,
         builder?: O,
         handler?: (args: Arguments<InferredOptionTypes<O>>) => void,
     ): Yargs<T>;
-    command<U>(command: string | ReadonlyArray<string>, showInHelp: false, module: CommandModule<T, U>): Yargs<U>;
-    command<U>(module: CommandModule<T, U>): Yargs<U>;
+    command<V, U>(command: string | ReadonlyArray<string>, showInHelp: false, module: CommandModule<T, V, U>): Yargs<U>;
+    command<V, U>(module: CommandModule<T, V, U>): Yargs<V>;
 
     // Advanced API
     /** Apply command modules from a directory relative to the module calling this method. */
@@ -451,13 +450,12 @@ export interface Yargs<T = {}> {
      * Note: Providing a callback to parse() disables the `exitProcess` setting until after the callback is invoked.
      * @param [context]  Provides a useful mechanism for passing state information to commands
      */
-    parse(): { [ key in keyof Arguments<T> ]: Arguments<T>[ key ] } | Promise<{ [ key in keyof Arguments<T> ]: Arguments<T>[ key ] }>;
-    parse(arg: string | ReadonlyArray<string>, context?: object, parseCallback?: ParseCallback<T>): { [ key in keyof Arguments<T> ]: Arguments<T>[ key ] }
-        | Promise<{ [ key in keyof Arguments<T> ]: Arguments<T>[ key ] }>;
-    parseSync(): { [ key in keyof Arguments<T> ]: Arguments<T>[ key ] };
-    parseSync(arg: string | ReadonlyArray<string>, context?: object, parseCallback?: ParseCallback<T>): { [ key in keyof Arguments<T> ]: Arguments<T>[ key ] };
-    parseAsync(): Promise<{ [ key in keyof Arguments<T> ]: Arguments<T>[ key ] }>;
-    parseAsync(arg: string | ReadonlyArray<string>, context?: object, parseCallback?: ParseCallback<T>): Promise<{ [ key in keyof Arguments<T> ]: Arguments<T>[ key ] }>;
+    parse<U = T>(): Arguments<U> | Promise<Arguments<U>>;
+    parse<U = T>(arg: string | ReadonlyArray<string>, context?: object, parseCallback?: ParseCallback<U>): Arguments<U> | Promise<Arguments<U>>;
+    parseSync<U = T>(): { [ key in keyof Arguments<T> ]: Arguments<T>[ key ] };
+    parseSync<U = T>(arg: string | ReadonlyArray<string>, context?: object, parseCallback?: ParseCallback<T>): Arguments<U>;
+    parseAsync<U = T>(): Promise<Arguments<U>>;
+    parseAsync<U = T>(arg: string | ReadonlyArray<string>, context?: object, parseCallback?: ParseCallback<T>): Promise<Arguments<U>>;
 
     /**
      * If the arguments have not been parsed, this property is `false`.
@@ -818,23 +816,47 @@ export type RequiredOptionType<O extends Options | PositionalOptions> =
 
 export type InferredOptionTypes<O extends { [ key: string ]: Options; }> = { [ key in keyof O ]: InferredOptionType<O[ key ]> };
 
-export interface CommandModule<T = {}, U = {}> {
+/* export interface CommandModule<T = {}, U = {}> {
+    // array of strings (or a single string) representing aliases of `exports.command`, positional args defined in an alias are ignored
+    aliases?: ReadonlyArray<string> | string;
+    // object declaring the options the command accepts, or a function accepting and returning a yargs instance
+    builder?: CommandBuilder<T, U>;
+    // string (or array of strings) that executes this command when given on the command line, first string may contain positional args
+    command?: ReadonlyArray<string> | string;
+    // boolean (or string) to show deprecation notice
+    deprecated?: boolean | string;
+    // string used as the description for the command in help text, use `false` for a hidden command
+    describe?: string | false;
+    // a function which will be passed the parsed Yargs.
+    handler: (args: Arguments<U>) => void;
+} */
+
+// export type CommandBuilder<T = {}, U = {}> = { [ key: string ]: Options; } | ((args: Yargs<T>) => Yargs<U>) | ((args: Yargs<T>) => PromiseLike<Yargs<U>>);
+
+
+export interface CommandModule<T, V = T, U = T, ExtraBuider = {}, ExtraHandler = {}> {
     /** array of strings (or a single string) representing aliases of `exports.command`, positional args defined in an alias are ignored */
     aliases?: ReadonlyArray<string> | string;
     /** object declaring the options the command accepts, or a function accepting and returning a yargs instance */
-    builder?: CommandBuilder<T, U>;
+    builder?: CommandBuilder<T, U, ExtraBuider>;
     /** string (or array of strings) that executes this command when given on the command line, first string may contain positional args */
     command?: ReadonlyArray<string> | string;
     /** boolean (or string) to show deprecation notice */
     deprecated?: boolean | string;
     /** string used as the description for the command in help text, use `false` for a hidden command */
     describe?: string | false;
-    /** a function which will be passed the parsed Yargs. */
-    handler: (args: Arguments<U>) => void;
-}
+    /** a function which will be passed the parsed argv. */
+    handler: (args: Arguments<V> & ExtraHandler) => void;
+};
+
+export type BuilderCallback<T, U = T, Extra = {}> = ((args: Yargs<T> & Extra, helpOrVersionSet: boolean) => (Yargs<U> | PromiseLike<Yargs<U>> | void));
+
+export type CommandBuilder<T, U = T, Extra = {}> = { [ key: string ]: Options; } | BuilderCallback<T, U, Extra>;
+
+
 
 export type ParseCallback<T = {}> = (err: Error | undefined, Yargs: Arguments<T> | Promise<Arguments<T>>, output: string) => void;
-export type CommandBuilder<T = {}, U = {}> = { [ key: string ]: Options; } | ((args: Yargs<T>) => Yargs<U>) | ((args: Yargs<T>) => PromiseLike<Yargs<U>>);
+
 export type SyncCompletionFunction = (current: string, Yargs: any) => string[];
 export type AsyncCompletionFunction = (current: string, Yargs: any, done: (completion: ReadonlyArray<string>) => void) => void;
 export type PromiseCompletionFunction = (current: string, Yargs: any) => Promise<string[]>;

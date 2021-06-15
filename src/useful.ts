@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import crypto from 'crypto';
 import { promisify } from 'util';
 import { exec, ExecOptions, execSync as execS, ExecSyncOptionsWithStringEncoding } from 'child_process';
-import { guidGenerator, TT$ } from '@upradata/util';
+import { guidGenerator, keys, TT$ } from '@upradata/util';
 
 
 const nodeEnv = (process.env.NODE_ENV || '').trim().toLowerCase();
@@ -15,10 +15,10 @@ export class SyncAsync<T = any> {
     async: Promise<T> = undefined;
 }
 
+export type SyncAsyncMode = keyof SyncAsync;
 
-export const syncAsync = Object.keys(new SyncAsync());
-export const readFileAsync = promisify(fs.readFile);
-export const writeFileAsync = promisify(fs.writeFile);
+export type SyncAsyncType<M extends SyncAsyncMode, T, U = undefined> = M extends 'sync' ? T : U extends undefined ? Promise<T> : U;
+
 
 
 const execPromise = promisify(exec);
@@ -43,7 +43,23 @@ export const execSync = async (command: string, options?: Partial<ExecSyncOption
 export const guid = guidGenerator(crypto.randomFillSync.bind(crypto));
 
 
-export const fileExists = (file: string) => fs.stat(file).then(_s => true).catch(_e => false);
+const handleFileExistsError = (e: any) => {
+    if (e?.code === 'ENOENT')
+        return false;
+
+    throw e;
+};
+
+export const fileExists = {
+    async: (file: string) => fs.stat(file).then(_s => true).catch(handleFileExistsError),
+    sync: (file: string) => {
+        try {
+            return !!fs.statSync(file);
+        } catch (e) {
+            return handleFileExistsError(e);
+        }
+    }
+};
 
 
 export interface PollOptions {

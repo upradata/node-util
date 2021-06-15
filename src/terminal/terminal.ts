@@ -1,11 +1,15 @@
 import { TableRows, TableRow, TableString, TableItem, TableStringOption, TableConfig } from './table';
-import { colors } from '../template-style';
-import { chain, PartialRecursive, StyleTemplate } from '@upradata/util';
+import { styles } from '../template-style';
+import { StyleTemplate } from '@upradata/util';
 
 
-export interface TitleOption {
-    color?: StyleTemplate;
-    isBig?: boolean;
+export class TitleOptions {
+    style?: StyleTemplate = styles.none.$;
+    bgStyle?: StyleTemplate = styles.none.$;
+    // backward-compatible => now use type === 'band'
+    isBig?: boolean = false;
+    type?: 'one-line' | 'two-strips' | 'top-strip' | 'bottom-strip' | 'band' = 'one-line';
+    transform?: (s: string) => string = s => s;
 }
 
 
@@ -26,31 +30,42 @@ export class Terminal {
 
     get lineWidth() {
         const { maxWidth } = this.tableString;
-        return chain(() => maxWidth.row.width) || Terminal.width;
+        return maxWidth?.row?.width || Terminal.width;
     }
 
     fullWidth(text: string, style: StyleTemplate) {
-        return style`${text}`.repeat(Terminal.width);
+        return style`${text}`.repeat(this.lineWidth);
     }
 
-    title(title: string, option: TitleOption = {}): string {
-        const { color = colors.none.$, isBig = false } = option;
-        const lineWidth = this.lineWidth;
+    title(title: string, options: TitleOptions = {}): string {
+        const { style, bgStyle, isBig, type, transform } = Object.assign(new TitleOptions(), options);
 
-        let s = '';
+        const titleType = isBig ? 'band' : type;
 
-        if (isBig)
-            s += color`${' '.repeat(lineWidth)}` + '\n';
+        const message = style`${this.alignCenter(transform(title))}`;
 
-        s += color`${this.alignCenter(title.toUpperCase(), lineWidth)}` + '\n';
+        if (titleType === 'one-line')
+            return message;
 
-        if (isBig)
-            s += color`${' '.repeat(lineWidth)}` + '\n';
+        const bg = `${this.fullWidth(' ', bgStyle)}`;
 
-        return s;
+        if (titleType === 'band')
+            return `${bg}\n${message}\n${bg}`;
+
+        if (titleType.includes('strip')) {
+            switch (titleType) {
+                case 'two-strips': return `${bg}\n\n${message}\n\n${bg}`;
+                case 'top-strip': return `${bg}\n\n${message}`;
+                case 'bottom-strip': return `${message}\n\n${bg}`;
+            }
+        }
+
+        console.warn(`title with type "${type}" not implemented. Default to 'one-line'`);
+
+        return message;
     }
 
-    logTitle(title: string, option?: TitleOption) {
+    logTitle(title: string, option?: TitleOptions) {
         console.log(this.title(title, option));
     }
 
@@ -70,7 +85,7 @@ export class Terminal {
         console.log(this.table(data, config));
     }
 
-    alignCenter(s: string, size: number): string {
+    alignCenter(s: string, size: number = this.lineWidth): string {
 
         const trim = s.trim();
         const whitespaceWidth = size - trim.length;
@@ -86,7 +101,7 @@ export class Terminal {
     }
 
     logAlignCenter(s: string, size: number) {
-        this.alignCenter(s, size);
+        console.log(this.alignCenter(s, size));
     }
 }
 

@@ -2,10 +2,9 @@ import yargs from 'yargs/yargs';
 import { Options, Arguments } from 'yargs';
 const { cjsPlatformShim } = require('yargs/build/index.cjs');
 import { YargsInstance } from './yargs-instance';
-import { Yargs as Yargss } from './yargs';
+import { Yargs as YargsType, CommandModule } from './yargs';
 import { ObjectOf, decamelize, camelize } from '@upradata/util';
 import { red } from '../template-style';
-import { CommandModule } from './types';
 
 
 export interface YargsCtor {
@@ -114,11 +113,11 @@ export class CustomYargs extends Yargs {
 };
 
 
-export type ParseArgs<T = {}> = CustomYargs & Yargss<T>;
+export type ParseArgs<T = {}> = CustomYargs & YargsType<T>;
 export type ParseArgsCtor<T = {}> = new () => ParseArgs<T>;
 
 export const ParseArgsFactory = <T = {}>() => CustomYargs as any as ParseArgsCtor<T>;
 export const ParseArgs = ParseArgsFactory();
 
 
-export type CustomCommandModule<T = {}, U = T> = CommandModule<T, U, {}, {}>;
+// export type CustomCommandModule<T = {}, U = T> = CommandModule<T, U, {}, {}>;
