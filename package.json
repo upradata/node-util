@@ -9,7 +9,7 @@
         "url": "https://github.com/mt-typescript/node-util.git"
     },
     "license": "MIT",
-    "version": "12.0.1",
+    "version": "12.0.2",
     "description": "Set of typescript util tools working in NodeJs",
     "sideEffects": false,
     "main": "lib",
@@ -35,7 +35,7 @@
         "build:watch": "concurrently 'tsc -p tsconfig.lib.json -w' 'tsc -p tsconfig.lib-esm.json -w'",
         "test": "npx jest --verbose false --config jest-ut.config.js",
         "e2e": "npx jest --passWithNoTests --verbose false --config jest-e2e.config.js",
-        "github-push": "npm run build && npm version patch && git pushall && git pushall-tags",
+        "github-push": "npm version patch && git pushall && git pushall-tags",
         "npm-publish": "npm run build && npm publish --access public"
     },
     "dependencies": {
@@ -119,7 +119,10 @@
         "vinyl-named": "^1.1.0",
         "xml2js": "^0.4.23",
         "yargs": "^17.0.1",
-        "yargs-parser": "^20.2.7"
+        "yargs-parser": "^20.2.7",
+        "@upradata/util": "^1.0.24",
+        "@upradata/graceful-watcher": "^1.0.0",
+        "@upradata/require-override": "^1.0.1"
     },
     "devDependencies": {
         "@types/args": "^3.0.0",
