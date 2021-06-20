@@ -9,7 +9,7 @@
         "url": "https://github.com/upradata/node-util.git"
     },
     "license": "MIT",
-    "version": "12.0.2",
+    "version": "13.0.0",
     "description": "Set of typescript util tools working in NodeJs",
     "sideEffects": false,
     "main": "lib",
@@ -114,7 +114,9 @@
         "vinyl-named": "^1.1.0",
         "xml2js": "^0.4.23",
         "yargs": "^17.0.1",
-        "yargs-parser": "^20.2.7"
+        "yargs-parser": "^20.2.7",
+        "@upradata/util": "^1.0.24",
+        "@upradata/require-override": "^1.0.1"
     },
     "devDependencies": {
         "@types/args": "^3.0.0",
@@ -178,7 +180,6 @@
         },
         "dependencies": {
             "@upradata/util": "link:/home/milottit/Libraries/Upra-Data/Util/util@1.0.24",
-            "@upradata/graceful-watcher": "link:/home/milottit/Libraries/Upra-Data/GracefulWatcher@1.0.0",
             "@upradata/require-override": "link:/home/milottit/Libraries/Upra-Data/Util/require-override@1.0.1"
         }
     }
