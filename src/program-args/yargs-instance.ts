@@ -1,5 +1,6 @@
 import { Arguments } from 'yargs';
 import yargsParser from 'yargs-parser';
+import { CommandHandler, Context } from './yargs';
 
 // Created putting the file 'yargs/build/lib/yargs-factory.js' in a typescript project
 

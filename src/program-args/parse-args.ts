@@ -1,8 +1,7 @@
 import yargs from 'yargs/yargs';
-import { Options, Arguments } from 'yargs';
 const { cjsPlatformShim } = require('yargs/build/index.cjs');
 import { YargsInstance } from './yargs-instance';
-import { Yargs as YargsType, CommandModule } from './yargs';
+import { Yargs as YargsType, Options, Arguments, CommandHandler, Context, CommandModule, BuilderCallback, MiddlewareFunction, InferredOptionTypes } from './yargs';
 import { ObjectOf, decamelize, camelize } from '@upradata/util';
 import { red } from '../template-style';
 
@@ -30,6 +29,19 @@ export interface InvalidParameter {
 
 
 
+
+// Thomas
+/* protected applyMiddlewareAndGetResult(
+    isDefaultCommand: boolean,
+    commandHandler: CommandHandler < any, any >,
+    innerArgv: Arguments | Promise < Arguments >,
+    currentContext: Context,
+    helpOnly: boolean,
+    aliases: Record < string, string[] >,
+    yargs: YargsInstance
+): Arguments | Promise<Arguments>;
+ */
+
 // export type MiddlewareCallback<T, U> = (argv: Arguments<T>, yargs: _ParseArgs<T>) => Arguments<U>;
 
 export class CustomYargs extends Yargs {
@@ -40,9 +52,13 @@ export class CustomYargs extends Yargs {
         super(process.argv.slice(2), process.cwd(), require, cjsPlatformShim);
 
         Object.getOwnPropertyNames(yargsMethods).forEach(key => {
+            // some yargs methods are being called with f.call(this, ...)
+            // so we ensure this represents CustomYargs
             if (typeof yargsMethods[ key ] === 'function' && key !== 'constructor')
                 yargsMethods[ key ] = yargsMethods[ key ].bind(this);
         });
+
+        this.init();
     }
 
     /* public middleware<U>(callback: MiddlewareCallback<T, U> | MiddlewareCallback<T, U>[], applyBeforeValidation?: boolean) {
@@ -110,14 +126,70 @@ export class CustomYargs extends Yargs {
             process.exit(1);
         }
     }
+
+    private init() {
+        const commandInstance = this.getInternalMethods().getCommandInstance();
+        const applyOriginal = commandInstance.applyMiddlewareAndGetResult.bind(commandInstance);
+
+        commandInstance.applyMiddlewareAndGetResult = (isDefaultCommand: boolean,
+            commandHandler: CommandHandler<any, any>,
+            innerArgv: Arguments | Promise<Arguments>,
+            currentContext: Context,
+            helpOnly: boolean,
+            aliases: Record<string, string[]>,
+            yargs: YargsInstance) => {
+
+            const { handler } = commandHandler;
+            commandHandler.handler = argv => handler(argv, this as any);
+
+            return applyOriginal(isDefaultCommand, commandHandler, innerArgv, currentContext, helpOnly, aliases, yargs);
+
+        };
+    }
+}
+
+
+
+export type ParseArgs<T = {}> = CustomYargs & YargsType<T, CustomYargs> & Command<T>;
+export type Command<T> = & {
+    command<V, U>(
+        command: string | ReadonlyArray<string>,
+        description: string,
+        builder?: BuilderCallback<T, U, ParseArgs<T>>,
+        handler?: (args: Arguments<V>, yargs: ParseArgs<T>) => void,
+        middlewares?: MiddlewareFunction[],
+        deprecated?: boolean | string,
+    ): ParseArgs<T>;
+    command<O extends { [ key: string ]: Options; }>(
+        command: string | ReadonlyArray<string>,
+        description: string,
+        builder?: O,
+        handler?: (args: Arguments<InferredOptionTypes<O>>, yargs: ParseArgs<T>) => void,
+        middlewares?: MiddlewareFunction[],
+        deprecated?: boolean | string,
+    ): ParseArgs<T>;
+    command<V, U>(command: string | ReadonlyArray<string>, description: string, module: CommandModule<T, V, U, ParseArgs<T>>): ParseArgs<T>;
+    command<V, U>(
+        command: string | ReadonlyArray<string>,
+        showInHelp: false,
+        builder?: BuilderCallback<T, U, ParseArgs<T>>,
+        handler?: (args: Arguments<V>, yargs: ParseArgs<T>) => void,
+        middlewares?: MiddlewareFunction[],
+        deprecated?: boolean | string,
+    ): ParseArgs<T>;
+    command<O extends { [ key: string ]: Options; }>(
+        command: string | ReadonlyArray<string>,
+        showInHelp: false,
+        builder?: O,
+        handler?: (args: Arguments<InferredOptionTypes<O>>, yargs: ParseArgs<T>) => void,
+    ): ParseArgs<T>;
+    command<V, U>(command: string | ReadonlyArray<string>, showInHelp: false, module: CommandModule<T, V, U, ParseArgs<T>>): ParseArgs<T>;
+    command<V, U>(module: CommandModule<T, V, U, ParseArgs<T>>): ParseArgs<T>;
 };
-
-
-export type ParseArgs<T = {}> = CustomYargs & YargsType<T>;
 export type ParseArgsCtor<T = {}> = new () => ParseArgs<T>;
 
 export const ParseArgsFactory = <T = {}>() => CustomYargs as any as ParseArgsCtor<T>;
 export const ParseArgs = ParseArgsFactory();
 
 
-// export type CustomCommandModule<T = {}, U = T> = CommandModule<T, U, {}, {}>;
+export type ParseArgsCommandModule<T = {}, V = T, U = T> = CommandModule<T, V, U, ParseArgs<T>, {}, {}>;
