@@ -1,8 +1,14 @@
-import { TableUserConfig, table, Alignment } from 'table';
+import { Alignment, table, TableUserConfig } from 'table';
 import * as alignString from 'table/dist/alignString';
 import * as calculateCellWidths from 'table/dist/calculateCellWidths';
 import { makeTableConfig } from 'table/dist/makeTableConfig';
-import { assignDefaultOption, assignRecursive, PartialRecursive, stringWidth } from '@upradata/util';
+import {
+    assignDefaultOption,
+    assignRecursive,
+    PartialRecursive,
+    stringWidth
+} from '@upradata/util';
+
 
 type RemoveReadOnly<T> = {
     -readonly [ K in keyof T ]: T[ K ]

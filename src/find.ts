@@ -1,7 +1,6 @@
-import { Options } from 'yargs';
 import findup from 'find-up';
 import path from 'path';
-import { SyncAsyncType, SyncAsyncMode } from './useful';
+import { SyncAsyncMode, SyncAsyncType } from './useful';
 
 
 const _findUp = <Mode extends SyncAsyncMode>(mode: Mode) => (files: string | string[], options?: findup.Options) => {

@@ -1,5 +1,6 @@
 declare module 'fork-stream' {
-    import stream from 'stream';
+import stream from 'stream';
+
 
     export type ForkStreamOptions = (stream.ReadableOptions | stream.WritableOptions) & {
         classifier: (data: any, done: (err: Error, isTrue: boolean) => any) => void;

@@ -1,6 +1,7 @@
 declare module 'merge2' {
 
-    import { PassThrough } from 'stream';
+import { PassThrough } from 'stream';
+
 
     export default function merge(a: Streams, options?: Options): Merge2Stream;
     export default function merge(a: Streams, b: Streams, options?: Options): Merge2Stream;

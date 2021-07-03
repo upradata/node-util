@@ -1,6 +1,13 @@
-import { TableRows, TableRow, TableString, TableItem, TableStringOption, TableConfig } from './table';
-import { styles } from '../template-style';
 import { StyleTemplate } from '@upradata/util';
+import { styles } from '../template-style';
+import {
+    TableConfig,
+    TableItem,
+    TableRow,
+    TableRows,
+    TableString,
+    TableStringOption
+} from './table';
 
 
 export class TitleOptions {

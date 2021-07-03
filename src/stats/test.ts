@@ -1,5 +1,5 @@
-import { Stats } from './stats';
 import { StatFiles } from './stat.files';
+import { Stats } from './stats';
 
 
 const stats = new Stats('CACA', StatFiles);

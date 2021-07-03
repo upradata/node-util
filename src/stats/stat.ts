@@ -1,5 +1,6 @@
-import { TableRows, TableRow } from '../terminal';
 import { ObjectOf } from '@upradata/util';
+import { TableRow, TableRows } from '../terminal';
+
 
 export interface StatData {
     header: string[];

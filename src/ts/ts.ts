@@ -1,6 +1,6 @@
 import fs from 'fs';
-import { TscCompiler } from './tsc';
 import rimraf from 'rimraf';
+import { TscCompiler } from './tsc';
 
 
 export function requireAndCompileIfNecesseray(filenameNoExt: string) {

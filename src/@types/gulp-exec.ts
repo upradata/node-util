@@ -1,6 +1,7 @@
 
 declare module 'gulp-exec' {
-    import stream from 'stream';
+import stream from 'stream';
+
 
     export interface ExecOptions {
         env?: NodeJS.ProcessEnv;

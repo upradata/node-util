@@ -1,5 +1,6 @@
 import { sep } from 'path';
 
+
 export function pathNormalize(path: string) {
     const split = path.split(/\/|\\/);
     return split.join(sep);

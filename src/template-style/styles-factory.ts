@@ -1,10 +1,23 @@
-import { buildStyle, DefinedStringTransforms, makeObject, recreateString, styles as s, Styles, StyleTransform, StyleOptions, Style, ToString, ensureArray } from '@upradata/util';
-export * from '@upradata/util/lib/template-string/export';
-import { TerminalStyleNames } from './helpers';
-import colorsSafe from 'colors/safe';
 import colorsStyles from 'colors/lib/styles';
 import { supportsColor } from 'colors/lib/system/supports-colors';
+import colorsSafe from 'colors/safe';
+import {
+    buildStyle,
+    DefinedStringTransforms,
+    ensureArray,
+    makeObject,
+    recreateString,
+    Style,
+    StyleOptions,
+    styles as s,
+    Styles,
+    StyleTransform,
+    ToString
+} from '@upradata/util';
+import { TerminalStyleNames } from './helpers';
 
+
+export * from '@upradata/util/lib/template-string/export';
 type AllTerminalStyleNames = (keyof typeof colorsSafe) | TerminalStyleNames;
 type TerminalStyleStringTranforms = Record<AllTerminalStyleNames, StyleTransform> & { none: (s: string) => string; };
 

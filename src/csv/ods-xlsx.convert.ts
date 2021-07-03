@@ -4,7 +4,6 @@ import { execAsync, fileExists, poll } from '../useful';
 import { absolutePath } from './util';
 
 
-
 const execAndPoll = async (options: { command: string; outputFile: string; } & XlsxOption) => {
     const { command, outputFile, verbose: logOutput, maxWait = 2000 } = options;
 

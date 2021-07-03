@@ -1,8 +1,9 @@
-import { map } from '@upradata/util';
-import { join, dirname, isAbsolute } from 'path';
+import { dirname, isAbsolute, join } from 'path';
 import { register } from 'tsconfig-paths';
+import { map } from '@upradata/util';
 import { getTsConfigJson, TsConfigJson } from './tsconfig';
 import { TsConfig } from './tsconfig.json';
+
 
 export class RegisterOptions {
     baseUrl?: string = undefined;

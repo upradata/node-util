@@ -1,9 +1,21 @@
 import yargs from 'yargs/yargs';
-const { cjsPlatformShim } = require('yargs/build/index.cjs');
-import { YargsInstance } from './yargs-instance';
-import { Yargs as YargsType, Options, Arguments, CommandHandler, Context, CommandModule, BuilderCallback, MiddlewareFunction, InferredOptionTypes } from './yargs';
-import { ObjectOf, decamelize, camelize } from '@upradata/util';
+import { camelize, decamelize, ObjectOf } from '@upradata/util';
 import { red } from '../template-style';
+import {
+    Arguments,
+    BuilderCallback,
+    CommandHandler,
+    CommandModule,
+    Context,
+    InferredOptionTypes,
+    MiddlewareFunction,
+    Options,
+    Yargs as YargsInstance
+} from './yargs';
+// import { YargsInstance } from './yargs-instance';
+
+
+const { cjsPlatformShim } = require('yargs/build/index.cjs');
 
 
 export interface YargsCtor {
@@ -131,7 +143,8 @@ export class CustomYargs extends Yargs {
         const commandInstance = this.getInternalMethods().getCommandInstance();
         const applyOriginal = commandInstance.applyMiddlewareAndGetResult.bind(commandInstance);
 
-        commandInstance.applyMiddlewareAndGetResult = (isDefaultCommand: boolean,
+        commandInstance.applyMiddlewareAndGetResult = (
+            isDefaultCommand: boolean,
             commandHandler: CommandHandler<any, any>,
             innerArgv: Arguments | Promise<Arguments>,
             currentContext: Context,
@@ -150,7 +163,9 @@ export class CustomYargs extends Yargs {
 
 
 
-export type ParseArgs<T = {}> = CustomYargs & YargsType<T, CustomYargs> & Command<T>;
+export type ParseArgs<T = {}> = CustomYargs & YargsInstance<T> & Command<T>;
+
+
 export type Command<T> = & {
     command<V, U>(
         command: string | ReadonlyArray<string>,
@@ -186,6 +201,8 @@ export type Command<T> = & {
     command<V, U>(command: string | ReadonlyArray<string>, showInHelp: false, module: CommandModule<T, V, U, ParseArgs<T>>): ParseArgs<T>;
     command<V, U>(module: CommandModule<T, V, U, ParseArgs<T>>): ParseArgs<T>;
 };
+
+
 export type ParseArgsCtor<T = {}> = new () => ParseArgs<T>;
 
 export const ParseArgsFactory = <T = {}>() => CustomYargs as any as ParseArgsCtor<T>;

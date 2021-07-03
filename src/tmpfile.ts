@@ -1,11 +1,12 @@
 
 
-import { stripIndents, TT$ } from '@upradata/util';
 import fs from 'fs-extra';
 import os from 'os';
 import path from 'path';
 import { promisify } from 'util';
-import { SyncAsync, guid } from './useful';
+import { stripIndents, TT$ } from '@upradata/util';
+import { guid, SyncAsync } from './useful';
+
 
 const existsFile = promisify(fs.exists);
 

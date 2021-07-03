@@ -1,10 +1,11 @@
-import { isUndefined, isDefined, ensureArray, chain, PartialRecursive } from '@upradata/util';
-import path from 'path';
-import fs from 'fs-extra';
 import crypto from 'crypto';
-import { warn } from './common';
-import { StoreCollection, isFilePrint, FilePrint, FileIteration } from './store-collection';
+import fs from 'fs-extra';
+import path from 'path';
+import { chain, ensureArray, isDefined, isUndefined, PartialRecursive } from '@upradata/util';
 import { findUpDir } from '../find';
+import { warn } from './common';
+import { FileIteration, FilePrint, isFilePrint, StoreCollection } from './store-collection';
+
 
 const ENCODING = 'utf8';
 

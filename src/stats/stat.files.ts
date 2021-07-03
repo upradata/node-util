@@ -1,4 +1,4 @@
-import { red, yellow, green } from '../template-style';
+import { green, red, yellow } from '../template-style';
 import { Stat } from './stat';
 
 

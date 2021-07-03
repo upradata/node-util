@@ -1,8 +1,9 @@
 
-import { ObjectOf, isArray } from '@upradata/util';
+import { isArray, ObjectOf } from '@upradata/util';
 import { highlightMagenta } from '../template-style';
-import { Terminal, TableColumnConfig, TableRows, TableRow } from '../terminal';
+import { TableColumnConfig, TableRow, TableRows, Terminal } from '../terminal';
 import { Stat, StatCtor, StatData } from './stat';
+
 
 type Statistics<S extends Stat> = ObjectOf<S | Statistics<S>>;
 

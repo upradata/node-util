@@ -26,7 +26,7 @@
 // Use parameterless declaration instead of declaring all parameters optional,
 // when all parameters are optional and more than one
 
-import { DetailedArguments, Configuration } from 'yargs-parser';
+import { Configuration, DetailedArguments } from 'yargs-parser';
 
 
 export type ParserConfigurationOptions = Configuration & {
@@ -43,10 +43,8 @@ export type ParserConfigurationOptions = Configuration & {
  * `Arguments<T>` to simplify the inferred type signature in client code.
  */
 
-type SelectYargs<Y, Y2> = unknown extends Y2 ? Y : Y2;
 
-
-export interface Yargs<T = {}, CustomYargs = unknown> {
+export interface Yargs<T = {}> {
 
     /**
      * Set key names as equivalent such that updates to a key will propagate to aliases and vice-versa.
@@ -145,39 +143,39 @@ export interface Yargs<T = {}, CustomYargs = unknown> {
      * Note that when `void` is returned, the handler `Yargs` object type will not include command-specific arguments.
      * @param [handler] Function, which will be executed with the parsed `Yargs` object.
      */
-   /*  command<V, U>(
-        command: string | ReadonlyArray<string>,
-        description: string,
-        builder?: BuilderCallback<T, U, SelectYargs<Yargs<T>, CustomYargs>>,
-        handler?: (args: Arguments<V>, yargs: Yargs<T>) => void,
-        middlewares?: MiddlewareFunction[],
-        deprecated?: boolean | string,
-    ): Yargs<T>;
-    command<O extends { [ key: string ]: Options; }>(
-        command: string | ReadonlyArray<string>,
-        description: string,
-        builder?: O,
-        handler?: (args: Arguments<InferredOptionTypes<O>>, yargs: Yargs<T>) => void,
-        middlewares?: MiddlewareFunction[],
-        deprecated?: boolean | string,
-    ): Yargs<T>;
-    command<V, U>(command: string | ReadonlyArray<string>, description: string, module: CommandModule<T, V, U, SelectYargs<Yargs<T>, CustomYargs>>): Yargs<T>;
-    command<V, U>(
-        command: string | ReadonlyArray<string>,
-        showInHelp: false,
-        builder?: BuilderCallback<T, U, SelectYargs<Yargs<T>, CustomYargs>>,
-        handler?: (args: Arguments<V>, yargs: Yargs<T>) => void,
-        middlewares?: MiddlewareFunction[],
-        deprecated?: boolean | string,
-    ): Yargs<T>;
-    command<O extends { [ key: string ]: Options; }>(
-        command: string | ReadonlyArray<string>,
-        showInHelp: false,
-        builder?: O,
-        handler?: (args: Arguments<InferredOptionTypes<O>>, yargs: Yargs<T>) => void,
-    ): Yargs<T>;
-    command<V, U>(command: string | ReadonlyArray<string>, showInHelp: false, module: CommandModule<T, V, U, SelectYargs<Yargs<T>, CustomYargs>>): Yargs<T>;
-    command<V, U>(module: CommandModule<T, V, U, SelectYargs<Yargs<T>, CustomYargs>>): Yargs<T>; */
+    /*  command<V, U>(
+         command: string | ReadonlyArray<string>,
+         description: string,
+         builder?: BuilderCallback<T, U, SelectYargs<Yargs<T>, CustomYargs>>,
+         handler?: (args: Arguments<V>, yargs: Yargs<T>) => void,
+         middlewares?: MiddlewareFunction[],
+         deprecated?: boolean | string,
+     ): Yargs<T>;
+     command<O extends { [ key: string ]: Options; }>(
+         command: string | ReadonlyArray<string>,
+         description: string,
+         builder?: O,
+         handler?: (args: Arguments<InferredOptionTypes<O>>, yargs: Yargs<T>) => void,
+         middlewares?: MiddlewareFunction[],
+         deprecated?: boolean | string,
+     ): Yargs<T>;
+     command<V, U>(command: string | ReadonlyArray<string>, description: string, module: CommandModule<T, V, U, SelectYargs<Yargs<T>, CustomYargs>>): Yargs<T>;
+     command<V, U>(
+         command: string | ReadonlyArray<string>,
+         showInHelp: false,
+         builder?: BuilderCallback<T, U, SelectYargs<Yargs<T>, CustomYargs>>,
+         handler?: (args: Arguments<V>, yargs: Yargs<T>) => void,
+         middlewares?: MiddlewareFunction[],
+         deprecated?: boolean | string,
+     ): Yargs<T>;
+     command<O extends { [ key: string ]: Options; }>(
+         command: string | ReadonlyArray<string>,
+         showInHelp: false,
+         builder?: O,
+         handler?: (args: Arguments<InferredOptionTypes<O>>, yargs: Yargs<T>) => void,
+     ): Yargs<T>;
+     command<V, U>(command: string | ReadonlyArray<string>, showInHelp: false, module: CommandModule<T, V, U, SelectYargs<Yargs<T>, CustomYargs>>): Yargs<T>;
+     command<V, U>(module: CommandModule<T, V, U, SelectYargs<Yargs<T>, CustomYargs>>): Yargs<T>; */
 
     // Advanced API
     /** Apply command modules from a directory relative to the module calling this method. */
@@ -456,7 +454,7 @@ export interface Yargs<T = {}, CustomYargs = unknown> {
      */
     parse<U = T>(): Arguments<U> | Promise<Arguments<U>>;
     parse<U = T>(arg: string | ReadonlyArray<string>, context?: object, parseCallback?: ParseCallback<U>): Arguments<U> | Promise<Arguments<U>>;
-    parseSync<U = T>(): { [ key in keyof Arguments<T> ]: Arguments<T>[ key ]; };
+    parseSync(): { [ key in keyof Arguments<T> ]: Arguments<T>[ key ]; };
     parseSync<U = T>(arg: string | ReadonlyArray<string>, context?: object, parseCallback?: ParseCallback<T>): Arguments<U>;
     parseAsync<U = T>(): Promise<Arguments<U>>;
     parseAsync<U = T>(arg: string | ReadonlyArray<string>, context?: object, parseCallback?: ParseCallback<T>): Promise<Arguments<U>>;
@@ -635,6 +633,93 @@ export interface Yargs<T = {}, CustomYargs = unknown> {
      * Use `.wrap(yargs.terminalWidth())` to maximize the width of yargs' usage instructions.
      */
     wrap(columns: number | null): Yargs<T>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    $0: string;
+    argv?: Arguments;
+    customScriptName: boolean;
+
+    addHelpOpt(opt: any, msg: any): this;
+    addShowHiddenOpt(opt: any, msg: any): this;
+    command(cmd: any, description: any, builder: any, handler: any, middlewares: any, deprecated: any): this;
+    commands(cmd: any, description: any, builder: any, handler: any, middlewares: any, deprecated: any): this;
+    defaults(key: any, value: any, defaultDescription: any): this;
+    getAliases(): any;
+    getDemandedOptions(): any;
+    getDemandedCommands(): any;
+    getDeprecatedOptions(): any;
+    getDetectLocale(): any;
+    getExitProcess(): any;
+    getGroups(): any;
+    getHelp(): any;
+    getOptions(): any;
+    getStrict(): any;
+    getStrictCommands(): any;
+    getStrictOptions(): any;
+    showVersion(level: any): this;
+    [ kCreateLogger ](): {
+        log: (...args: any[]) => void;
+        error: (...args: any[]) => void;
+    };
+    [ kDeleteFromParserHintObject ](optionKey: any): void;
+    [ kFreeze ](): void;
+    [ kGetDollarZero ](): string;
+    [ kGetParserConfiguration ](): any;
+    [ kGuessLocale ](): void;
+    [ kGuessVersion ](): any;
+    [ kParsePositionalNumbers ](argv: any): any;
+    [ kPkgUp ](rootPath: any): any;
+    [ kPopulateParserHintArray ](type: any, keys: any): void;
+    [ kPopulateParserHintSingleValueDictionary ](builder: any, type: any, key: any, value: any): void;
+    [ kPopulateParserHintArrayDictionary ](builder: any, type: any, key: any, value: any): void;
+    [ kPopulateParserHintDictionary ](builder: any, type: any, key: any, value: any, singleKeyHandler: any): void;
+    [ kSanitizeKey ](key: any): any;
+    [ kSetKey ](key: any, set: any): this;
+    [ kUnfreeze ](): void;
+    [ kValidateAsync ](validation: any, argv: any): any;
+    getInternalMethods(): {
+        getCommandInstance: any;
+        getContext: any;
+        getHasOutput: any;
+        getLoggerInstance: any;
+        getParseContext: any;
+        getParserConfiguration: any;
+        getUsageInstance: any;
+        getValidationInstance: any;
+        hasParseCallback: any;
+        postProcess: any;
+        reset: any;
+        runValidation: any;
+        runYargsParserAndExecuteCommands: any;
+        setHasOutput: any;
+    };
+    [ kGetCommandInstance ](): any;
+    [ kGetContext ](): any;
+    [ kGetHasOutput ](): any;
+    [ kGetLoggerInstance ](): any;
+    [ kGetParseContext ](): any;
+    [ kGetUsageInstance ](): any;
+    [ kGetValidationInstance ](): any;
+    [ kHasParseCallback ](): boolean;
+    [ kPostProcess ](argv: any, populateDoubleDash: any, calledFromCommand: any, runGlobalMiddleware: any): any;
+    [ kReset ](aliases?: {}): this;
+    [ kRebase ](base: any, dir: any): any;
+    [ kRunYargsParserAndExecuteCommands ](args: any, shortCircuit: any, calledFromCommand: any, commandIndex?: number, helpOnly?: boolean): any;
+    [ kRunValidation ](aliases: any, positionalMap: any, parseErrors: any, isDefaultCommand: any): (argv: any) => void;
+    [ kSetHasOutput ](): void;
+
 }
 
 export type Arguments<T = {}> = T & {
@@ -733,7 +818,7 @@ export interface Options {
     skipValidation?: boolean;
     /** boolean, interpret option as a string, see `string()` */
     string?: boolean;
-    type?: "array" | "count" | PositionalOptionsType;
+    type?: 'array' | 'count' | PositionalOptionsType;
 }
 
 export interface PositionalOptions {
@@ -790,25 +875,25 @@ export type InferredOptionType<O extends Options | PositionalOptions> =
     InferredOptionTypeInner<O>;
 
 export type InferredOptionTypeInner<O extends Options | PositionalOptions> =
-    O extends { default: any, coerce: (arg: any) => infer T; } ? T :
+    O extends { default: any; coerce: (arg: any) => infer T; } ? T :
     O extends { default: infer D; } ? D :
-    O extends { type: "count"; } ? number :
+    O extends { type: 'count'; } ? number :
     O extends { count: true; } ? number :
     RequiredOptionType<O> | undefined;
 
 export type RequiredOptionType<O extends Options | PositionalOptions> =
-    O extends { type: "array", string: true; } ? string[] :
-    O extends { type: "array", number: true; } ? number[] :
-    O extends { type: "array", normalize: true; } ? string[] :
-    O extends { type: "string", array: true; } ? string[] :
-    O extends { type: "number", array: true; } ? number[] :
-    O extends { string: true, array: true; } ? string[] :
-    O extends { number: true, array: true; } ? number[] :
-    O extends { normalize: true, array: true; } ? string[] :
-    O extends { type: "array"; } ? Array<string | number> :
-    O extends { type: "boolean"; } ? boolean :
-    O extends { type: "number"; } ? number :
-    O extends { type: "string"; } ? string :
+    O extends { type: 'array'; string: true; } ? string[] :
+    O extends { type: 'array'; number: true; } ? number[] :
+    O extends { type: 'array'; normalize: true; } ? string[] :
+    O extends { type: 'string'; array: true; } ? string[] :
+    O extends { type: 'number'; array: true; } ? number[] :
+    O extends { string: true; array: true; } ? string[] :
+    O extends { number: true; array: true; } ? number[] :
+    O extends { normalize: true; array: true; } ? string[] :
+    O extends { type: 'array'; } ? Array<string | number> :
+    O extends { type: 'boolean'; } ? boolean :
+    O extends { type: 'number'; } ? number :
+    O extends { type: 'string'; } ? string :
     O extends { array: true; } ? Array<string | number> :
     O extends { boolean: true; } ? boolean :
     O extends { number: true; } ? number :
@@ -851,7 +936,7 @@ export interface CommandModule<T, V = T, U = T, Y = Yargs<T>, ExtraBuider = {}, 
     describe?: string | false;
     /** a function which will be passed the parsed argv. */
     handler: (args: Arguments<V> & ExtraHandler, yargs: Y) => void;
-};
+}
 
 export type BuilderCallback<T, U = T, Y = Yargs<T>, Extra = {}> = ((args: Y & Extra, helpOrVersionSet: boolean) => (Yargs<U> | PromiseLike<Yargs<U>> | void));
 
@@ -866,7 +951,7 @@ export type AsyncCompletionFunction = (current: string, Yargs: any, done: (compl
 export type PromiseCompletionFunction = (current: string, Yargs: any) => Promise<string[]>;
 export type MiddlewareFunction<T = {}> = (args: Arguments<T>) => void;
 export type Choices = ReadonlyArray<string | number | true | undefined>;
-export type PositionalOptionsType = "boolean" | "number" | "string";
+export type PositionalOptionsType = 'boolean' | 'number' | 'string';
 
 
 export interface Positional {
@@ -908,3 +993,41 @@ export interface Context {
     commands: string[];
     fullCommands: string[];
 }
+
+// Created putting the file 'yargs/build/lib/yargs-factory.js' in a typescript project
+
+// export declare function YargsFactory(_shim: any): (processArgs: any[], cwd: any, parentRequire: any) => YargsInstance;
+declare const kCreateLogger: unique symbol;
+declare const kDeleteFromParserHintObject: unique symbol;
+declare const kFreeze: unique symbol;
+declare const kGetDollarZero: unique symbol;
+declare const kGetParserConfiguration: unique symbol;
+declare const kGuessLocale: unique symbol;
+declare const kGuessVersion: unique symbol;
+declare const kParsePositionalNumbers: unique symbol;
+declare const kPkgUp: unique symbol;
+declare const kPopulateParserHintArray: unique symbol;
+declare const kPopulateParserHintSingleValueDictionary: unique symbol;
+declare const kPopulateParserHintArrayDictionary: unique symbol;
+declare const kPopulateParserHintDictionary: unique symbol;
+declare const kSanitizeKey: unique symbol;
+declare const kSetKey: unique symbol;
+declare const kUnfreeze: unique symbol;
+declare const kValidateAsync: unique symbol;
+declare const kGetCommandInstance: unique symbol;
+declare const kGetContext: unique symbol;
+declare const kGetHasOutput: unique symbol;
+declare const kGetLoggerInstance: unique symbol;
+declare const kGetParseContext: unique symbol;
+declare const kGetUsageInstance: unique symbol;
+declare const kGetValidationInstance: unique symbol;
+declare const kHasParseCallback: unique symbol;
+declare const kPostProcess: unique symbol;
+declare const kRebase: unique symbol;
+declare const kReset: unique symbol;
+declare const kRunYargsParserAndExecuteCommands: unique symbol;
+declare const kRunValidation: unique symbol;
+declare const kSetHasOutput: unique symbol;
+
+
+export declare function isYargsInstance(y: any): boolean;

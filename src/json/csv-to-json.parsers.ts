@@ -1,6 +1,17 @@
-import { TransformOptions } from 'stream';
-import { makeObject, mergeRegexes, MergeRexesOptions, regexToString, compose, isUndefined, ifChained, isDefinedProp, keys, isDefined } from '@upradata/util';
 import { CSVParseParam } from 'csvtojson/v2/Parameters';
+import { TransformOptions } from 'stream';
+import {
+    compose,
+    ifChained,
+    isDefined,
+    isDefinedProp,
+    isUndefined,
+    keys,
+    makeObject,
+    mergeRegexes,
+    MergeRexesOptions,
+    regexToString
+} from '@upradata/util';
 import { csvToJson } from './csv-json';
 
 

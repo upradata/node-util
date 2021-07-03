@@ -1,10 +1,11 @@
-import { createCompilerHost } from './compiler-host';
-import ts from 'typescript';
 import fs from 'fs-extra';
 import path from 'path';
 import tsconfig from 'tsconfig';
+import ts from 'typescript';
+import { AssignOptions, assignRecursive } from '@upradata/util';
+import { createCompilerHost } from './compiler-host';
 import { TsConfig } from './tsconfig.json';
-import { assignRecursive, AssignOptions } from '@upradata/util';
+
 
 export const defaultTscOptions = (): ts.CompilerOptions => ({
     noEmitOnError: false,

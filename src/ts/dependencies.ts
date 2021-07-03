@@ -1,7 +1,8 @@
-import ts from 'typescript';
 import fs from 'fs-extra';
+import ts from 'typescript';
 import { assignRecursive } from '@upradata/util';
 import { defaultTscOptions } from './tsc';
+
 
 function getExternalModuleName(node: ts.Node): ts.Expression {
     if (node.kind === ts.SyntaxKind.ImportDeclaration) {

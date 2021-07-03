@@ -75,14 +75,11 @@ import {
     WhileStatement,
     WithStatement,
     YieldExpression
-} from "estree";
-import { Stats as FsStats, WriteStream } from "fs";
-import { JSONSchema4, JSONSchema6, JSONSchema7 } from "json-schema";
-import { default as ValidationError } from "schema-utils/declarations/ValidationError";
-import {
-    Extend,
-    ValidationErrorConfiguration
-} from "schema-utils/declarations/validate";
+} from 'estree';
+import { Stats as FsStats, WriteStream } from 'fs';
+import { JSONSchema4, JSONSchema6, JSONSchema7 } from 'json-schema';
+import { Extend, ValidationErrorConfiguration } from 'schema-utils/declarations/validate';
+import { default as ValidationError } from 'schema-utils/declarations/ValidationError';
 import {
     AsArray,
     AsyncParallelHook,
@@ -94,7 +91,8 @@ import {
     SyncBailHook,
     SyncHook,
     SyncWaterfallHook
-} from "tapable";
+} from 'tapable';
+
 
 export declare class AbstractLibraryPlugin<T> {
     constructor(__0: {

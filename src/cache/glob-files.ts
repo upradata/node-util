@@ -1,6 +1,7 @@
-import path from 'path';
 import glob, { IOptions as GlobOptions } from 'glob';
-import { isPlainObject, assignRecursive, isArray } from '@upradata/util';
+import path from 'path';
+import { assignRecursive, isArray, isPlainObject } from '@upradata/util';
+
 
 export type GlobFilesOptions = GlobOptions & { noGlob?: boolean; };
 export type GlobFile = { pattern: string; options?: GlobFilesOptions; };

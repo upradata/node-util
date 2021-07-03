@@ -1,11 +1,10 @@
 
 import csv from 'csvtojson';
-import { CSVParseParam } from 'csvtojson/v2/Parameters';
-import { TransformOptions } from 'stream';
-import { RowSplit, MultipleRowResult } from 'csvtojson/v2/rowSplit';
 import { Fileline } from 'csvtojson/v2/fileline';
+import { CSVParseParam } from 'csvtojson/v2/Parameters';
+import { MultipleRowResult, RowSplit } from 'csvtojson/v2/rowSplit';
+import { TransformOptions } from 'stream';
 import { delayedPromise } from '@upradata/util';
-
 
 
 // To filter empty rows (row with all empty columns)

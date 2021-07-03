@@ -1,7 +1,7 @@
 declare module 'gulp-if' {
-    import stream from 'stream';
-    import VinylFile from 'vinyl';
-    import minimatch from 'minimatch';
+import minimatch from 'minimatch';
+import stream from 'stream';
+import VinylFile from 'vinyl';
 
 
     export interface StatFilterCondition {

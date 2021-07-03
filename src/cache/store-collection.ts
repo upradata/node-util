@@ -1,5 +1,6 @@
-import { ObjectOf, isUndefined, isDefined } from '@upradata/util';
 import fs from 'fs-extra';
+import { isDefined, isUndefined, ObjectOf } from '@upradata/util';
+
 
 export interface FilePrint {
     mtime: number;

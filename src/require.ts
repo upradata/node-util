@@ -1,10 +1,11 @@
-import ts from 'typescript';
-import path from 'path';
 import fs from 'fs-extra';
-import { readJson } from './json/read-json5';
-import { TscCompiler } from './ts/tsc';
+import path from 'path';
+import ts from 'typescript';
 import { Cache } from './cache';
+import { readJson } from './json/read-json5';
 import { red, yellow } from './template-style';
+import { TscCompiler } from './ts/tsc';
+
 
 export interface RequireOptions {
     outDir: string;

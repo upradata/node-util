@@ -1,7 +1,8 @@
-import { StoreOptions, Store, CacheChangeOptions } from './store';
+import { ensureArray, isDefined, isUndefined } from '@upradata/util';
 import { warn } from './common';
 import { File, GlobFiles } from './glob-files';
-import { isDefined, ensureArray, isUndefined } from '@upradata/util';
+import { CacheChangeOptions, Store, StoreOptions } from './store';
+
 
 export class CacheOpts {
     verbose?: boolean = false;

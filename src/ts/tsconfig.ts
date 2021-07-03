@@ -1,6 +1,7 @@
 import * as tsconfig from 'tsconfig';
-import { TsConfig } from './tsconfig.json';
 import { assignRecursive } from '@upradata/util';
+import { TsConfig } from './tsconfig.json';
+
 
 export interface TsConfigJson {
     path: { start: string; end: string; };
