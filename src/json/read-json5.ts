@@ -1,6 +1,6 @@
 import { readFile, readFileSync } from 'fs-extra';
 import JSON5 from 'json5';
-import { JSONSchemaForNPMPackageJsonFiles } from '@schemastore/package';
+import type { JSONSchemaForNPMPackageJsonFiles } from '@schemastore/package';
 
 
 export type ReadJson<T> = {

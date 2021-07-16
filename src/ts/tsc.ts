@@ -3,7 +3,7 @@ import path from 'path';
 import tsconfig from 'tsconfig';
 import ts from 'typescript';
 import { AssignOptions, assignRecursive } from '@upradata/util';
-import { createCompilerHost } from './compiler-host';
+// import { createCompilerHost } from './compiler-host';
 import { TsConfig } from './tsconfig.json';
 
 
@@ -147,7 +147,7 @@ export class TscCompiler {
         const { compiledFile } = TscCompiler.compileAndEmit(filepath, options);
         const requiredModule = require(compiledFile);
 
-        const opts = Object.assign({ deleteOutDir: true }, options);
+        const opts = { deleteOutDir: true, ...options };
 
         if (opts.deleteOutDir)
             fs.removeSync(options.outDir);

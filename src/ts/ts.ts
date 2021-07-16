@@ -1,20 +1,20 @@
-import fs from 'fs';
-import rimraf from 'rimraf';
+import fs from 'fs-extra';
 import { TscCompiler } from './tsc';
 
 
-export function requireAndCompileIfNecesseray(filenameNoExt: string) {
-    let file = `${filenameNoExt}.js`;
+export const requireAndCompileIfNecesseray = (filenameNoExt: string) => {
+    const jsFile = `${filenameNoExt}.js`;
 
-    if (fs.existsSync(file))
-        return require(file);
+    if (fs.existsSync(jsFile))
+        return require(jsFile);
 
-    file = `${filenameNoExt}.ts`;
-    if (fs.existsSync(file)) {
+    const tsFile = `${filenameNoExt}.ts`;
+
+    if (fs.existsSync(tsFile)) {
         // const fileContent = fs.readFileSync(file, 'utf8');
-        const { emittedFiles, outDir } = TscCompiler.compile([ file ]);
+        const { emittedFiles, outDir } = TscCompiler.compile([ tsFile ]);
         const required = require(emittedFiles[ 0 ]); // path.join(outTmpDir, path.basename(filenameNoExt) + '.js')
-        rimraf/* .sync */(outDir, () => { });
+        fs.removeSync(outDir);
 
         return required;
     }
@@ -26,4 +26,4 @@ export function requireAndCompileIfNecesseray(filenameNoExt: string) {
       } */
 
     return undefined;
-}
+};
