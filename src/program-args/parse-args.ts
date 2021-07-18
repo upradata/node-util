@@ -1,6 +1,8 @@
+import fs from 'fs-extra';
+import path from 'path';
 import yargs from 'yargs/yargs';
 import { camelize, decamelize, ObjectOf } from '@upradata/util';
-import { lookupRoot, fromDir } from '../find';
+import { fromDir, findUp } from '../find';
 import { red } from '../template-style';
 import {
     Arguments,
@@ -15,7 +17,14 @@ import {
 } from './yargs';
 // import { YargsInstance } from './yargs-instance';
 
-const fromRoot = fromDir(lookupRoot.sync(__dirname));
+// I use findUp because if the package manager is Pnpm, the node_modules of this package is different levels up
+
+const root = findUp.sync(directory => {
+    const hasYargs = fs.existsSync(path.join(directory, 'node_modules/yargs'));
+    return hasYargs && directory;
+}, { type: 'directory', cwd: __dirname });
+
+const fromRoot = fromDir(root);
 
 // I am obliged to require the file this way to workaround the "exports" field in yargs
 // package.json not exporting this module

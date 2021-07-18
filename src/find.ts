@@ -2,10 +2,11 @@ import findup from 'find-up';
 import path from 'path';
 import { SyncAsyncMode, SyncAsyncType } from './useful';
 
+type FilesOrMatcher = string | readonly string[] | ((directory: string) => findup.Match | Promise<findup.Match>);
 
-const _findUp = <Mode extends SyncAsyncMode>(mode: Mode) => (files: string | string[], options?: findup.Options) => {
+const _findUp = <Mode extends SyncAsyncMode>(mode: Mode) => (filesOrMatcher: FilesOrMatcher, options?: findup.Options) => {
     const lookup = (mode === 'sync' ? findup.sync : findup) as SyncAsyncType<Mode, typeof findup.sync, typeof findup>;
-    return lookup(files, options) as SyncAsyncType<Mode, string>;
+    return lookup(filesOrMatcher as any, options) as SyncAsyncType<Mode, string>;
 };
 
 export const findUp = {
