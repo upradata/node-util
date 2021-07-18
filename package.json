@@ -9,7 +9,7 @@
         "url": "https://github.com/upradata/node-util.git"
     },
     "license": "MIT",
-    "version": "13.0.6",
+    "version": "13.0.7",
     "description": "Set of typescript util tools working in NodeJs",
     "sideEffects": false,
     "main": "lib",
