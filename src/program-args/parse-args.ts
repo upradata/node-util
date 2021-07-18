@@ -1,5 +1,6 @@
 import yargs from 'yargs/yargs';
 import { camelize, decamelize, ObjectOf } from '@upradata/util';
+import { lookupRoot, fromDir } from '../find';
 import { red } from '../template-style';
 import {
     Arguments,
@@ -14,8 +15,11 @@ import {
 } from './yargs';
 // import { YargsInstance } from './yargs-instance';
 
+const fromRoot = fromDir(lookupRoot.sync(__dirname));
 
-const { cjsPlatformShim } = require('yargs/build/index.cjs');
+// I am obliged to require the file this way to workaround the "exports" field in yargs
+// package.json not exporting this module
+const { cjsPlatformShim } = require(fromRoot('node_modules', 'yargs/build/index.cjs'));
 
 
 export interface YargsCtor {
