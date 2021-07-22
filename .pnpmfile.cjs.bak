@@ -17,7 +17,6 @@ function afterAllResolved(lockfile, context) {
     delete pkg.exports;
 
     fs.writeFileSync(require.resolve(yargsPackageJsonFile), JSON.stringify(pkg, null, 4), { encoding: 'utf-8' });
-    context.log('==> yargs package.json "exports" field REMOVED !');
 
     return lockfile;
 }
