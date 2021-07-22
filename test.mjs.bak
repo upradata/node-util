@@ -1,0 +1,3 @@
+import * as all from '@upradata/node-util/find';
+
+console.log(all);
