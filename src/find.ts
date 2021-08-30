@@ -1,11 +1,11 @@
-import findup from 'find-up';
+import { findUp as findup, findUpSync as findupSync, Options as FindupOptions, Match as FindupMath } from 'find-up';
 import path from 'path';
 import { SyncAsyncMode, SyncAsyncType } from './useful';
 
-type FilesOrMatcher = string | readonly string[] | ((directory: string) => findup.Match | Promise<findup.Match>);
+type FilesOrMatcher = string | readonly string[] | ((directory: string) => FindupMath | Promise<FindupMath>);
 
-const _findUp = <Mode extends SyncAsyncMode>(mode: Mode) => (filesOrMatcher: FilesOrMatcher, options?: findup.Options) => {
-    const lookup = (mode === 'sync' ? findup.sync : findup) as SyncAsyncType<Mode, typeof findup.sync, typeof findup>;
+const _findUp = <Mode extends SyncAsyncMode>(mode: Mode) => (filesOrMatcher: FilesOrMatcher, options?: FindupOptions) => {
+    const lookup = (mode === 'sync' ? findupSync : findup) as SyncAsyncType<Mode, typeof findupSync, typeof findup>;
     return lookup(filesOrMatcher as any, options) as SyncAsyncType<Mode, string>;
 };
 
@@ -16,8 +16,8 @@ export const findUp = {
 
 
 export const findUpDir = {
-    sync: (files: string | string[], options?: findup.Options) => path.dirname(findUp.sync(files, { ...options, type: 'file' })),
-    async: async (files: string | string[], options?: findup.Options) => path.dirname(await findUp.async(files, { ...options, type: 'file' }))
+    sync: (files: string | string[], options?: FindupOptions) => path.dirname(findUp.sync(files, { ...options, type: 'file' })),
+    async: async (files: string | string[], options?: FindupOptions) => path.dirname(await findUp.async(files, { ...options, type: 'file' }))
 };
 
 
