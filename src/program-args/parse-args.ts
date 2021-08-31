@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import yargs from 'yargs/yargs';
 import { camelize, decamelize, ObjectOf } from '@upradata/util';
-import { fromDir, findUp } from '../find';
+import { fromDir, findUp } from '../find-up';
 import { red } from '../template-style';
 import {
     Arguments,

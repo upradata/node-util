@@ -1,6 +1,6 @@
 import glob, { IOptions as GlobOptions } from 'glob';
 import path from 'path';
-import { assignRecursive, isArray, isPlainObject } from '@upradata/util';
+import { assignRecursive, isPlainObject, ensureArray } from '@upradata/util';
 
 
 export type GlobFilesOptions = GlobOptions & { noGlob?: boolean; };
@@ -40,7 +40,7 @@ export class GlobFiles {
         if (isFilesWithGlobalOptions(this.files)) {
             const f = this.files[ 0 ].files;
 
-            filesList = isArray(f) ? f : [ f ];
+            filesList = ensureArray(f);
             globalOptions = this.files[ 0 ].options;
         } else {
             filesList = this.files as FilePath[];
