@@ -7,6 +7,7 @@ specifiers:
   '@types/vinyl': ^2.0.5
   '@types/yargs': ^17.0.2
   '@types/yargs-parser': ^20.2.1
+  '@upradata/util': ^12.0.1
   colors: ^1.4.0
   concurrently: ^6.2.1
   csvtojson: ^2.0.10
@@ -24,6 +25,7 @@ specifiers:
   yargs-parser: ^20.2.9
 
 dependencies:
+  '@upradata/util': 12.0.1
   colors: 1.4.0
   csvtojson: 2.0.10
   find-up: 5.0.0
@@ -161,6 +163,15 @@ packages:
       '@types/yargs-parser': 20.2.1
     dev: true
 
+  /@upradata/util/12.0.1:
+    resolution: {integrity: sha512-4738C5xvPCLsx+btyiTCnjBqiF8ARM+WP5ctIMItOLXk4QW5lj/7dF5E4w+D+dBFSuMsIlRr4utgDOgJs71DAg==}
+    dependencies:
+      common-tags: 1.8.0
+      emoji-regex: 9.2.2
+      find-up: 5.0.0
+      ts-util-is: 1.3.0
+    dev: false
+
   /acorn-walk/8.1.1:
     resolution: {integrity: sha512-FbJdceMlPHEAWJOILDk1fXD8lnTlEIWFkqtfk+MvmL5q/qlHfN7GEHcsFZWt/Tea9jRNPWUZG4G976nqAAmU9w==}
     engines: {node: '>=0.4.0'}
@@ -292,6 +303,11 @@ packages:
     engines: {node: '>=0.1.90'}
     dev: false
 
+  /common-tags/1.8.0:
+    resolution: {integrity: sha512-6P6g0uetGpW/sdyUy/iQQCbFF0kWVMSIVSyYz7Zgjcgh8mgw8PQzDNZeyZ5DQ2gM7LBoZPHmnjz8rUthkBG5tw==}
+    engines: {node: '>=4.0.0'}
+    dev: false
+
   /concat-map/0.0.1:
     resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
     dev: false
@@ -342,6 +358,10 @@ packages:
 
   /emoji-regex/8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
+
+  /emoji-regex/9.2.2:
+    resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
+    dev: false
 
   /error-ex/1.3.2:
     resolution: {integrity: sha512-7dFHNmqeFSEt2ZBsCriorKnn3Z2pj+fd9kmI6QoWw4//DL+icEBfc0U7qJCisqrTsKTjw4fNFy2pW9OqStD84g==}
@@ -795,6 +815,10 @@ packages:
       typescript: 4.4.2
       yn: 3.1.1
     dev: true
+
+  /ts-util-is/1.3.0:
+    resolution: {integrity: sha512-NqgI9zd8Sr4eMW1NAsAQd7aJiGGlwTnrxUFny1ysbCFY98NyTjh5xRTA885tLH4FtG22DlvYl5scpe2HkHNkmw==}
+    dev: false
 
   /tsconfig-paths/3.11.0:
     resolution: {integrity: sha512-7ecdYDnIdmv639mmDwslG6KQg1Z9STTz1j7Gcz0xa+nshh/gKDAHcPxRbWOsA3SPp0tXP2leTcY9Kw+NAkfZzA==}
