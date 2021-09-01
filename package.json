@@ -9,7 +9,7 @@
         "url": "https://github.com/upradata/node-util.git"
     },
     "license": "MIT",
-    "version": "13.0.11",
+    "version": "14.0.1",
     "description": "Set of typescript util tools working in NodeJs",
     "sideEffects": false,
     "main": "lib",
@@ -40,6 +40,7 @@
         "npm-publish": "npm run build && npm publish --access public"
     },
     "dependencies": {
+        "@types/memory-fs": "^0.3.3",
         "colors": "^1.4.0",
         "csvtojson": "^2.0.10",
         "fs-extra": "^10.0.0",
@@ -58,10 +59,15 @@
         "@schemastore/package": "^0.0.6",
         "@types/fs-extra": "^9.0.12",
         "@types/glob": "^7.1.4",
+        "@types/jest": "^27.0.1",
         "@types/vinyl": "^2.0.5",
         "@types/yargs": "^17.0.2",
         "@types/yargs-parser": "^20.2.1",
         "concurrently": "^6.2.1",
+        "jest": "^27.1.0",
+        "jest-environment-node": "^27.1.0",
+        "memory-fs": "^0.5.0",
+        "ts-jest": "^27.0.5",
         "ts-node": "^10.2.1"
     },
     "publishConfig": {
@@ -72,7 +78,7 @@
             "html-index-webpack-extended": "/home/milottit/Libraries/WebpackAngular/IndexHtmlPlugin"
         },
         "dependencies": {
-            "@upradata/util": "link:/home/milottit/Libraries/Upra-Data/util@12.0.1"
+            "@upradata/util": "link:/home/milottit/Libraries/Upra-Data/util@12.0.5"
         }
     }
 }

@@ -1,5 +1,5 @@
 import { recreateString, Style } from '@upradata/util';
-import { styles, COLORS_SAFE } from '../../src/template-style';
+import { COLORS_SAFE, styles } from '../../src/template-style';
 
 
 describe('Test suite template string styles', () => {
