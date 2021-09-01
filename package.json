@@ -9,7 +9,7 @@
 		"url": "https://github.com/upradata/node-util.git"
 	},
 	"license": "MIT",
-	"version": "14.0.1",
+	"version": "14.0.2",
 	"description": "Set of typescript util tools working in NodeJs",
 	"sideEffects": false,
 	"main": "lib",
@@ -40,7 +40,6 @@
 		"npm-publish": "npm run build && npm publish --access public"
 	},
 	"dependencies": {
-		"@types/memory-fs": "^0.3.3",
 		"colors": "^1.4.0",
 		"csvtojson": "^2.0.10",
 		"fs-extra": "^10.0.0",
@@ -58,6 +57,7 @@
 	},
 	"devDependencies": {
 		"@schemastore/package": "^0.0.6",
+		"@types/memory-fs": "^0.3.3",
 		"@types/fs-extra": "^9.0.12",
 		"@types/glob": "^7.1.4",
 		"@types/jest": "^27.0.1",
@@ -76,7 +76,11 @@
 	},
 	"local": {
 		"usedBy": {
-			"html-index-webpack-extended": "/home/milottit/Libraries/WebpackAngular/IndexHtmlPlugin"
+			"html-index-webpack-extended": "/home/milottit/Libraries/WebpackAngular/IndexHtmlPlugin",
+			"@upradata/npx-local": "/home/milottit/Libraries/Upra-Data/npx-local",
+			"@upradata/express": "/home/milottit/Libraries/Upra-Data/express",
+			"@upradata/stream": "/home/milottit/Libraries/Upra-Data/stream",
+			"@upradata/puppeteer": "/home/milottit/Libraries/Upra-Data/puppeteer"
 		},
 		"dependencies": {
 			"@upradata/util": "link:/home/milottit/Libraries/Upra-Data/util@13.0.1"
