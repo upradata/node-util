@@ -1,26 +1,36 @@
-
-import * as fs from '../mocks/fs.mock';
-import { CacheMock } from '../mocks/cache.mock';
-import { md5, Store } from '../../src/cache/store';
+import { MockFS, mockFs } from './../mocks/fs.mock';
 import VinylFile from 'vinyl';
+import type { CacheMock } from '../mocks/cache.mock';
 
 
 describe('Test suite for cache', () => {
+    let fs: MockFS = undefined;
+    let Cache: typeof CacheMock = undefined;
+
+    beforeAll(() => {
+        fs = mockFs();
+        Cache = require('../mocks/cache.mock').CacheMock;
+    });
+
+    afterAll(() => {
+        jest.unmock('fs');
+    });
+
     it('should add files to cache, save it and load it back', () => {
-        const { cache, collectionObject } = new CacheMock().populateCache();
+        const { cache, collectionObject } = new Cache({ fs }).populateCache();
 
         // const allFiles = glob.sync('**/*', { cwd: root }).map(file => path.join(root, file));
         expect(cache.store.storeCollection.toObject()).toEqual(collectionObject);
 
         cache.save();
-        const cacheLoaded = new CacheMock().createCache();
+        const cacheLoaded = new Cache({ fs }).createCache();
         expect(cacheLoaded.store.storeCollection.toObject()).toEqual(collectionObject);
 
     });
 
     it('should return changedFiles', () => {
         fs.clean();
-        const { cache, files, collectionNames } = new CacheMock().populateCache();
+        const { cache, files, collectionNames } = new Cache({ fs }).populateCache();
         const filepaths = files.map(f => f.path);
 
         // Files already exist in the filesystem and the cache
@@ -46,7 +56,10 @@ describe('Test suite for cache', () => {
     });
 
     it('should use md5 criteria', () => {
-        const cacheMock = new CacheMock({
+        const md5 = require('../../src/cache/store').md5 as (filePath: string, size?: number) => string;
+
+        const cacheMock = new Cache({
+            fs,
             cache: { criteria: 'md5' },
             mock: { criteria: (i, file) => md5(file.path) }
         });
@@ -61,7 +74,7 @@ describe('Test suite for cache', () => {
                     path: cacheMock.files[ 0 ].dirname,
                     stat: {
                         isDirectory: () => true,
-                        mtime: { getTime: () => parseInt('123465789' + 100) }
+                        mtime: { getTime: () => parseInt(`123465789${100}`) }
                     } as any
                 })
             ],
@@ -90,7 +103,8 @@ describe('Test suite for cache', () => {
     });
 
     it('should use function criteria and isSameComparator function', () => {
-        const { cache, files, collectionObject } = new CacheMock({
+        const { cache, files, collectionObject } = new Cache({
+            fs,
             cache: { criteria: path => fs.files[ path ].contents.toString()[ 0 ] },
             mock: { criteria: (i, file) => file.contents.toString()[ 0 ] }
         }).populateCache();
@@ -111,7 +125,7 @@ describe('Test suite for cache', () => {
 
         for (const i of indexes) {
             const content = files[ i ].contents.toString();
-            files[ i ].contents = Buffer.from('A' + content.slice(1));
+            files[ i ].contents = Buffer.from(`A${content.slice(1)}`);
             fs.addOrUpdateFile(files[ i ]);
         }
 
@@ -119,7 +133,7 @@ describe('Test suite for cache', () => {
     });
 
     it('should delete collections', () => {
-        const { cache } = new CacheMock().populateCache();
+        const { cache } = new Cache({ fs }).populateCache();
 
         cache.deleteCollection('collectionName3.collectionName32');
         cache.deleteCollection('collectionName3.doNotExist');
@@ -130,7 +144,7 @@ describe('Test suite for cache', () => {
     });
 
     it('should delete files', () => {
-        const { cache, files } = new CacheMock().populateCache();
+        const { cache, files } = new Cache({ fs }).populateCache();
 
         cache.deleteFile('collectionName1', files[ 0 ].path, files[ 2 ].path);
         cache.deleteFile('collectionName3.collectionName32', files[ 7 ].path);

@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import yargs from 'yargs/yargs';
 import { camelize, decamelize, ObjectOf } from '@upradata/util';
-import { fromDir, findUp } from '../find';
+import { fromDir, findUp } from '../find-up';
 import { red } from '../template-style';
 import {
     Arguments,
@@ -22,7 +22,7 @@ import {
 const root = findUp.sync(directory => {
     const hasYargs = fs.existsSync(path.join(directory, 'node_modules/yargs'));
     return hasYargs && directory;
-}, { type: 'directory', cwd: __dirname });
+}, { type: 'directory', from: __dirname });
 
 const fromRoot = fromDir(root);
 

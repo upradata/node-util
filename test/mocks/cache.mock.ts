@@ -1,11 +1,13 @@
 
-import * as fs from '../mocks/fs.mock';
 import VinylFile from 'vinyl';
+import { assignRecursive, ensureArray, AssignOptions } from '@upradata/util';
 import { Cache, CacheOptions } from '../../src/cache';
-import { CollectionObject } from '../../src/cache/store-collection';
-import { ensureArray, assignRecursive } from '@upradata/util';
+import type { CollectionObject } from '../../src/cache/store-collection';
+import type { MockFS } from './fs.mock';
+
 
 export interface CacheMockOptions {
+    fs: MockFS;
     cache?: Partial<CacheOptions>;
     mock?: {
         deleteAllCollections?: boolean;
@@ -15,6 +17,7 @@ export interface CacheMockOptions {
 }
 
 export class CacheMock {
+    fs: MockFS;
     cache: Cache;
     private _files = new Set<VinylFile>();
     collectionObject: CollectionObject = {};
@@ -22,8 +25,9 @@ export class CacheMock {
     collectionUniqueNames: string[] = [];
     options: CacheMockOptions;
 
-    constructor(options?: CacheMockOptions) {
-        this.options = assignRecursive({ mock: { nb: 10, deleteAllCollections: true }, cache: {} }, options);
+    constructor(options: CacheMockOptions) {
+        this.options = assignRecursive({ mock: { nb: 10, deleteAllCollections: true }, cache: {} }, options, new AssignOptions({ except: [ 'fs' ] }));
+        this.fs = options.fs;
 
         this.cache = this.createCache();
         if (this.options.mock.deleteAllCollections)
@@ -35,7 +39,7 @@ export class CacheMock {
     }
 
     createCache() {
-        return new Cache(Object.assign({ path: '/path/to/project/cache-dir/cache.json' }, this.options.cache));
+        return new Cache({ path: '/path/to/project/cache-dir/cache.json', ...this.options.cache });
     }
 
     generateFiles(nb: number) {
@@ -47,7 +51,7 @@ export class CacheMock {
                 contents: Buffer.from(`Content ${i}th`),
                 stat: {
                     isDirectory: () => false,
-                    mtime: { getTime: () => parseInt('123465789' + i) }
+                    mtime: { getTime: () => parseInt(`123465789${i}`) }
                 } as any
             });
 
@@ -58,13 +62,13 @@ export class CacheMock {
     }
 
 
-    addEntries(args: { files: VinylFile[], collectionName: string | string[], indexes?: number[]; }) {
+    addEntries(args: { files: VinylFile[]; collectionName: string | string[]; indexes?: number[]; }) {
         const { collectionName, files } = args;
         const { criteria } = this.options.mock;
 
         for (const file of files) {
             this._files.add(file);
-            fs.addOrUpdateFile(file);
+            this.fs.addOrUpdateFile(file);
         }
 
         const paths = files.map(f => f.path);

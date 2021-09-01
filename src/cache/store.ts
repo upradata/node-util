@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import { chain, ensureArray, isDefined, isUndefined, PartialRecursive } from '@upradata/util';
-import { findUpDir } from '../find';
+import { findUpDir } from '../find-up';
 import { warn } from './common';
 import { FileIteration, FilePrint, isFilePrint, StoreCollection } from './store-collection';
 
