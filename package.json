@@ -9,7 +9,7 @@
         "url": "https://github.com/upradata/node-util.git"
     },
     "license": "MIT",
-    "version": "14.0.1",
+    "version": "14.0.2",
     "description": "Set of typescript util tools working in NodeJs",
     "sideEffects": false,
     "main": "lib",
@@ -75,7 +75,11 @@
     },
     "local": {
         "usedBy": {
-            "html-index-webpack-extended": "/home/milottit/Libraries/WebpackAngular/IndexHtmlPlugin"
+            "html-index-webpack-extended": "/home/milottit/Libraries/WebpackAngular/IndexHtmlPlugin",
+            "@upradata/npx-local": "/home/milottit/Libraries/Upra-Data/npx-local",
+            "@upradata/express": "/home/milottit/Libraries/Upra-Data/express",
+            "@upradata/stream": "/home/milottit/Libraries/Upra-Data/stream",
+            "@upradata/puppeteer": "/home/milottit/Libraries/Upra-Data/puppeteer"
         },
         "dependencies": {
             "@upradata/util": "link:/home/milottit/Libraries/Upra-Data/util@13.0.1"

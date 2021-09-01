@@ -54,16 +54,22 @@ export class FindFirstPathOptions {
 export type FindFirstPathOpts = Partial<FindFirstPathOptions>;
 
 
-
-
 const getStatFunction = <Mode extends SyncAsyncMode>(
     mode: Mode, allowSymlinks: boolean
 ): SyncAsyncType<Mode, fs.StatSyncFn<fs.PathLike>, (path: fs.PathLike) => Promise<fs.Stats>> => {
 
     const statSync = allowSymlinks ? fs.statSync : fs.lstatSync;
-    const statAsync = allowSymlinks ? fs.stat : fs.lstat;
+    const statAsync = (allowSymlinks ? fs.stat : fs.lstat);
 
-    return mode === 'sync' ? statSync as any : statAsync as any;
+    const statSyncNotError = (path: fs.PathLike, options?: fs.StatOptions): fs.Stats => {
+        try {
+            return statSync(path, options) as fs.Stats;
+        } catch (e) {
+            return undefined;
+        }
+    };
+
+    return mode === 'sync' ? statSyncNotError : statAsync as any;
 };
 
 
@@ -71,7 +77,7 @@ const getStatFunction = <Mode extends SyncAsyncMode>(
 const _findFirstPath = <Mode extends SyncAsyncMode>(mode: Mode) => (paths: string[], options?: FindFirstPathOpts): SyncAsyncType<Mode, string> => {
     const { allowSymlinks, directory, type, nbConcurrentPromises, preserveOrder } = new FindFirstPathOptions(options);
 
-    const matchType = <M extends SyncAsyncMode>(stat: TT$<fs.Stats>): SyncAsyncType<M, boolean> => stat[ typeMappings[ type ] ]();
+    const matchType = <M extends SyncAsyncMode>(stat: TT$<fs.Stats>): SyncAsyncType<M, boolean> => stat?.[ typeMappings[ type ] ]() ?? false;
 
 
     const getStat = getStatFunction(mode, allowSymlinks);
@@ -98,7 +104,7 @@ const _findFirstPath = <Mode extends SyncAsyncMode>(mode: Mode) => (paths: strin
 
         try {
             return await Promise.any(slicePaths.map(async p => {
-                const isFound = await matchType<'async'>(getStat(path.resolve(directory, p)));
+                const isFound = await matchType<'async'>(getStat(path.resolve(directory, p))).catch(_e => false);
                 return isFound ? p : Promise.reject(new Error('not found'));
             }));
         } catch (e) {
