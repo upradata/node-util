@@ -1,4 +1,3 @@
-import { TT$ } from '@upradata/util';
 import fs from 'fs-extra';
 import path from 'path';
 import process from 'process';
@@ -61,7 +60,7 @@ const getStatFunction = <Mode extends SyncAsyncMode>(
     const statSync = allowSymlinks ? fs.statSync : fs.lstatSync;
     const statAsync = (allowSymlinks ? fs.stat : fs.lstat);
 
-    const statSyncNotError = (path: fs.PathLike, options?: fs.StatOptions): fs.Stats => {
+    const statSyncNoError = (path: fs.PathLike, options?: fs.StatOptions): fs.Stats => {
         try {
             return statSync(path, options) as fs.Stats;
         } catch (e) {
@@ -69,16 +68,20 @@ const getStatFunction = <Mode extends SyncAsyncMode>(
         }
     };
 
-    return mode === 'sync' ? statSyncNotError : statAsync as any;
+    const statAsyncNoError = (path: fs.PathLike): Promise<fs.Stats> => {
+        return statAsync(path).catch(_e => undefined);
+    };
+
+    return mode === 'sync' ? statSyncNoError : statAsyncNoError as any;
 };
 
+type GetStat<M extends SyncAsyncMode> = SyncAsyncType<M, fs.StatSyncFn<fs.PathLike>, (path: fs.PathLike) => Promise<fs.Stats>>;
 
 
 const _findFirstPath = <Mode extends SyncAsyncMode>(mode: Mode) => (paths: string[], options?: FindFirstPathOpts): SyncAsyncType<Mode, string> => {
     const { allowSymlinks, directory, type, nbConcurrentPromises, preserveOrder } = new FindFirstPathOptions(options);
 
-    const matchType = <M extends SyncAsyncMode>(stat: TT$<fs.Stats>): SyncAsyncType<M, boolean> => stat?.[ typeMappings[ type ] ]() ?? false;
-
+    const matchType = <M extends SyncAsyncMode>(stat: fs.Stats): SyncAsyncType<M, boolean> => stat?.[ typeMappings[ type ] ]() ?? false;
 
     const getStat = getStatFunction(mode, allowSymlinks);
 
@@ -88,7 +91,8 @@ const _findFirstPath = <Mode extends SyncAsyncMode>(mode: Mode) => (paths: strin
 
         const [ p, ...restPaths ] = paths;
 
-        const found = matchType(getStat(path.resolve(directory, p)));
+        const stat = getStat(path.resolve(directory, p));
+        const found = stat instanceof Promise ? stat.then(matchType) : matchType(stat);
 
         if (typeof found === 'boolean')
             return found ? p : findPathInOrder(restPaths) as any;
@@ -104,7 +108,7 @@ const _findFirstPath = <Mode extends SyncAsyncMode>(mode: Mode) => (paths: strin
 
         try {
             return await Promise.any(slicePaths.map(async p => {
-                const isFound = await matchType<'async'>(getStat(path.resolve(directory, p))).catch(_e => false);
+                const isFound = await (getStat as GetStat<'async'>)(path.resolve(directory, p)).then(matchType);
                 return isFound ? p : Promise.reject(new Error('not found'));
             }));
         } catch (e) {

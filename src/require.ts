@@ -1,3 +1,5 @@
+/* eslint-disable global-require */
+/* eslint-disable no-case-declarations */
 import fs from 'fs-extra';
 import path from 'path';
 import ts from 'typescript';
@@ -16,9 +18,9 @@ export interface RequireOptions {
 }
 
 
-export const requireModuleDefault = (filepath: string, options: RequireOptions) => importDefault(requireModule(filepath, options));
+export const requireModuleDefault = <T = unknown>(filepath: string, options: RequireOptions): T => importDefault(requireModule(filepath, options));
 
-export function requireModule(filepath: string, options: RequireOptions): any {
+export function requireModule<T = unknown>(filepath: string, options: RequireOptions): T {
     switch (path.extname(filepath)) {
         case '.json': return readJson.sync(filepath);
         case '.js': return require(filepath);
@@ -47,7 +49,7 @@ export function requireModule(filepath: string, options: RequireOptions): any {
                 deleteOutDir: options.deleteOutDir || false
             });
 
-            cache.store.options.extra = file => jsFile.filepath; // add js compiled file path to get if cache hit
+            cache.store.options.extra = _file => jsFile.filepath; // add js compiled file path to get if cache hit
 
             if (options.cache || options.cacheFile) {
                 cache.addOrUpdateFile(collectionName, filepath);
@@ -60,6 +62,6 @@ export function requireModule(filepath: string, options: RequireOptions): any {
     }
 }
 
-export function importDefault(mod: any) {
+export function importDefault<T = unknown>(mod: any): T {
     return mod && mod.__esModule ? mod.default : mod;
 }
