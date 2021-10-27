@@ -45,7 +45,7 @@ export type Parsers<O extends { default?: string; }> = Partial<Record<keyof O, P
 const commaToNumber = (s: number | string) => isDefined(s) ? parseFloat(`${s}`.replace(',', '.')) : s;
 
 export const cellParsers = {
-    boolean: (cellData: string | boolean) => typeof cellData === 'boolean' ? cellData : cellData === 'true' ? true : false,
+    boolean: (cellData: string | boolean) => typeof cellData === 'boolean' ? cellData : cellData === 'true',
     string: (cellData: string) => cellData,
     number: (cellData: string) => commaToNumber(cellData),
     arrayString: (cellData: string) => isDefined(cellData) ? cellData.replace(/[\[\]]/g, '').split(',') : cellData,
@@ -97,7 +97,7 @@ export const autoParser = (emptyCell: any = '') => (cellData: string) => {
         .next(cellData => ({ if: regexParsers.number.test(cellData), then: cellParsers.number }))
         .next(cellData => ({ if: regexParsers.arrayNumber.test(cellData), then: cellParsers.arrayNumber }))
         .next(cellData => ({ if: regexParsers.arrayString.test(cellData), then: cellParsers.arrayString }))
-        .next(cellData => ({ then: cellParsers.string }))
+        .next(_cellData => ({ then: cellParsers.string }))
         .value;
 
     return cellDataParser(parser, emptyCell);
@@ -145,7 +145,7 @@ export type CsvOptions<O extends {} = {}> = Partial<Omit<CSVParseParam, 'headers
 
 
 export const csvToJsonWithDefaultParsers = <O extends { default?: string; }>(defaultParserOptions: ParsersOptions<O> = {}) =>
-    <R>(file: string, csvOptions?: CsvOptions<O>, options: { stream?: TransformOptions, parsers?: ParsersOpts<O>; } = {}): Promise<R[]> => {
+    <R>(file: string, csvOptions?: CsvOptions<O>, options: { stream?: TransformOptions; parsers?: ParsersOpts<O>; } = {}): Promise<R[]> => {
 
         return csvToJson<R>(file, {
             colParser: getParsers(csvOptions.headers, defaultParserOptions, options.parsers),
@@ -154,7 +154,9 @@ export const csvToJsonWithDefaultParsers = <O extends { default?: string; }>(def
     };
 
 
-export const csvToJsonWithAutoParsers = <O extends { default?: string; }, R>(file: string, csvOptions?: CsvOptions<O>, options: { stream?: TransformOptions, parsers?: ParsersOpts<O>; } = {}): Promise<R[]> => {
+export const csvToJsonWithAutoParsers = <O extends { default?: string; }, R>(
+    file: string, csvOptions?: CsvOptions<O>, options: { stream?: TransformOptions; parsers?: ParsersOpts<O>; } = {}
+): Promise<R[]> => {
 
     return csvToJsonWithDefaultParsers<O>({
         default:

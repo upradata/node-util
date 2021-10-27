@@ -78,10 +78,11 @@
 			"html-index-webpack-extended": "/home/milottit/Libraries/WebpackAngular/IndexHtmlPlugin",
 			"@upradata/npx-local": "/home/milottit/Libraries/Upra-Data/npx-local",
 			"@upradata/express": "/home/milottit/Libraries/Upra-Data/express",
-			"@upradata/stream": "/home/milottit/Libraries/Upra-Data/stream",
+			"@upradata/stream": "/home/milottit/Libraries/Upra-Data/stream-html",
 			"@upradata/puppeteer": "/home/milottit/Libraries/Upra-Data/puppeteer",
 			"@upradata/npx-init": "/home/milottit/Libraries/Upra-Data/npx-init",
-			"@upradata/tilda-tools": "/home/milottit/Libraries/Tilda/tools"
+			"@upradata/tilda-tools": "/home/milottit/Libraries/Tilda/tools",
+			"@upradata/stream-image": "/home/milottit/Libraries/Upra-Data/stream-image"
 		},
 		"dependencies": {
 			"@upradata/util": "link:/home/milottit/Libraries/Upra-Data/util@13.0.1"

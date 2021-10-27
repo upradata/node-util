@@ -9,7 +9,6 @@ specifiers:
   '@types/vinyl': ^2.0.5
   '@types/yargs': ^17.0.2
   '@types/yargs-parser': ^20.2.1
-  '@upradata/util': ^13.0.1
   colors: ^1.4.0
   concurrently: ^6.2.1
   csvtojson: ^2.0.10
@@ -31,7 +30,6 @@ specifiers:
   yargs-parser: ^20.2.9
 
 dependencies:
-  '@upradata/util': 13.0.1
   colors: 1.4.0
   csvtojson: 2.0.10
   fs-extra: 10.0.0
@@ -797,13 +795,6 @@ packages:
       '@types/yargs-parser': 20.2.1
     dev: true
 
-  /@upradata/util/13.0.1:
-    resolution: {integrity: sha512-g5TB5MlF5bAhmZX15ptnOhFilymUA1xs1bjsuvCJf8NuZDT8msK5dEcjlarq6UOulK+Rs3nECmehfPbYbEDcqA==}
-    dependencies:
-      common-tags: 1.8.0
-      emoji-regex: 9.2.2
-    dev: false
-
   /abab/2.0.5:
     resolution: {integrity: sha512-9IK9EadsbHo6jLWIpxpR6pL0sazTXV6+SQv25ZB+F7Bj9mJNaOc4nCRabwd5M/JwmUa8idz6Eci6eKfJryPs6Q==}
     dev: true
@@ -1159,11 +1150,6 @@ packages:
       delayed-stream: 1.0.0
     dev: true
 
-  /common-tags/1.8.0:
-    resolution: {integrity: sha512-6P6g0uetGpW/sdyUy/iQQCbFF0kWVMSIVSyYz7Zgjcgh8mgw8PQzDNZeyZ5DQ2gM7LBoZPHmnjz8rUthkBG5tw==}
-    engines: {node: '>=4.0.0'}
-    dev: false
-
   /concat-map/0.0.1:
     resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
 
@@ -1311,10 +1297,6 @@ packages:
 
   /emoji-regex/8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
-
-  /emoji-regex/9.2.2:
-    resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
-    dev: false
 
   /errno/0.1.8:
     resolution: {integrity: sha512-dJ6oBr5SQ1VSd9qkk7ByRgb/1SH4JZjCHSW/mr63/QcXO9zLVxvJ6Oy13nio03rxpSnVDDjFor75SjVeZWPW/A==}

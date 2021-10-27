@@ -168,6 +168,19 @@ export class CustomYargs extends Yargs {
             const { handler } = commandHandler;
             commandHandler.handler = argv => handler(argv, this as any);
 
+            const { middlewares } = commandHandler;
+            commandHandler.middlewares = middlewares.map(m => {
+                function middleware(argv) {
+                    return m(argv, this as any);
+                }
+
+                middleware.applyBeforeValidation = m.applyBeforeValidation;
+                middleware.global = m.global;
+                middleware.option = m.option;
+
+                return middleware;
+            });
+
             return applyOriginal(isDefaultCommand, commandHandler, innerArgv, currentContext, helpOnly, aliases, yargs);
 
         };
@@ -179,13 +192,13 @@ export class CustomYargs extends Yargs {
 export type ParseArgs<T = {}> = CustomYargs & YargsInstance<T> & Command<T>;
 
 
-export type Command<T> = & {
+export type Command<T> = {
     command<V, U>(
         command: string | ReadonlyArray<string>,
         description: string,
         builder?: BuilderCallback<T, U, ParseArgs<T>>,
         handler?: (args: Arguments<V>, yargs: ParseArgs<T>) => void,
-        middlewares?: MiddlewareFunction[],
+        middlewares?: MiddlewareFunction<T, YargsInstance<T>>[],
         deprecated?: boolean | string,
     ): ParseArgs<T>;
     command<O extends { [ key: string ]: Options; }>(
@@ -193,7 +206,7 @@ export type Command<T> = & {
         description: string,
         builder?: O,
         handler?: (args: Arguments<InferredOptionTypes<O>>, yargs: ParseArgs<T>) => void,
-        middlewares?: MiddlewareFunction[],
+        middlewares?: MiddlewareFunction<T, YargsInstance<T>>[],
         deprecated?: boolean | string,
     ): ParseArgs<T>;
     command<V, U>(command: string | ReadonlyArray<string>, description: string, module: CommandModule<T, V, U, ParseArgs<T>>): ParseArgs<T>;
@@ -202,7 +215,7 @@ export type Command<T> = & {
         showInHelp: false,
         builder?: BuilderCallback<T, U, ParseArgs<T>>,
         handler?: (args: Arguments<V>, yargs: ParseArgs<T>) => void,
-        middlewares?: MiddlewareFunction[],
+        middlewares?: MiddlewareFunction<T, YargsInstance<T>>[],
         deprecated?: boolean | string,
     ): ParseArgs<T>;
     command<O extends { [ key: string ]: Options; }>(
@@ -211,15 +224,15 @@ export type Command<T> = & {
         builder?: O,
         handler?: (args: Arguments<InferredOptionTypes<O>>, yargs: ParseArgs<T>) => void,
     ): ParseArgs<T>;
-    command<V, U>(command: string | ReadonlyArray<string>, showInHelp: false, module: CommandModule<T, V, U, ParseArgs<T>>): ParseArgs<T>;
-    command<V, U>(module: CommandModule<T, V, U, ParseArgs<T>>): ParseArgs<T>;
+    command<V, U>(command: string | ReadonlyArray<string>, showInHelp: false, module: ParseArgsCommandModule<T, V, U>): ParseArgs<T>;
+    command<V, U>(module: ParseArgsCommandModule<T, V, U>): ParseArgs<T>;
 };
 
 
 export type ParseArgsCtor<T = {}> = new () => ParseArgs<T>;
 
 export const ParseArgsFactory = <T = {}>() => CustomYargs as any as ParseArgsCtor<T>;
-export const ParseArgs = ParseArgsFactory();
+// export const ParseArgs = ParseArgsFactory();
 
 
 export type ParseArgsCommandModule<T = {}, V = T, U = T> = CommandModule<T, V, U, ParseArgs<T>, {}, {}>;

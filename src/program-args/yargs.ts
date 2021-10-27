@@ -396,7 +396,7 @@ export interface Yargs<T = {}> {
      * @param callbacks Can be a function or a list of functions. Each callback gets passed a reference to Yargs.
      * @param [applyBeforeValidation] Set to `true` to apply middleware before validation. This will execute the middleware prior to validation checks, but after parsing.
      */
-    middleware(callbacks: MiddlewareFunction<T> | ReadonlyArray<MiddlewareFunction<T>>, applyBeforeValidation?: boolean): Yargs<T>;
+    middleware(callbacks: MiddlewareFunction<T, Yargs<T>> | ReadonlyArray<MiddlewareFunction<T, Yargs<T>>>, applyBeforeValidation?: boolean): Yargs<T>;
 
     /**
      * The number of arguments that should be consumed after a key. This can be a useful hint to prevent parsing ambiguity.
@@ -648,7 +648,7 @@ export interface Yargs<T = {}> {
 
 
     $0: string;
-    argv?: Arguments;
+    argv?: Arguments<T>;
     customScriptName: boolean;
 
     addHelpOpt(opt: any, msg: any): this;
@@ -949,7 +949,7 @@ export type ParseCallback<T = {}> = (err: Error | undefined, Yargs: Arguments<T>
 export type SyncCompletionFunction = (current: string, Yargs: any) => string[];
 export type AsyncCompletionFunction = (current: string, Yargs: any, done: (completion: ReadonlyArray<string>) => void) => void;
 export type PromiseCompletionFunction = (current: string, Yargs: any) => Promise<string[]>;
-export type MiddlewareFunction<T = {}> = (args: Arguments<T>) => void;
+export type MiddlewareFunction<T /* = {} */, Y extends Yargs> = (args: Arguments<T>, yargs: Y) => void;
 export type Choices = ReadonlyArray<string | number | true | undefined>;
 export type PositionalOptionsType = 'boolean' | 'number' | 'string';
 

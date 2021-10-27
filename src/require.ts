@@ -2,11 +2,35 @@
 /* eslint-disable no-case-declarations */
 import fs from 'fs-extra';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import ts from 'typescript';
 import { Cache } from './cache';
 import { readJson } from './json/read-json5';
 import { red, yellow } from './template-style';
 import { TscCompiler } from './ts/tsc';
+
+
+export const requireJs = async <T = unknown>(filepath: string): Promise<T> => {
+    try {
+        // dynamic import expects file url instead of path and may fail
+        // when windows path is provided
+        const { default: imported } = await import(pathToFileURL(filepath).toString());
+        return imported;
+    } catch (importError) {
+        // TODO remove require in v3
+        try {
+            return require(filepath);
+        } catch (requireError) {
+            // throw original error if es module is detected
+            if (requireError.code === 'ERR_REQUIRE_ESM') {
+                throw importError;
+            } else {
+                throw requireError;
+            }
+        }
+    }
+};
+
 
 
 export interface RequireOptions {
@@ -20,7 +44,7 @@ export interface RequireOptions {
 
 export const requireModuleDefault = <T = unknown>(filepath: string, options: RequireOptions): T => importDefault(requireModule(filepath, options));
 
-export function requireModule<T = unknown>(filepath: string, options: RequireOptions): T {
+export function requireModule<T = unknown>(filepath: string, options?: RequireOptions): T {
     switch (path.extname(filepath)) {
         case '.json': return readJson.sync(filepath);
         case '.js': return require(filepath);
