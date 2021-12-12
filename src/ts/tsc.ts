@@ -70,22 +70,24 @@ export class TscCompiler {
         const program = ts.createProgram(fileNames, compilerOptions, host);
 
         const emitResult = program.emit();
-
         const allDiagnostics = ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics);
 
         if (allDiagnostics !== undefined && allDiagnostics.length > 0) {
-            let errorMessages: string = undefined;
 
-            for (const diagnostic of allDiagnostics) {
+            const errorMessages = allDiagnostics.reduce((errorMessages, diagnostic) => {
+
                 if (diagnostic.file) {
+
                     const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
                     const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
-                    errorMessages += `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}\n`;
+
+                    return errorMessages + `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}\n`;
                 }
-                else {
-                    errorMessages += `${ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')}\n`;
-                }
-            }
+
+                return errorMessages + `${ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')}\n`;
+
+            }, '');
+
 
             throw new Error(errorMessages);
         }

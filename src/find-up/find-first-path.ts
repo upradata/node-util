@@ -55,7 +55,7 @@ export type FindFirstPathOpts = Partial<FindFirstPathOptions>;
 
 const getStatFunction = <Mode extends SyncAsyncMode>(
     mode: Mode, allowSymlinks: boolean
-): SyncAsyncType<Mode, fs.StatSyncFn<fs.PathLike>, (path: fs.PathLike) => Promise<fs.Stats>> => {
+): SyncAsyncType<Mode, fs.StatSyncFn, (path: fs.PathLike) => Promise<fs.Stats>> => {
 
     const statSync = allowSymlinks ? fs.statSync : fs.lstatSync;
     const statAsync = (allowSymlinks ? fs.stat : fs.lstat);
@@ -75,7 +75,7 @@ const getStatFunction = <Mode extends SyncAsyncMode>(
     return mode === 'sync' ? statSyncNoError : statAsyncNoError as any;
 };
 
-type GetStat<M extends SyncAsyncMode> = SyncAsyncType<M, fs.StatSyncFn<fs.PathLike>, (path: fs.PathLike) => Promise<fs.Stats>>;
+type GetStat<M extends SyncAsyncMode> = SyncAsyncType<M, fs.StatSyncFn, (path: fs.PathLike) => Promise<fs.Stats>>;
 
 
 const _findFirstPath = <Mode extends SyncAsyncMode>(mode: Mode) => (paths: string[], options?: FindFirstPathOpts): SyncAsyncType<Mode, string> => {

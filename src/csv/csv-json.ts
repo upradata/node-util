@@ -71,8 +71,15 @@ export function csvToJson<R>(file: string, param?: Partial<CSVParseParam & { ski
 
 
 // export type Row = ObjectOf<string>;
-export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: Array<keyof T>; nbKeys?: number; } = {}): string {
-    const { csvColumnKeys, nbKeys } = options;
+export type JsonToCsvOptions<T> = {
+    csvColumnKeys?: Array<keyof T>;
+    nbKeys?: number;
+    delimiter?: string;
+};
+
+
+export function jsonToCsv<T>(json: T[], options: JsonToCsvOptions<T> = {}): string {
+    const { csvColumnKeys, nbKeys, delimiter = ';' } = options;
 
     let header: string[] = csvColumnKeys ? csvColumnKeys as any : [];
 
@@ -89,7 +96,7 @@ export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: Array<keyof T
         }
     }
 
-    let csv = header.join(';');
+    let csv = header.join(delimiter);
 
     for (const row of json) {
         const fullRow = {};
@@ -97,7 +104,7 @@ export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: Array<keyof T
         for (const h of header)
             fullRow[ h ] = row[ h ] ?? '';
 
-        csv += '\n' + Object.values(fullRow).join((';'));
+        csv += '\n' + Object.values(fullRow).join((delimiter));
     }
 
     return csv;

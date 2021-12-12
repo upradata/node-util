@@ -1,7 +1,7 @@
 import { Alignment, table, TableUserConfig } from 'table';
-import * as alignString from 'table/dist/alignString';
-import * as calculateCellWidths from 'table/dist/calculateCellWidths';
-import { makeTableConfig } from 'table/dist/makeTableConfig';
+import * as alignString from 'table/dist/src/alignString.js';
+import * as calculateCellWidths from 'table/dist/src/calculateCellWidths';
+import { makeTableConfig } from 'table/dist/src/makeTableConfig';
 import {
     assignDefaultOption,
     assignRecursive,

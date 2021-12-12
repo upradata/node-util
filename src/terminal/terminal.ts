@@ -22,7 +22,8 @@ export class TitleOptions {
 
 export interface TableData {
     data: TableRows;
-    header?: TableRow;
+    headers?: TableRow;
+    title?: string;
 }
 
 
@@ -76,16 +77,23 @@ export class Terminal {
         console.log(this.title(title, option));
     }
 
-    table({ data, header }: TableData, config?: TableConfig): string {
-        const d: TableItem[][] = header ? [ header ] : [];
+    table({ data, headers, title }: TableData, config?: TableConfig): string {
+        const d: TableItem[][] = headers ? [ headers, ...data ] : data;
 
-        if (Array.isArray(data[ 0 ]))
+        /* if (Array.isArray(data[ 0 ]))
             d.push(...data as any);
         else
-            d.push([ data as any ]);
+            d.push([ data as any ]); */
 
+        const c = {
+            header: title ? {
+                alignment: 'center',
+                content: title,
+            } : undefined,
+            ...config
+        } as TableConfig;
 
-        return this.tableString.get(d, config);
+        return this.tableString.get(d, c);
     }
 
     logTable(data: TableData, config?: TableConfig) {
