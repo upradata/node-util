@@ -11,10 +11,26 @@ export type StatTable = { headers: string[]; rows: TableRows; };
 export type StatTableWithName = StatTable & { name: string; collectionName: string; };
 
 export type OutputStat = Record<string /* stat name */, StatTableWithName>;
+export type StatCollection = { collectionName: string; stats: OutputStat; };
+
 export type OutputStats = {
     global: OutputStat;
-    detailed: Record<string /* collection name */, OutputStat>;
+    detailed: Record<string /* collection name */, StatCollection>;
 };
+
+
+export type SortType = keyof StatsToStringOptions[ 'sort' ];
+type SortData<T extends SortType> = T extends 'stats' ? StatTableWithName : StatCollection;
+
+export type StatsSorter<T extends SortType> = (stats: SortData<T>[]) => SortData<T>[];
+
+export interface StatsToStringOptions {
+    rowWidth?: number;
+    sort?: {
+        stats?: boolean | StatsSorter<'stats'>;
+        collections?: boolean | StatsSorter<'collections'>;
+    };
+}
 
 
 export class Stats<S extends Stat> {
@@ -52,16 +68,19 @@ export class Stats<S extends Stat> {
     }
 
     get(...names: string[]) {
-        let stat: Stat | Statistics<S> = this.stats[ names[ 0 ] ];
 
-        for (const name of names.slice(1)) {
-            if (!this.stats[ name ])
-                return undefined;
-
-            stat = stat[ name ];
-        }
-
+        const stat = names.reduce((stat, name) => stat[ name ] || {}, this.stats);
         return stat;
+        /*   let stat: Stat | Statistics<S> = this.stats[ names[ 0 ] ];
+  
+          for (const name of names.slice(1)) {
+              if (!this.stats[ name ])
+                  return undefined;
+  
+              stat = stat[ name ];
+          }
+  
+          return stat; */
     }
 
 
@@ -88,12 +107,12 @@ export class Stats<S extends Stat> {
 
                         datas.global[ dataName ] = stat;
                     } else {
-                        const stat = (datas.detailed[ dataName ] || {}) as OutputStat;
+                        const collection = (datas.detailed[ dataName ] || { collectionName: fullName, stats: {} }) as StatCollection;
 
                         const s = statData as StatData<'detailed'>;
-                        stat[ dataName ] = { headers: s.headers, rows: s.data, name: dataName, collectionName: fullName };
+                        collection.stats[ dataName ] = { headers: s.headers, rows: s.data, name: dataName, collectionName: fullName };
 
-                        datas.detailed[ fullName ] = stat;
+                        datas.detailed[ fullName ] = collection;
                     }
                 }
             }
@@ -123,36 +142,52 @@ export class Stats<S extends Stat> {
     }
 
     toString(...names: string[]): string;
-    toString(names: string[], options?: { rowWidth?: number; }): string;
-    toString(n: any, o?: any): string {
-        const names = n as string[];
-        const options = o as { rowWidth?: number; };
+    toString(names: string[], options?: StatsToStringOptions): string;
+    toString(...args: any[]): string {
+        const isOptions = typeof args.slice(-1)[ 0 ] === 'object';
+
+        const names = (isOptions ? args.slice(0, -1) : args) as string[];
+        const options = (isOptions ? args.slice(-1)[ 0 ] : {}) as StatsToStringOptions;
 
         const datas = this.output(...names);
 
-        const terminal = new Terminal({ maxWidth: { row: { width: options.rowWidth } } });
+        const terminal = new Terminal({ maxWidth: { row: { width: options?.rowWidth } } });
 
 
-        const toString = (data: OutputStat) => {
-            for (const { name, collectionName, headers, rows } of Object.values(data)) {
-
-                if (rows.length > 0) {
-                    return terminal.table({
-                        title: collectionName ? `${collectionName.replaceAll('.', ' ❯ ')} ⟹  ${name}` : name,
-                        headers,
-                        data: rows
-                    });
-                }
+        const toString = ({ name, collectionName, headers, rows }: StatTableWithName) => {
+            if (rows.length > 0) {
+                return terminal.table({
+                    title: collectionName ? `${collectionName.replaceAll('.', ' ❯ ')} ⟹  ${name}` : name,
+                    headers,
+                    data: rows
+                });
             }
         };
 
-
         const title = terminal.title(`"${this.statsName}" summary`, { type: 'band', style: highlightMagenta });
 
-        return [
-            ...Object.values(datas.detailed),
+        const sort = <T extends SortType>(stats: SortData<T>[], type: T): SortData<T>[] => {
+            const sortColl = options.sort?.[ type ];
+
+            if (typeof sortColl === 'function')
+                return (sortColl as StatsSorter<T>)(stats);
+
+            if (!sortColl)
+                return stats;
+
+            // default sorting is the alphanumeric order of the name field depending of the "type"
+            const filedToCompare = type === 'collections' ? 'collectionName' : 'name';
+
+            return stats.sort((s1, s2) => s1[ filedToCompare ].localeCompare(s2[ filedToCompare ]));
+        };
+
+
+        const stats = [
+            ...sort(Object.values(datas.detailed), 'collections').map(c => c.stats),
             datas.global
-        ].reduce((s, data) => `${s}\n${toString(data)}`, `${title}\n`);
+        ].flatMap(s => Object.values(s));
+
+        return sort(stats, 'stats').reduce((s, data) => `${s}\n${toString(data)}`, `${title}\n`);
     }
 
     log(...names: string[]) {

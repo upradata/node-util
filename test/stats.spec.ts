@@ -36,10 +36,16 @@ const createStats = () => {
 describe('Stats test', () => {
 
     it('should create all collections', () => {
-        expect(createStats().output()).toMatchSnapshot('all stats as collections');
+        const stats = createStats();
+        expect(stats.output()).toMatchSnapshot('all stat collections');
+        expect(stats.output('collection2', 'sub-collection')).toMatchSnapshot('stat sub-collections');
+
     });
 
     it('should log all collections', () => {
-        expect(createStats().toString([], { rowWidth: 200 }).split('\n')).toMatchSnapshot('all stats as string');
+
+        const stats = createStats();
+        expect(stats.toString([], { rowWidth: 200 }).split('\n')).toMatchSnapshot('all stats as string');
+        expect(stats.toString([ 'collection2', 'sub-collection' ], { rowWidth: 200 }).split('\n')).toMatchSnapshot('sub-collection stats as string');
     });
 });

@@ -29,3 +29,4 @@ stat3.fail(...all.slice(1).map(file => ({ file, reason: `J'en sais rien` })));
 
 
 stats.log();
+stats.log('collection2', 'sub-collection');
