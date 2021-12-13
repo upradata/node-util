@@ -144,10 +144,10 @@ export class Stats<S extends Stat> {
     toString(...names: string[]): string;
     toString(names: string[], options?: StatsToStringOptions): string;
     toString(...args: any[]): string {
-        const isOptions = typeof args.slice(-1)[ 0 ] === 'object';
+        const hasOptions = Array.isArray(args[ 0 ]);
 
-        const names = (isOptions ? args.slice(0, -1) : args) as string[];
-        const options = (isOptions ? args.slice(-1)[ 0 ] : {}) as StatsToStringOptions;
+        const names = (hasOptions ? args[ 0 ] || [] : args) as string[];
+        const options = (hasOptions ? args[ 1 ] || {} : {}) as StatsToStringOptions;
 
         const datas = this.output(...names);
 
@@ -183,15 +183,22 @@ export class Stats<S extends Stat> {
 
 
         const stats = [
-            ...sort(Object.values(datas.detailed), 'collections').map(c => c.stats),
-            datas.global
-        ].flatMap(s => Object.values(s));
+            ...sort(Object.values(datas.detailed), 'collections').flatMap(c => Object.values(c.stats)),
+            /* ...sort(
+                sort(Object.values(datas.detailed), 'collections').flatMap(c => Object.values(c.stats)),
+                'stats'
+            ), */
+            ...sort(Object.values(datas.global), 'stats')
+        ];
 
-        return sort(stats, 'stats').reduce((s, data) => `${s}\n${toString(data)}`, `${title}\n`);
+        return stats.reduce((s, data) => `${s}\n${toString(data)}`, `${title}\n`);
     }
 
-    log(...names: string[]) {
-        console.log(this.toString(...names));
+
+    log(...names: string[]): this;
+    log(names: string[], options?: StatsToStringOptions): this;
+    log(...args: any[]): this {
+        console.log(this.toString(...args));
         return this;
     }
 }
