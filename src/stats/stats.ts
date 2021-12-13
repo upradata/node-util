@@ -1,36 +1,12 @@
 
-import { isArray, ObjectOf } from '@upradata/util';
+import { camelize, CamelCase } from '@upradata/util';
 import { highlightMagenta } from '../template-style';
-import { TableColumnConfig, TableRow, TableRows, Terminal } from '../terminal';
+import { TableRow, TableRows, Terminal } from '../terminal';
 import { Stat, StatCtor, StatData } from './stat';
-
-
-export type Statistics<S extends Stat> = ObjectOf<S | Statistics<S>>;
-
-export type StatTable = { headers: string[]; rows: TableRows; };
-export type StatTableWithName = StatTable & { name: string; collectionName: string; };
-
-export type OutputStat = Record<string /* stat name */, StatTableWithName>;
-export type StatCollection = { collectionName: string; stats: OutputStat; };
-
-export type OutputStats = {
-    global: OutputStat;
-    detailed: Record<string /* collection name */, StatCollection>;
-};
-
-
-export type SortType = keyof StatsToStringOptions[ 'sort' ];
-type SortData<T extends SortType> = T extends 'stats' ? StatTableWithName : StatCollection;
-
-export type StatsSorter<T extends SortType> = (stats: SortData<T>[]) => SortData<T>[];
-
-export interface StatsToStringOptions {
-    rowWidth?: number;
-    sort?: {
-        stats?: boolean | StatsSorter<'stats'>;
-        collections?: boolean | StatsSorter<'collections'>;
-    };
-}
+import {
+    Statistics, StatTableWithName, StatCollection, OutputStats, StatsToStringOptions,
+    SortData, StatSorter, SortType, statSorters
+} from './types';
 
 
 export class Stats<S extends Stat> {
@@ -68,19 +44,7 @@ export class Stats<S extends Stat> {
     }
 
     get(...names: string[]) {
-
-        const stat = names.reduce((stat, name) => stat[ name ] || {}, this.stats);
-        return stat;
-        /*   let stat: Stat | Statistics<S> = this.stats[ names[ 0 ] ];
-  
-          for (const name of names.slice(1)) {
-              if (!this.stats[ name ])
-                  return undefined;
-  
-              stat = stat[ name ];
-          }
-  
-          return stat; */
+        return names.reduce((stat, name) => stat[ name ] || {}, this.stats);
     }
 
 
@@ -88,11 +52,11 @@ export class Stats<S extends Stat> {
         const stats = names.length === 0 ? this.stats : this.get(...names);
 
         const datas: OutputStats = {
-            detailed: {},
+            collections: {},
             global: {}
         };
 
-        const isGlobalStat = (s: StatData): s is StatData<'global'> => !isArray(s.data[ 0 ]);
+        const isGlobalStat = (s: StatData): s is StatData<'global'> => !Array.isArray(s.data[ 0 ]);
 
         const addData = (fullName: string, stat: S) => {
             for (const [ dataName, statData ] of Object.entries(stat.datas(fullName))) {
@@ -107,12 +71,12 @@ export class Stats<S extends Stat> {
 
                         datas.global[ dataName ] = stat;
                     } else {
-                        const collection = (datas.detailed[ dataName ] || { collectionName: fullName, stats: {} }) as StatCollection;
+                        const collection = (datas.collections[ fullName ] || { collectionName: fullName, stats: {} }) as StatCollection;
 
                         const s = statData as StatData<'detailed'>;
                         collection.stats[ dataName ] = { headers: s.headers, rows: s.data, name: dataName, collectionName: fullName };
 
-                        datas.detailed[ fullName ] = collection;
+                        datas.collections[ fullName ] = collection;
                     }
                 }
             }
@@ -166,29 +130,27 @@ export class Stats<S extends Stat> {
 
         const title = terminal.title(`"${this.statsName}" summary`, { type: 'band', style: highlightMagenta });
 
-        const sort = <T extends SortType>(stats: SortData<T>[], type: T): SortData<T>[] => {
-            const sortColl = options.sort?.[ type ];
+        const sort = <T extends SortType>(datas: SortData<T>[], type: T): SortData<T>[] => {
+            const sorter = options.sort?.[ camelize(type) ] as StatsToStringOptions[ 'sort' ][ CamelCase<T> ];
 
-            if (typeof sortColl === 'function')
-                return (sortColl as StatsSorter<T>)(stats);
+            if (!sorter)
+                return datas;
 
-            if (!sortColl)
-                return stats;
-
-            // default sorting is the alphanumeric order of the name field depending of the "type"
-            const filedToCompare = type === 'collections' ? 'collectionName' : 'name';
-
-            return stats.sort((s1, s2) => s1[ filedToCompare ].localeCompare(s2[ filedToCompare ]));
+            const s = (typeof sorter === 'function' ? sorter : statSorters[ camelize(sorter) ](type)) as StatSorter<T>;
+            return s(datas);
         };
 
 
         const stats = [
-            ...sort(Object.values(datas.detailed), 'collections').flatMap(c => Object.values(c.stats)),
+            ...sort(Object.values(datas.collections), 'collections').flatMap(c => Object.values(c.stats)),
             /* ...sort(
                 sort(Object.values(datas.detailed), 'collections').flatMap(c => Object.values(c.stats)),
                 'stats'
             ), */
-            ...sort(Object.values(datas.global), 'stats')
+            ...sort(Object.values(datas.global).map(stats => options.sort?.globalRows ? ({
+                ...stats,
+                rows: sort(stats.rows, 'global-rows')
+            }) : stats), 'stats')
         ];
 
         return stats.reduce((s, data) => `${s}\n${toString(data)}`, `${title}\n`);

@@ -51,10 +51,7 @@ describe('Stats test', () => {
         expect(stats.toString([], {
             sort: {
                 collections: colls => colls.sort((c1, c2) => c1.collectionName.localeCompare(c2.collectionName) * -1),
-                stats: stats => stats.sort((s1, s2) => {
-                    console.log(s1.name, s2.name);
-                    return s1.name.localeCompare(s2.name) * -1;
-                })
+                stats: stats => stats.sort((s1, s2) => s1.name.localeCompare(s2.name) * -1)
             }
         })).toMatchSnapshot('all stats as string with sorting');
 
