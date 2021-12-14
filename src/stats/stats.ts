@@ -1,7 +1,7 @@
 
 import { camelize, CamelCase } from '@upradata/util';
 import { highlightMagenta } from '../template-style';
-import { TableRow, TableRows, Terminal } from '../terminal';
+import { Terminal } from '../terminal';
 import { Stat, StatCtor, StatData } from './stat';
 import {
     Statistics, StatTableWithName, StatCollection, OutputStats, StatsToStringOptions,
@@ -137,7 +137,7 @@ export class Stats<S extends Stat> {
                 return datas;
 
             const s = (typeof sorter === 'function' ? sorter : statSorters[ camelize(sorter) ](type)) as StatSorter<T>;
-            return s(datas);
+            return s?.(datas) ?? datas;
         };
 
 
@@ -162,17 +162,5 @@ export class Stats<S extends Stat> {
     log(...args: any[]): this {
         console.log(this.toString(...args));
         return this;
-    }
-}
-
-
-
-class GlobalStat {
-    headers: string[];
-    rows: TableRows = [];
-
-    addData(statData: { headers: string[]; data: TableRow; }) {
-        this.headers = statData.headers;
-        this.rows.push(statData.data);
     }
 }

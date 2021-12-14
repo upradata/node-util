@@ -1,8 +1,9 @@
 import { Option } from 'commander';
+export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 import * as commanderOption from 'commander/lib/option';
+import { NonFunctionProperties } from '@upradata/util';
 import { CommanderParser } from './parsers';
 import { camelcase } from './util';
-export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 
 /* export interface CliOptionInit {
     flags: string;
@@ -10,7 +11,7 @@ export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 } */
 
 
-export type CliOptionInit<T> = {
+export type CliOptionInit<T> = Omit<NonFunctionProperties<Partial<Option>>, 'parseArg' | 'argChoices'> & {
     flags: string;
     description?: string;
     defaultValue?: T;
@@ -27,6 +28,7 @@ export interface Alias {
     flags: string;
     parser?: CommanderParser<any>;
 }
+
 
 export class CliOption extends Option {
     private cliAliases: Set<CliOption> = new Set();

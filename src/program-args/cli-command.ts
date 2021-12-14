@@ -1,7 +1,9 @@
+import { bind } from '@upradata/util';
 import { Command, Option, OptionValueSource } from 'commander';
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 import { EventEmitter } from 'events';
 import { CliOption, CliOptionInit } from './cli-option';
+import { CliHelper, CliHelperOpts } from './helper';
 
 
 declare module 'commander' {
@@ -31,11 +33,39 @@ declare module 'commander' {
         _showSuggestionAfterError: boolean;
 
         options: CliOption[];
+        createHelp(): CliHelper;
     }
 }
 
 
 export class CliCommand extends Command {
+    public _helperOptions: CliHelperOpts;
+
+    constructor(name?: string) {
+        super(name);
+
+        const optionsPush = bind(this.options.push, this.options);
+        const optionsSet = new Set<CliOption>();
+
+        this.options.push = (...options: CliOption[]) => {
+            const opts = options.filter(o => !optionsSet.has(o));
+            opts.forEach(o => optionsSet.add(o));
+
+            return optionsPush(...opts);
+        };
+    }
+
+
+    helperOptions(): CliHelperOpts;
+    helperOptions(options: CliHelperOpts): this;
+    helperOptions(options?: CliHelperOpts): this | CliHelperOpts {
+        if (options) {
+            this._helperOptions = options;
+            return this;
+        }
+
+        return this._helperOptions;
+    }
 
     createCommand(name?: string) {
         return new CliCommand(name);
@@ -81,8 +111,8 @@ export class CliCommand extends Command {
         // In the redefined setOptionValueWithSource, done to handle key object like --opt.entry.a
         // I retrieve the option with this.options and the name passed as a parameter
         // So I need to add it before this.setOptionValueWithSource is called (it is done just if there is option.defaultValue during addOption)
-        if (!this.options.includes(option))
-            this.options.push(option);
+        // BUT NO WORRY, I redefined this.options.push to push options if they do not exist already with a Set in the constructor
+        this.options.push(option);
 
         super.addOption(option);
 
@@ -153,4 +183,8 @@ export class CliCommand extends Command {
 
         return this;
     }
+
+    createHelp() {
+        return Object.assign(new CliHelper(this.helperOptions()), this.configureHelp());
+    };
 }
