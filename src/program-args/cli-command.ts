@@ -1,5 +1,4 @@
-import { bind } from '@upradata/util';
-import { Command, Option, OptionValueSource } from 'commander';
+import { Command, CommanderError, Option, OptionValueSource } from 'commander';
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 import { EventEmitter } from 'events';
 import { CliOption, CliOptionInit } from './cli-option';
@@ -31,6 +30,8 @@ declare module 'commander' {
         _lifeCycleHooks: Record</* event */ string, Array<(command: Command, thisCommand: Command) => any>>; // a hash of arrays
         _showHelpAfterError: boolean | string;
         _showSuggestionAfterError: boolean;
+        _findOption: (name: string) => CliOption;
+        _displayError: (exitCode: number, code: string, message: string) => void;
 
         options: CliOption[];
         createHelp(): CliHelper;
@@ -44,7 +45,7 @@ export class CliCommand extends Command {
     constructor(name?: string) {
         super(name);
 
-        const optionsPush = bind(this.options.push, this.options);
+        /* const optionsPush = bind(this.options.push, this.options);
         const optionsSet = new Set<CliOption>();
 
         this.options.push = (...options: CliOption[]) => {
@@ -52,7 +53,7 @@ export class CliCommand extends Command {
             opts.forEach(o => optionsSet.add(o));
 
             return optionsPush(...opts);
-        };
+        }; */
     }
 
 
@@ -114,38 +115,115 @@ export class CliCommand extends Command {
         // BUT NO WORRY, I redefined this.options.push to push options if they do not exist already with a Set in the constructor
         this.options.push(option);
 
-        super.addOption(option);
+        // super.addOption(option);
+        const getDefaultOption = () => {
+            const name = option.attributeName();
+            let defaultValue = option.defaultValue;
 
-        const aliases = option.getAliases();
+            // preassign default value for --no-*, [optional], <required>, or plain flag if boolean value
+            if (option.negate || option.optional || option.required || typeof defaultValue === 'boolean') {
+                // when --no-foo we make sure default is true, unless a --foo option is already defined
+                if (option.negate) {
+                    const positiveLongFlag = option.long.replace(/^--no-/, '--');
+                    defaultValue = this._findOption(positiveLongFlag) ? this.getOptionValue(name) : true;
+                }
 
-        if (aliases.size > 0) {
-            for (const alias of aliases) {
-                const aliasOption = new CliOption(alias.flags, option.description);
-                aliasOption.parseArg = aliasOption.parseArg || option.parseArg;
+                // preassign only if we have a default
+                if (defaultValue !== undefined) {
+                    this.setOptionValueWithSource(name, defaultValue, 'default');
+                }
+            }
 
-                super.addOption(aliasOption);
+            return defaultValue;
+        };
 
-                // cliRawValue: the string value passed at the command line for the option --option.name()
-                // for instance => command --arg value => option.name()==arg && cliRawValue=value
-                let isBlocked = false;
+        const defaultValue = getDefaultOption();
 
-                const handleOptionValue = (option: Option, cliRawValue: string) => {
-                    if (isBlocked)
+        // handler for cli and env supplied values
+        const handleOptionValue = (option: CliOption, cliRawValue: string, invalidValueMessage: string, valueSource: OptionValueSource) => {
+            const name = option.attributeName();
+
+            // Note: using closure to access lots of lexical scoped variables.
+            const oldValue = this.getOptionValue(name);
+
+            const parseArg = () => {
+                // custom processing
+                if (cliRawValue !== null && option.parseArg) {
+                    try {
+                        return option.parseArg(cliRawValue, oldValue === undefined ? defaultValue : oldValue);
+                    } catch (err) {
+                        const e = err as CommanderError;
+
+                        if (e.code === 'commander.invalidArgument') {
+                            const message = `${invalidValueMessage} ${e.message}`;
+                            this._displayError(e.exitCode, e.code, message);
+                        }
+
+                        throw e;
+                    }
+                }
+
+                if (cliRawValue !== null && option.variadic)
+                    return option._concatValue(cliRawValue, oldValue);
+
+                return cliRawValue;
+            };
+
+            const value = parseArg();
+
+            // unassigned or boolean value
+            if (typeof oldValue === 'boolean' || typeof oldValue === 'undefined') {
+                // if no value, negate false, and we have a default, then use it!
+                if (value == null) {
+                    this.setOptionValueWithSource(name, option.negate ? false : defaultValue || true, valueSource);
+                } else {
+                    this.setOptionValueWithSource(name, value, valueSource);
+                }
+            } else if (value !== null) {
+                // reassign
+                this.setOptionValueWithSource(name, option.negate ? false : value, valueSource);
+            }
+        };
+
+        const { aliases } = option;
+        const options = [ option, ...aliases ];
+
+        const handles = {
+            option: new Set<string>(),
+            optionEnv: new Set<string>()
+        };
+
+        const addListeners = (options: CliOption[]) => {
+            for (const o of options) {
+
+                const onNewValue = (source: OptionValueSource, invalidValueMessage: (value: string) => string) => (value: string) => {
+                    if (handles.option.size === options.length)
+                        handles.option = new Set();
+
+                    if (handles.option.has(o.name()))
                         return;
 
-                    isBlocked = true;
+                    handles.option.add(o.name());
 
-                    this.parseOptions([ option.long || option.short, cliRawValue ]);
+                    handleOptionValue(o, value, invalidValueMessage(value), source);
                 };
 
-                this.on('option:' + option.name(), (cliRawValue: string) => {
-                    handleOptionValue(aliasOption, cliRawValue);
-                });
 
-                this.on('option:' + aliasOption.name(), cliRawValue => {
-                    handleOptionValue(option, cliRawValue);
-                });
+                this.on('option:' + o.name(), onNewValue('cli', v => `error: option '${o.flags}' argument '${v}' is invalid.`));
+
+                if (option.envVar)
+                    this.on('option:' + o.name(), onNewValue('env', v => `error: option '${o.flags}' value '${v}' from env '${o.envVar}' is invalid.`));
             }
+        };
+
+        addListeners(aliases.size === 0 ? [ option ] : options);
+
+        for (const alias of aliases) {
+            const aliasOption = new CliOption(alias.flags, option.description);
+            aliasOption.parseArg = aliasOption.parseArg || option.parseArg;
+
+            // super.addOption(aliasOption);
+            this.addOption(aliasOption);
         }
 
         return this;

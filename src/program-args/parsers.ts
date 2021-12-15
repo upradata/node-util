@@ -1,6 +1,6 @@
-import { InvalidArgumentError, Option } from 'commander';
+import { InvalidArgumentError } from 'commander';
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
-import { compose, isBoolean, isDefined } from '@upradata/util';
+import { compose, isBoolean, isUndefined } from '@upradata/util';
 import { requireModule, RequireOptions } from '../require';
 import { CliOption } from './cli-option';
 
@@ -43,22 +43,20 @@ export const parsers = {
     float: parseNumber('float'),
 
     boolean: function (this: CliOption, value: any): boolean {
-        const v = value === undefined ?
+        const v = isUndefined(value) ?
             this.negate ? false : this.defaultValue || true :
             value;
 
-        let bool = false;
-
-        // should never happen actually as Commander.Command is coded
         // when it is a boolean type option, like command --enable, there is no value
+
         if (isBoolean(v))
-            bool = value;
+            return v;
 
         if (v === 'true')
-            bool = true;
+            return true;
 
         if (v === 'false')
-            bool = false;
+            return false;
 
         throw new InvalidArgumentError(`Not a boolean`);
     },

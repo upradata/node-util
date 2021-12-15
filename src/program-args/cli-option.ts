@@ -5,10 +5,14 @@ import { NonFunctionProperties } from '@upradata/util';
 import { CommanderParser } from './parsers';
 import { camelcase } from './util';
 
-/* export interface CliOptionInit {
-    flags: string;
-    description: string;
-} */
+
+
+declare module 'commander' {
+    interface Option {
+        envVar: string;
+        _concatValue: <T>(v1: T, v2: T | T[]) => T[];
+    }
+}
 
 
 export type CliOptionInit<T> = Omit<NonFunctionProperties<Partial<Option>>, 'parseArg' | 'argChoices'> & {
@@ -40,14 +44,14 @@ export class CliOption extends Option {
         this.isObject = this.name().split('.').length > 1;
     }
 
-    getAliases() {
+    get aliases() {
         return this.cliAliases;
     }
 
     addAlias(alias: Alias) {
         const aliasOption = Object.assign(
-            new CliOption(alias.flags),
             this,
+            new CliOption(alias.flags),
             { parseArg: alias.parser || this.parseArg }
         );
 
@@ -82,5 +86,5 @@ export class CliOption extends Option {
 }
 
 
-type splitOptionFlags = (flags: string) => { shortFlag: string; longFlag: string; };
-const splitOptionFlags = commanderOption.splitOptionFlags as splitOptionFlags;
+type SplitOptionFlags = (flags: string) => { shortFlag: string; longFlag: string; };
+const splitOptionFlags = commanderOption.splitOptionFlags as SplitOptionFlags;

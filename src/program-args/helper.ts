@@ -19,7 +19,7 @@ export class CliHelperOptions {
     sortSubcommands: boolean = false;
     sortOptions: boolean = false;
     styles: CliHelperStyles = {
-        arguments: str => s.magenta.bold.underline.$$(str),
+        arguments: str => s.magenta.bold.$$(str),
         options: str => s.blue.italic.bold.$$(str),
         subCommand: str => str.replace(/(.*?)([[<].*)/, s.green.bold.$`ᐅ $1` + '$2'),
         commandUsage: str => str.replace(/(.*?)([[<].*)/, s.green.bold.$`$1` + '$2'),
