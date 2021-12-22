@@ -115,7 +115,17 @@ export class Stats<S extends Stat> {
 
         const datas = this.output(...names);
 
-        const terminal = new Terminal({ maxWidth: { row: { width: options?.rowWidth } } });
+        const { rowWidth, columnToShrink, maxCellWidth } = options;
+
+        const terminal = new Terminal({
+            maxWidth: {
+                row: {
+                    width: rowWidth,
+                    indexToShrink: columnToShrink > 0 ? columnToShrink - 1 : undefined
+                },
+                cell: maxCellWidth
+            }
+        });
 
 
         const toString = ({ name, collectionName, headers, rows }: StatTableWithName) => {
@@ -124,7 +134,7 @@ export class Stats<S extends Stat> {
                     title: collectionName ? `${collectionName.replaceAll('.', ' ❯ ')} ⟹  ${name}` : name,
                     headers,
                     data: rows
-                });
+                }, options.tableConfig);
             }
         };
 

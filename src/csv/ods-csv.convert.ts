@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { ifChained } from '@upradata/util';
+import { ifThen } from '@upradata/util';
 import { green, oneLineTrim, yellow } from '../template-style';
 import { tmpFileName } from '../tmpfile';
 import { execAsync } from '../useful';
@@ -57,7 +57,7 @@ const convert = async (filepath: string, options: Partial<OdsConvertOptions> & {
     await fs.copyFile(filepath, outputDir);
 
 
-    const unoconvCommand = ifChained()
+    const unoconvCommand = ifThen()
         .next({
             if: conversionType === 'ods->csv',
             then: `${UNOCONV} -f csv -e FilterOptions=${filterOptions} ${filename}`,

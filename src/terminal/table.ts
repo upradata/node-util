@@ -3,8 +3,11 @@ import * as alignString from 'table/dist/src/alignString.js';
 import * as calculateCellWidths from 'table/dist/src/calculateCellWidths';
 import { makeTableConfig } from 'table/dist/src/makeTableConfig';
 import {
+    arrayN,
     assignDefaultOption,
+    AssignOptions,
     assignRecursive,
+    isDefined,
     PartialRecursive,
     stringWidth
 } from '@upradata/util';
@@ -25,7 +28,7 @@ export type TableConfig = TableUserConfig & { singleLine?: boolean; };
 
 export interface MaxRowWidth {
     width: number;
-    indexToShrink?: number; // to do, make a list (1st cell, then 2nd cell if table size still too big, then 3rd....). Not only one index
+    indexToShrink?: number; // TODO: make a list (1st cell, then 2nd cell if table size still too big, then 3rd....). Not only one index
 }
 
 export interface ColumnsMaxWidth {
@@ -85,7 +88,11 @@ export class TableString {
             columnDefault: { truncate: 200 }
         }, option.tableConfig);
 
-        this.maxWidth = option.maxWidth || { row: { width: process.stdout.columns || 80 } };
+        this.maxWidth = assignRecursive({
+            row: {
+                width: process.stdout.columns || 80
+            }
+        }, option.maxWidth, new AssignOptions({ accept: (k, v) => isDefined(v) }));
     }
 
     get(data: TableRows, options?: TableConfig) {
@@ -118,7 +125,7 @@ export class TableString {
             throw new Error('Dataset must have at least one row.');
         }
 
-        const columnsWidth: number[] = Array(firstRow.length).fill(0);
+        const columnsWidth = arrayN<number>(firstRow.length, 0);
 
         for (const row of table) {
             const cellsRowWidth = this.getCellsRowWidth(row);
@@ -147,35 +154,40 @@ export class TableString {
         // tslint:disable-next-line: prefer-const
         const { width, indexToShrink } = this.maxWidth.row;
 
-        const nbCol = columnsWidth.length;
-        // const { paddingLeft, paddingRight } = this.config.columns[ 0 ];
-        const paddingLeft = this.maxValue(Object.values(builtConfig.columns).map(c => c.paddingLeft));
-        const paddingRight = this.maxValue(Object.values(builtConfig.columns).map(c => c.paddingRight));
+        if (width && indexToShrink) {
 
-        const totalPaddingCells = nbCol * (paddingLeft + paddingRight) + (nbCol + 1); // we assume all rows have same padding (we could )
+            const nbCol = columnsWidth.length;
+            // const { paddingLeft, paddingRight } = this.config.columns[ 0 ];
+            const paddingLeft = this.maxValue(Object.values(builtConfig.columns).map(c => c.paddingLeft));
+            const paddingRight = this.maxValue(Object.values(builtConfig.columns).map(c => c.paddingRight));
 
-        const lineWidth = width - totalPaddingCells;
-        let index = indexToShrink;
+            const totalPaddingCells = nbCol * (paddingLeft + paddingRight) + (nbCol + 1); // we assume all rows have same padding (we could ...)
 
-        const totalWidth = columnsWidth.reduce((sum, w) => sum + w, 0); // row width (whitout padding and vertical bar => just text)
+            const lineWidth = width - totalPaddingCells;
+            let index = indexToShrink;
 
-        if (totalWidth > lineWidth) {
-            if (!index) {
-                // cell that is the widest
-                index = columnsWidth.findIndex(cellW => this.maxValue(columnsWidth) === cellW);
+            const totalWidth = columnsWidth.reduce((sum, w) => sum + w, 0); // row width (whitout padding and vertical bar => just text)
+
+            if (totalWidth > lineWidth) {
+                if (!index) {
+                    // cell that is the widest
+                    index = columnsWidth.findIndex(cellW => this.maxValue(columnsWidth) === cellW);
+                }
+
+                const shrinkWidth = columnsWidth[ index ] - (totalWidth - lineWidth);
+
+                if (shrinkWidth < 4) { // 4 is min width => todo: make an option
+                    // so we will shrink the next bigger cell
+                    const maxShrinkWidth = columnsWidth[ index ] - 4;
+
+                    columnsWidth[ index ] = maxShrinkWidth;
+                    return this.resizeColumnsWidth(columnsWidth, builtConfig);
+                    // tslint:disable-next-line: no-else-after-return
+                } else
+                    columnsWidth[ index ] = shrinkWidth;
             }
 
-            const shrinkWidth = columnsWidth[ index ] - (totalWidth - lineWidth);
-
-            if (shrinkWidth < 4) { // 4 is min width => todo: make an option
-                // so we will shrink the next bigger cell
-                const maxShrinkWidth = columnsWidth[ index ] - 4;
-
-                columnsWidth[ index ] = maxShrinkWidth;
-                return this.resizeColumnsWidth(columnsWidth, builtConfig);
-                // tslint:disable-next-line: no-else-after-return
-            } else
-                columnsWidth[ index ] = shrinkWidth;
+            return columnsWidth;
         }
 
         return columnsWidth;

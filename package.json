@@ -9,7 +9,7 @@
         "url": "https://github.com/upradata/node-util.git"
     },
     "license": "MIT",
-    "version": "14.0.2",
+    "version": "15.0.0",
     "description": "Set of typescript util tools working in NodeJs",
     "sideEffects": false,
     "main": "lib",
@@ -38,12 +38,11 @@
     "scripts": {
         "clean": "shx rm -rf lib lib-esm",
         "pre:build": "npm run clean",
-        "build-old": "concurrently 'tsc -p tsconfig.lib.json' 'tsc -p tsconfig.lib-esm.json' && pnpm run copy:declaration",
-        "build": "concurrently 'tsc -p tsconfig.lib.json' 'tsc -p tsconfig.lib-esm.json'",
+        "build": "concurrently 'tsc -p tsconfig.lib.json' 'tsc -p tsconfig.lib-esm.json' && pnpm run copy:declaration",
         "post:build": "npm run test && npm run e2e",
-        "copy:declaration": "cp src/@types/webpack.d.ts lib/@types && cp src/@types/webpack.d.ts lib-esm/@types",
+        "copy:declaration": "cp -R src/@types lib/@types && cp -R src/@types lib-esm/@types",
         "watch": "npm run build:watch",
-        "build:watch": "concurrently 'tsc -p tsconfig.lib.json -w' 'tsc -p tsconfig.lib-esm.json -w'",
+        "build:watch": "concurrently 'tsc -p tsconfig.lib.json -w' 'tsc -p tsconfig.lib-esm.json -w' 'pnpm run copy:declaration'",
         "test": "jest --verbose false --config jest-ut.config.js",
         "e2e": "jest --passWithNoTests --verbose false --config jest-e2e.config.js",
         "github-push": "npm version patch && git pushall && git pushall-tags",
@@ -92,7 +91,9 @@
             "@upradata/npx-init": "/home/milottit/Libraries/Upra-Data/npx-init",
             "@upradata/tilda-tools": "/home/milottit/Libraries/Tilda/tools",
             "@upradata/stream-image": "/home/milottit/Libraries/Upra-Data/stream-image",
-            "@upradata/stream-html": "/home/milottit/Libraries/Upra-Data/stream-html"
+            "@upradata/stream-html": "/home/milottit/Libraries/Upra-Data/stream-html",
+            "@upradata/tilda-services-components": "/home/milottit/Libraries/Tilda/services-components",
+            "@upradata/webpack": "/home/milottit/Libraries/Upra-Data/webpack"
         },
         "dependencies": {
             "@upradata/util": "link:/home/milottit/Libraries/Upra-Data/util@13.0.1"

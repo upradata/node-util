@@ -1,6 +1,6 @@
 import { ObjectOf, KebabCase } from '@upradata/util';
 import { Stat } from './stat';
-import { TableRows, TableRow } from '../terminal';
+import { TableRows, TableRow, TableConfig } from '../terminal';
 
 export type Statistics<S extends Stat> = ObjectOf<S | Statistics<S>>;
 
@@ -67,6 +67,9 @@ export type StatSorterTypes = KebabCase<keyof StatSorters<any>>;
 
 export interface StatsToStringOptions {
     rowWidth?: number;
+    maxCellWidth?: number;
+    columnToShrink?:number
+    tableConfig?: TableConfig;
     sort?: {
         stats?: StatSorterTypes | StatSorter<'stats'>;
         collections?: StatSorterTypes | StatSorter<'collections'>;
