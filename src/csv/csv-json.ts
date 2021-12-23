@@ -55,7 +55,7 @@ const enableSkipEmptyRows = () => {
 
 
 // Converter.then is defined => we can use it like a promise :)
-export function csvToJson<R>(file: string, param?: Partial<CSVParseParam & { skipEmptyRows?: boolean; }>, options?: TransformOptions): Promise<R[]> {
+export const csvToJson = <R>(file: string, param?: Partial<CSVParseParam & { skipEmptyRows?: boolean; }>, options?: TransformOptions): Promise<R[]> => {
     const { promise, resolve, reject } = delayedPromise<R[]>();
 
     const disableSkipRows = param?.skipEmptyRows ? enableSkipEmptyRows() : () => { };
@@ -67,7 +67,7 @@ export function csvToJson<R>(file: string, param?: Partial<CSVParseParam & { ski
         disableSkipRows();
         return json;
     });
-}
+};
 
 
 // export type Row = ObjectOf<string>;

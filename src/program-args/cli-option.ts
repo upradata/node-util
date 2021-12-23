@@ -50,9 +50,16 @@ export class CliOption extends Option {
 
     addAlias(alias: Alias) {
         const aliasOption = Object.assign(
-            this,
             new CliOption(alias.flags),
-            { parseArg: alias.parser || this.parseArg }
+            {
+                parseArg: alias.parser || this.parseArg,
+                description: this.description,
+                defaultValue: this.defaultValue,
+                defaultValueDescription: this.defaultValueDescription,
+                envVar: this.envVar,
+                hidden: this.hidden,
+                choices: this.argChoices
+            }
         );
 
         const optionFlags = splitOptionFlags(alias.flags);

@@ -107,8 +107,8 @@ export const cellDataParser = (parser: Parser<string, unknown>, emptyCell: any) 
     return compose([ parser, cellParsers.setEmptyCell(emptyCell) ], cellData);
 };
 
-export const getParsers = <O extends { default?: string; }>(
-    headers: (keyof O)[] = [], defaultParserOptions: ParsersOptions<O> = {}, parsersOptions: ParsersOpts<O> = {}
+export const getParsers = <O extends { default?: string; }, Headers extends string = DefaultHeaders<O>>(
+    headers: Headers[] = [], defaultParserOptions: ParsersOptions<O> = {}, parsersOptions: ParsersOpts<O> = {}
 ): Parsers<O> => {
 
     const names = ifThen()
@@ -141,11 +141,14 @@ export const getParsers = <O extends { default?: string; }>(
 
 
 
-export type CsvOptions<O extends {} = {}> = Partial<Omit<CSVParseParam, 'headers'>> & { headers?: (keyof O & string)[]; };
+export type CsvOptions<Headers extends string = string> = Partial<Omit<CSVParseParam, 'headers'>> & { headers?: Headers[]; };
 
+type DefaultHeaders<O> = Exclude<keyof O & string, 'default'>;
 
 export const csvToJsonWithDefaultParsers = <O extends { default?: string; }>(defaultParserOptions: ParsersOptions<O> = {}) =>
-    <R>(file: string, csvOptions?: CsvOptions<O>, options: { stream?: TransformOptions; parsers?: ParsersOpts<O>; } = {}): Promise<R[]> => {
+    <R, Headers extends string = DefaultHeaders<O>>(
+        file: string, csvOptions?: CsvOptions<Headers>, options: { stream?: TransformOptions; parsers?: ParsersOpts<O>; } = {}
+    ): Promise<R[]> => {
 
         return csvToJson<R>(file, {
             colParser: getParsers(csvOptions.headers, defaultParserOptions, options.parsers),
@@ -154,8 +157,8 @@ export const csvToJsonWithDefaultParsers = <O extends { default?: string; }>(def
     };
 
 
-export const csvToJsonWithAutoParsers = <O extends { default?: string; }, R>(
-    file: string, csvOptions?: CsvOptions<O>, options: { stream?: TransformOptions; parsers?: ParsersOpts<O>; } = {}
+export const csvToJsonWithAutoParsers = <O extends { default?: string; }, R, Headers extends string = DefaultHeaders<O>>(
+    file: string, csvOptions?: CsvOptions<Headers>, options: { stream?: TransformOptions; parsers?: ParsersOpts<O>; } = {}
 ): Promise<R[]> => {
 
     return csvToJsonWithDefaultParsers<O>({

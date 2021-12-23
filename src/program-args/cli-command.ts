@@ -1,8 +1,10 @@
 import { Command, CommanderError, Option, OptionValueSource } from 'commander';
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 import { EventEmitter } from 'events';
+import { FunctionN, TT$ } from '@upradata/util';
 import { CliOption, CliOptionInit } from './cli-option';
 import { CliHelper, CliHelperOpts } from './helper';
+import { camelcase } from './util';
 
 
 declare module 'commander' {
@@ -40,7 +42,9 @@ declare module 'commander' {
 
 
 export class CliCommand extends Command {
-    public _helperOptions: CliHelperOpts;
+    private _helperOptions: CliHelperOpts;
+    private _actionHandlers: FunctionN<any[], TT$<void>>[] = [];
+    private optionNames = new Set<string>();
 
     constructor(name?: string) {
         super(name);
@@ -94,8 +98,9 @@ export class CliCommand extends Command {
 
         const newOption = new CliOption(flags, description);
 
-        newOption.addAliases(...aliases);
+
         Object.assign(newOption, rest, { parseArg: parser, argChoices: choices } as Partial<Option>);
+        newOption.addAliases(...aliases);
 
         this.addOption(newOption);
 
@@ -114,6 +119,7 @@ export class CliCommand extends Command {
         // So I need to add it before this.setOptionValueWithSource is called (it is done just if there is option.defaultValue during addOption)
         // BUT NO WORRY, I redefined this.options.push to push options if they do not exist already with a Set in the constructor
         this.options.push(option);
+        this.optionNames.add(option.name());
 
         // super.addOption(option);
         const getDefaultOption = () => {
@@ -219,11 +225,8 @@ export class CliCommand extends Command {
         addListeners(aliases.size === 0 ? [ option ] : options);
 
         for (const alias of aliases) {
-            const aliasOption = new CliOption(alias.flags, option.description);
-            aliasOption.parseArg = aliasOption.parseArg || option.parseArg;
-
-            // super.addOption(aliasOption);
-            this.addOption(aliasOption);
+            if (!this.optionNames.has(alias.name()))
+                this.addOption(alias);
         }
 
         return this;
@@ -245,7 +248,7 @@ export class CliCommand extends Command {
 
             const newObject = keys.reduce((o, key, i) => ({
                 ...o,
-                [ key ]: i === keys.length - 1 ? value : o[ key ] || {}
+                [ camelcase(key) ]: i === keys.length - 1 ? value : o[ key ] || {}
             }), oldObject);
 
 
@@ -261,6 +264,21 @@ export class CliCommand extends Command {
 
         return this;
     }
+
+
+    action(fn: FunctionN<any[], TT$<void>>): this {
+        this._actionHandlers.push(fn);
+
+        if (!this._actionHandler) {
+            super.action((...args: any[]) => {
+                for (const handler of this._actionHandlers)
+                    handler.apply(this, args);
+            });
+        }
+
+        return this;
+    }
+
 
     createHelp() {
         return Object.assign(new CliHelper(this.helperOptions()), this.configureHelp());
