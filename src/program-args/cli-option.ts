@@ -11,6 +11,8 @@ declare module 'commander' {
     interface Option {
         envVar: string;
         _concatValue: <T>(v1: T, v2: T | T[]) => T[];
+        // parseArg?: (<T>(value: string, previous: T) => T) | (<T>(value: string, previous: T, aliasOriginOption?: CliOption) => T);
+        // <T>(value: string, previous: T) => T;
     }
 }
 
@@ -27,10 +29,16 @@ export type CliOptionInit<T> = Omit<NonFunctionProperties<Partial<Option>>, 'par
     aliases?: Alias[];
 };
 
+export type AliasMode = 'two-way' | 'source' | 'target';
+export type AliasTransforms = {
+    [ AliasTo: string ]: (value: string) => string | CommanderParser<never, string>;
+};
 
 export interface Alias {
     flags: string;
     parser?: CommanderParser<any>;
+    transforms?: AliasTransforms;
+    mode?: AliasMode;
 }
 
 
@@ -38,6 +46,9 @@ export class CliOption extends Option {
     private cliAliases: Set<CliOption> = new Set();
     public isObject = false;
     public isValueFromDefault = false;
+    public parser: CommanderParser<any> = undefined; // parseArg synonym
+    public aliasMode: AliasMode = 'two-way';
+    public aliasTransforms: AliasTransforms = {};
 
     constructor(flags: string, description?: string) {
         super(flags, description);
@@ -48,18 +59,25 @@ export class CliOption extends Option {
         return this.cliAliases;
     }
 
+    hasAliases() {
+        return this.cliAliases.size > 0;
+    }
+
     addAlias(alias: Alias) {
         const aliasOption = Object.assign(
             new CliOption(alias.flags),
             {
+                aliasMode: alias.mode || 'two-way',
+                parser: alias.parser || this.parseArg,
                 parseArg: alias.parser || this.parseArg,
+                aliasTransforms: alias.transforms,
                 description: this.description,
                 defaultValue: this.defaultValue,
                 defaultValueDescription: this.defaultValueDescription,
                 envVar: this.envVar,
                 hidden: this.hidden,
-                choices: this.argChoices
-            }
+                argChoices: this.argChoices
+            } as Partial<CliOption>
         );
 
         const optionFlags = splitOptionFlags(alias.flags);
@@ -72,11 +90,10 @@ export class CliOption extends Option {
             aliasOption.negate = aliasOption.long.startsWith('--no-');
         }
 
-        this.cliAliases.add(aliasOption);
 
-        for (const alias of this.cliAliases) {
-            alias.cliAliases.add(aliasOption);
-            aliasOption.cliAliases.add(alias);
+        for (const o of [ this, ...this.cliAliases ]) {
+            o.cliAliases.add(aliasOption);
+            aliasOption.cliAliases.add(o);
         }
 
         return this;
@@ -84,6 +101,13 @@ export class CliOption extends Option {
 
     addAliases(...aliases: Alias[]) {
         aliases.forEach(alias => this.addAlias(alias));
+        return this;
+    }
+
+    argParser<T>(fn: (value: string, previous: T) => T): this {
+        super.argParser(fn);
+        this.parser = this.parseArg;
+
         return this;
     }
 

@@ -98,8 +98,9 @@ export class CliCommand extends Command {
 
         const newOption = new CliOption(flags, description);
 
+        Object.assign(newOption, rest, { argChoices: choices } as Partial<Option>);
 
-        Object.assign(newOption, rest, { parseArg: parser, argChoices: choices } as Partial<Option>);
+        newOption.argParser(parser);
         newOption.addAliases(...aliases);
 
         this.addOption(newOption);
@@ -146,17 +147,17 @@ export class CliCommand extends Command {
         const defaultValue = getDefaultOption();
 
         // handler for cli and env supplied values
-        const handleOptionValue = (option: CliOption, cliRawValue: string, invalidValueMessage: string, valueSource: OptionValueSource) => {
-            const name = option.attributeName();
+        const handleOptionValue = (o: CliOption, cliRawValue: string, invalidValueMessage: string, valueSource: OptionValueSource) => {
+            const name = o.attributeName();
 
             // Note: using closure to access lots of lexical scoped variables.
             const oldValue = this.getOptionValue(name);
 
-            const parseArg = () => {
+            const parseOption = () => {
                 // custom processing
-                if (cliRawValue !== null && option.parseArg) {
+                if (cliRawValue !== null && o.parser) {
                     try {
-                        return option.parseArg(cliRawValue, oldValue === undefined ? defaultValue : oldValue);
+                        return o.parser(cliRawValue, oldValue === undefined ? defaultValue : oldValue, option);
                     } catch (err) {
                         const e = err as CommanderError;
 
@@ -169,60 +170,58 @@ export class CliCommand extends Command {
                     }
                 }
 
-                if (cliRawValue !== null && option.variadic)
-                    return option._concatValue(cliRawValue, oldValue);
+                if (cliRawValue !== null && o.variadic)
+                    return o._concatValue(cliRawValue, oldValue);
 
                 return cliRawValue;
             };
 
-            const value = parseArg();
+            const value = parseOption();
 
             // unassigned or boolean value
             if (typeof oldValue === 'boolean' || typeof oldValue === 'undefined') {
                 // if no value, negate false, and we have a default, then use it!
                 if (value == null) {
-                    this.setOptionValueWithSource(name, option.negate ? false : defaultValue || true, valueSource);
+                    this.setOptionValueWithSource(name, o.negate ? false : defaultValue || true, valueSource);
                 } else {
                     this.setOptionValueWithSource(name, value, valueSource);
                 }
             } else if (value !== null) {
                 // reassign
-                this.setOptionValueWithSource(name, option.negate ? false : value, valueSource);
+                this.setOptionValueWithSource(name, o.negate ? false : value, valueSource);
             }
         };
 
         const { aliases } = option;
-        const options = [ option, ...aliases ];
 
-        const handles = {
-            option: new Set<string>(),
-            optionEnv: new Set<string>()
+        const onNewValue = (source: OptionValueSource, invalidValueMessage: (value: string) => string) => {
+            let isRunning = false;
+
+            return (value: string) => {
+                if (isRunning)
+                    return;
+
+                isRunning = true;
+
+                handleOptionValue(option, value, invalidValueMessage(value), source);
+
+                if (option.aliasMode === 'two-way' || option.aliasMode === 'source') {
+                    for (const alias of aliases) {
+                        if (alias.aliasMode === 'two-way' || alias.aliasMode === 'target') {
+                            const transform = option.aliasTransforms[ alias.name() ] || option.aliasTransforms[ alias.attributeName() ];
+                            handleOptionValue(alias, transform?.call(option, value) ?? value, invalidValueMessage(value), source);
+                        }
+                    }
+                }
+            };
         };
 
-        const addListeners = (options: CliOption[]) => {
-            for (const o of options) {
 
-                const onNewValue = (source: OptionValueSource, invalidValueMessage: (value: string) => string) => (value: string) => {
-                    if (handles.option.size === options.length)
-                        handles.option = new Set();
+        this.on('option:' + option.name(), onNewValue('cli', v => `error: option '${option.flags}' argument '${v}' is invalid.`));
 
-                    if (handles.option.has(o.name()))
-                        return;
+        if (option.envVar)
+            this.on('option:' + option.name(), onNewValue('env', v => `error: option '${option.flags}' value '${v}' from env '${option.envVar}' is invalid.`));
 
-                    handles.option.add(o.name());
-
-                    handleOptionValue(o, value, invalidValueMessage(value), source);
-                };
-
-
-                this.on('option:' + o.name(), onNewValue('cli', v => `error: option '${o.flags}' argument '${v}' is invalid.`));
-
-                if (option.envVar)
-                    this.on('option:' + o.name(), onNewValue('env', v => `error: option '${o.flags}' value '${v}' from env '${o.envVar}' is invalid.`));
-            }
-        };
-
-        addListeners(aliases.size === 0 ? [ option ] : options);
 
         for (const alias of aliases) {
             if (!this.optionNames.has(alias.name()))
