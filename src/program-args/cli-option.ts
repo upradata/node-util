@@ -32,29 +32,30 @@ export type CliOptionInit<T> = Omit<NonFunctionProperties<Partial<Option>>, 'par
 export type AliasDirection = 'source' | 'target';
 export type AliasMode = 'multi-way' | 'two-way' | AliasDirection;
 
-export type AliasTransform = (value: string) => string | CommanderParser<never, string>;
+export type AliasTransform = ((value: string) => string) | CommanderParser<never, string>;
 export type AliasTransforms = {
     [ AliasTo: string ]: AliasTransform;
 };
 
 
-export type AliasInit<M extends AliasMode = AliasMode> = {
-    mode?: M;
-    flags: string;
-    parser?: CommanderParser<any>;
-    transform?: M extends 'multi-way' ? AliasTransform | AliasTransforms : AliasTransform;
+type AliasDetail = {
+    mode?: Exclude<AliasMode, 'multi-way'>;
+    transform?: AliasTransform;
+} | {
+    mode: 'multi-way';
+    transform?: AliasTransform | AliasTransforms;
 };
 
-export type AliasCliOption<M extends AliasMode = AliasMode> = {
-    mode?: M;
-    option: CliOption;
-    transform?: M extends 'mutli-way' ? AliasTransform | AliasTransforms : AliasTransform;
-};
+export type AliasInit = {
+    flags: string;
+    parser?: CommanderParser<any>;
+} & AliasDetail;
+
+export type AliasCliOption = { option: CliOption; } & AliasDetail;
 
 export type Alias = AliasInit | AliasCliOption;
 
 const isAliasCliOption = (v: Alias): v is AliasCliOption => !!(v as AliasCliOption)?.option;
-
 
 
 export class CliOption extends Option {
@@ -83,10 +84,9 @@ export class CliOption extends Option {
         const add = (d: Omit<AliasCliOption, 'transform'> & { transform: AliasTransform; }) => {
             const { option, mode, transform = (v: string) => v } = d;
 
-            const addAlias = (direction: { alias: AliasDirection, this: AliasDirection; }) => {
-
-                option.cliAliases.add({ option: this, direction: direction.alias, transform });
-                this.cliAliases.add({ option: option, direction: direction.this, transform });
+            const addAlias = (d: { alias: AliasDirection, this: AliasDirection; }) => {
+                option.cliAliases.add({ option: this, direction: d.this, transform: transform.bind(this) });
+                this.cliAliases.add({ option: option, direction: d.alias, transform: transform.bind(option) });
             };
 
 

@@ -200,7 +200,7 @@ export class CliCommand extends Command {
                 handleOptionValue(option, value, invalidValueMessage(value), source);
 
                 for (const a of [ ...aliases ].filter(a => a.direction === 'target'))
-                    handleOptionValue(a.option, a.transform.call(a.option, value) ?? value, invalidValueMessage(value), source);
+                    handleOptionValue(a.option, a.transform(value), invalidValueMessage(value), source);
             };
         };
 
