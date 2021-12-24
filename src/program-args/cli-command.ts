@@ -195,24 +195,12 @@ export class CliCommand extends Command {
         const { aliases } = option;
 
         const onNewValue = (source: OptionValueSource, invalidValueMessage: (value: string) => string) => {
-            let isRunning = false;
 
             return (value: string) => {
-                if (isRunning)
-                    return;
-
-                isRunning = true;
-
                 handleOptionValue(option, value, invalidValueMessage(value), source);
 
-                if (option.aliasMode === 'two-way' || option.aliasMode === 'source') {
-                    for (const alias of aliases) {
-                        if (alias.aliasMode === 'two-way' || alias.aliasMode === 'target') {
-                            const transform = option.aliasTransforms[ alias.name() ] || option.aliasTransforms[ alias.attributeName() ];
-                            handleOptionValue(alias, transform?.call(option, value) ?? value, invalidValueMessage(value), source);
-                        }
-                    }
-                }
+                for (const a of [ ...aliases ].filter(a => a.direction === 'target'))
+                    handleOptionValue(a.option, a.transform.call(a.option, value) ?? value, invalidValueMessage(value), source);
             };
         };
 
@@ -224,8 +212,8 @@ export class CliCommand extends Command {
 
 
         for (const alias of aliases) {
-            if (!this.optionNames.has(alias.name()))
-                this.addOption(alias);
+            if (!this.optionNames.has(alias.option.name()))
+                this.addOption(alias.option);
         }
 
         return this;
