@@ -160,7 +160,7 @@ export class CliCommand extends Command {
                         return o.parser(cliRawValue, oldValue === undefined ? defaultValue : oldValue, option);
                     } catch (err) {
                         const e = err as CommanderError;
-
+                        debugger;
                         if (e.code === 'commander.invalidArgument') {
                             const message = `${invalidValueMessage} ${e.message}`;
                             this._displayError(e.exitCode, e.code, message);
