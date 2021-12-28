@@ -1,4 +1,4 @@
-import { StyleTemplate } from '@upradata/util';
+import { stringWidth, StyleTransformString } from '@upradata/util';
 import { styles } from '../template-style';
 import {
     TableConfig,
@@ -11,8 +11,8 @@ import {
 
 
 export class TitleOptions {
-    style?: StyleTemplate = styles.none.$;
-    bgStyle?: StyleTemplate = styles.none.$;
+    style?: StyleTransformString<string> = styles.none.transform;
+    bgStyle?: StyleTransformString<string> = styles.none.transform;
     // backward-compatible => now use type === 'band'
     isBig?: boolean = false;
     type?: 'one-line' | 'two-strips' | 'top-strip' | 'bottom-strip' | 'band' = 'one-line';
@@ -41,8 +41,8 @@ export class Terminal {
         return maxWidth?.row?.width || Terminal.width;
     }
 
-    fullWidth(text: string, style: StyleTemplate) {
-        return style`${text}`.repeat(this.lineWidth);
+    fullWidth(text: string, style: StyleTransformString<string>) {
+        return style(text).repeat(this.lineWidth);
     }
 
     title(title: string, options: TitleOptions = {}): string {
@@ -50,7 +50,7 @@ export class Terminal {
 
         const titleType = isBig ? 'band' : type;
 
-        const message = style`${this.alignCenter(transform(title))}`;
+        const message = style(this.alignCenter(transform(title)));
 
         if (titleType === 'one-line')
             return message;
@@ -80,11 +80,6 @@ export class Terminal {
     table({ data, headers, title }: TableData, config?: TableConfig): string {
         const d: TableItem[][] = headers ? [ headers, ...data ] : data;
 
-        /* if (Array.isArray(data[ 0 ]))
-            d.push(...data as any);
-        else
-            d.push([ data as any ]); */
-
         const c = {
             header: title ? {
                 alignment: 'center',
@@ -103,7 +98,7 @@ export class Terminal {
     alignCenter(s: string, size: number = this.lineWidth): string {
 
         const trim = s.trim();
-        const whitespaceWidth = size - trim.length;
+        const whitespaceWidth = size - stringWidth(trim); // stringWidth for invisible chars
 
         if (whitespaceWidth <= 0)
             return s;

@@ -1,6 +1,6 @@
 
 import { camelize, CamelCase } from '@upradata/util';
-import { highlightMagenta } from '../template-style';
+import { styles as s } from '../template-style';
 import { Terminal } from '../terminal';
 import { Stat, StatCtor, StatData } from './stat';
 import {
@@ -138,7 +138,7 @@ export class Stats<S extends Stat> {
             }
         };
 
-        const title = terminal.title(`"${this.statsName}" summary`, { type: 'band', style: highlightMagenta });
+        const title = terminal.title(`"${this.statsName}" summary`, { type: 'band', style: s.white.bgMagenta.transform });
 
         const sort = <T extends SortType>(datas: SortData<T>[], type: T): SortData<T>[] => {
             const sorter = options.sort?.[ camelize(type) ] as StatsToStringOptions[ 'sort' ][ CamelCase<T> ];
