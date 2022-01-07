@@ -48,16 +48,6 @@ export class CliCommand extends Command {
 
     constructor(name?: string) {
         super(name);
-
-        /* const optionsPush = bind(this.options.push, this.options);
-        const optionsSet = new Set<CliOption>();
-
-        this.options.push = (...options: CliOption[]) => {
-            const opts = options.filter(o => !optionsSet.has(o));
-            opts.forEach(o => optionsSet.add(o));
-
-            return optionsPush(...opts);
-        }; */
     }
 
 
@@ -196,7 +186,7 @@ export class CliCommand extends Command {
 
         const onNewValue = (source: OptionValueSource, invalidValueMessage: (value: string) => string) => {
 
-            return (value: string) => {
+            return function (value: string) {
                 handleOptionValue(option, value, invalidValueMessage(value), source);
 
                 for (const a of [ ...aliases ].filter(a => a.direction === 'target'))
@@ -229,17 +219,20 @@ export class CliCommand extends Command {
 
         if (option?.isObject) {
             const parts = option.name().split('.');
-            const [ objectName, ...keys ] = parts;
+            const [ objectname, ...keys ] = parts;
 
-            const oldObject: {} = this.getOptionValue(objectName) || {};
+            const objectName = camelcase(objectname);
+            const obj: {} = this.getOptionValue(objectName) || {};
 
-            const newObject = keys.reduce((o, key, i) => ({
-                ...o,
-                [ camelcase(key) ]: i === keys.length - 1 ? value : o[ key ] || {}
-            }), oldObject);
+            keys.reduce((o, key, i) => {
+                const v = i === keys.length - 1 ? value : o[ key ] || {};
+                o[ camelcase(key) ] = v;
+
+                return v;
+            }, obj);
 
 
-            this.setOptionValue(objectName, newObject);
+            this.setOptionValue(objectName, obj);
             this._optionValueSources[ objectName ] = source;
         }
 

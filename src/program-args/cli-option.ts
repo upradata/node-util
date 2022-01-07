@@ -63,8 +63,6 @@ export class CliOption extends Option {
     public isObject = false;
     public isValueFromDefault = false;
     public parser: CommanderParser<any> = undefined; // parseArg synonym
-    // public aliasMode: AliasMode = 'two-way';
-    // public aliasTransforms: AliasTransforms = {};
 
     constructor(flags: string, description?: string) {
         super(flags, description);
