@@ -84,7 +84,7 @@ export class CliOption extends Option {
 
             const addAlias = (d: { alias: AliasDirection, this: AliasDirection; }) => {
                 option.cliAliases.add({ option: this, direction: d.this, transform: transform.bind(this) });
-                this.cliAliases.add({ option: option, direction: d.alias, transform: transform.bind(option) });
+                this.cliAliases.add({ option, direction: d.alias, transform: transform.bind(option) });
             };
 
 
@@ -96,6 +96,8 @@ export class CliOption extends Option {
 
         };
 
+
+        const mode = alias.mode || 'source';
 
         const getAliasOption = () => {
 
@@ -109,9 +111,9 @@ export class CliOption extends Option {
                     parser: alias.parser || this.parseArg,
                     parseArg: alias.parser || this.parseArg,
                     description: this.description,
-                    defaultValue: this.defaultValue,
-                    defaultValueDescription: this.defaultValueDescription,
-                    envVar: this.envVar,
+                    defaultValue: mode === 'source' ? undefined : this.defaultValue,
+                    defaultValueDescription: mode === 'source' ? undefined : this.defaultValueDescription,
+                    envVar: mode === 'source' ? undefined : this.envVar,
                     hidden: this.hidden,
                     argChoices: this.argChoices
                 } as Partial<CliOption>
@@ -131,8 +133,6 @@ export class CliOption extends Option {
         };
 
         const aliasOption = getAliasOption();
-
-        const mode = alias.mode || 'source';
 
         if (mode !== 'multi-way')
             add({ option: aliasOption, mode, transform: alias.transform as AliasTransform });
