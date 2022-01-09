@@ -80,9 +80,10 @@ export function requireModule<T = unknown, M extends ModuleFile = ModuleFile>(fi
 
                 if (options.cache || options.cacheFile) {
                     if (!cache.isChangedFiles(collectionName, [ filepath ])) {
-                        const compiledFile = cache.store.filePrint(filepath, collectionName).extra;
+                        // if filepath does not exist => no filePrint
+                        const compiledFile = cache.store.filePrint(filepath, collectionName)?.extra;
                         // check if file still exists in the cache directory
-                        if (fs.existsSync(compiledFile))
+                        if (compiledFile && fs.existsSync(compiledFile))
                             return require(cache.store.filePrint(filepath, collectionName).extra);
                     }
                 }

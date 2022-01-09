@@ -41,7 +41,7 @@ export class Cache {
         const globFiles = new GlobFiles(ensureArray(files));
         const { files: fileNames, missed } = globFiles.getFiles();
 
-        if (method && this.options.verbose) {
+        if (method /* && this.options.verbose */) {
             for (const { pattern, err } of missed) {
                 if (isDefined(err))
                     warn(`[${method}] Pattern parse fail for ${pattern}: ${err.message}`);
