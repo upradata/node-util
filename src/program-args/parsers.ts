@@ -2,7 +2,7 @@ import { InvalidArgumentError } from 'commander';
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 import { composeLeft, isBoolean, isUndefined, ObjectOf, setRecursive, TT as UtilTT } from '@upradata/util';
 import { requireModule, RequireOptions } from '../require';
-import { CliOption } from './cli-option';
+import { CliOption, AliasTransform } from './cli-option';
 
 
 export type CliParserPrevious<T> = UtilTT<T, 'mutable'>;
@@ -96,13 +96,36 @@ export const parsers = {
             v = value;
         }
 
-
         if (key)
             v = setRecursive({}, key, v);
 
         return concatIfVariadic(this?.variadic, v, previous);
 
     } as CommanderParser<ObjectOf<any>>,
+
+    cumulateObject: function <T>(this: CliOption, value: string, previous: CliParserPrevious<T>) {
+        const o = JSON.parse(value);
+
+        const trySetLastValue = () => {
+            const lastValue = Array.isArray(previous) ? previous?.at(-1) : previous;
+
+            if (!lastValue)
+                return o;
+
+            let isSet = false;
+
+            for (const [ key, value ] of Object.entries(o)) {
+                if (lastValue && !(key in lastValue)) {
+                    lastValue[ key ] = value;
+                    isSet = true;
+                }
+            }
+
+            return isSet ? lastValue : o;
+        };
+
+        return concatIfVariadic(this?.variadic, trySetLastValue(), previous);
+    },
 
     choices: <T = string>(choices: T[], parser?: CommanderValueParser<T>): CommanderParser<T> => function (this: CliOption, value, previous) {
         const parsedValue = parser?.(value, previous) ?? value as unknown as T;
@@ -113,12 +136,22 @@ export const parsers = {
         return concatIfVariadic(this?.variadic, parsedValue, previous);
     },
 
-    require: (options: Partial<RequireOptions<any>>): CommanderParser<any> => function (this: CliOption, value, previous) {
+    require: <T = any>(options: RequireOptions): CommanderParser<T> => function (this: CliOption, value, previous) {
         return concatIfVariadic(this?.variadic, requireModule(value, options), previous);
     },
 
-    compose: <P extends CommanderValueParser<any>[]>(...parsers: P): CommanderParser<any> => function (this: CliOption, value, previous, aliasOriginOption) {
+    compose: <T = any, R = T>(...parsers: CommanderValueParser<any>[]): CommanderParser<T, R> => function (this: CliOption, value, previous, aliasOriginOption) {
         const parsedValue = composeLeft(parsers.map(p => (v: string) => p.call(this, v, previous, aliasOriginOption)), value);
         return concatIfVariadic(this?.variadic, parsedValue, previous);
     }
+};
+
+
+type Map<T1, T2> = (value: T1) => T2;
+export type AliasTransformer = (...transforms: [ Map<string, any>, ...Map<any, any>[], Map<any, string> ]) => AliasTransform;
+
+export const aliasMap: AliasTransformer = (...transforms) => parsers.compose<never, string>(...transforms);
+
+export const aliasMaps = {
+    toObject: (prop: string): AliasTransform => aliasMap(parsers.object(prop), (v: any) => JSON.stringify(v))
 };

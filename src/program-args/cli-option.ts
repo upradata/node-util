@@ -104,12 +104,15 @@ export class CliOption extends Option {
             if (isAliasCliOption(alias))
                 return alias.option;
 
+            // undefined means no parser => raw string will stay as it is
+            // not that in cli-command parseOption in addOption, if there is no parser, _concatValue is called if it is a variadic option
+            const parser = alias.parser || alias.transform ? undefined : this.parseArg;
 
             const aliasOption = Object.assign(
                 new CliOption(alias.flags),
                 {
-                    parser: alias.parser || this.parseArg,
-                    parseArg: alias.parser || this.parseArg,
+                    parser,
+                    parseArg: parser,
                     description: this.description,
                     defaultValue: mode === 'source' ? undefined : this.defaultValue,
                     defaultValueDescription: mode === 'source' ? undefined : this.defaultValueDescription,
