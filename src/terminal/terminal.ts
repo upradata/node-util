@@ -1,4 +1,4 @@
-import { stringWidth, StyleTransformString } from '@upradata/util';
+import { composeLeft, stringWidth, StyleTransformString } from '@upradata/util';
 import { styles } from '../template-style';
 import {
     TableConfig,
@@ -17,6 +17,7 @@ export class TitleOptions {
     isBig?: boolean = false;
     type?: 'one-line' | 'two-strips' | 'top-strip' | 'bottom-strip' | 'band' = 'one-line';
     transform?: (s: string) => string = s => s;
+    alignCenter?: boolean;
 }
 
 
@@ -41,30 +42,42 @@ export class Terminal {
         return maxWidth?.row?.width || Terminal.width;
     }
 
-    fullWidth(text: string, style: StyleTransformString<string>) {
+    fullWidth(text: string, style: StyleTransformString<string> = styles.none.transform) {
         return style(text).repeat(this.lineWidth);
     }
 
+    logFullWidth(text: string, style?: StyleTransformString<string>) {
+        console.log(this.fullWidth(text, style));
+    }
+
+    colorLine(style: StyleTransformString<string>) {
+        return this.fullWidth(' ', style);
+    }
+
+    logColorLine(style: StyleTransformString<string>) {
+        console.log(this.colorLine(style));
+    }
+
     title(title: string, options: TitleOptions = {}): string {
-        const { style, bgStyle, isBig, type, transform } = Object.assign(new TitleOptions(), options);
+        const { style, bgStyle, isBig, type, transform, alignCenter = true } = Object.assign(new TitleOptions(), options);
 
         const titleType = isBig ? 'band' : type;
 
-        const message = style(this.alignCenter(transform(title)));
+        const message = composeLeft([ transform, alignCenter ? this.alignCenter.bind(this) : (s: string) => s, style ], title);
 
         if (titleType === 'one-line')
             return message;
 
-        const bg = `${this.fullWidth(' ', bgStyle)}`;
+        const bg = this.colorLine(bgStyle);
 
         if (titleType === 'band')
             return `${bg}\n${message}\n${bg}`;
 
         if (titleType.includes('strip')) {
             switch (titleType) {
-                case 'two-strips': return `${bg}\n\n${message}\n\n${bg}`;
-                case 'top-strip': return `${bg}\n\n${message}`;
-                case 'bottom-strip': return `${message}\n\n${bg}`;
+                case 'two-strips': return `${bg}\n${message}\n${bg}`;
+                case 'top-strip': return `${bg}\n${message}`;
+                case 'bottom-strip': return `${message}\n${bg}`;
             }
         }
 

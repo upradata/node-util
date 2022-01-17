@@ -4,6 +4,7 @@ import { assignRecursive } from '@upradata/util';
 import { TsConfig } from './tsconfig.json';
 
 
+
 export interface TsConfigJson {
     path: { start: string; end: string; };
     config: TsConfig;
@@ -44,7 +45,7 @@ const mergeExtendedTsconfigJson = (tsconfigData: TsConfigData, rootTsconfigJsonP
     if (!extendedTsConfig.path)
         throw new Error(`Cannot find tsconfig file: "${path.join(dir, extendedTsconfigJsonFilePath)}"`);
 
-    const mergedTsconfig = assignRecursive(tsconfigJson, { extends: undefined }, extendedTsConfig.config);
+    const mergedTsconfig = assignRecursive(tsconfigJson, { extends: undefined as TsConfig[ 'extends' ] }, extendedTsConfig.config as TsConfig);
 
     return mergeExtendedTsconfigJson({ ...extendedTsConfig, config: mergedTsconfig }, rootTsconfigJsonPath);
-};;
+};
