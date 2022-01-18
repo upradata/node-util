@@ -37,6 +37,7 @@ export type Extra = (path: string) => any;
 export class CacheChangeOptions {
     onlyExistingFiles?: boolean = false;
     recursive?: boolean = false;
+    verbose?: boolean = true;
 
     constructor(options: Partial<CacheChangeOptions> = {}) {
         Object.assign(this, options);
