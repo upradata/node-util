@@ -25,6 +25,7 @@ specifiers:
   ts-node: ^10.4.0
   tsconfig: ^7.0.0
   tsconfig-paths: ^3.12.0
+  types-tsconfig: ^1.2.1
   typescript: ^4.5.3
   vinyl: ^2.2.1
 
@@ -57,6 +58,7 @@ devDependencies:
   memory-fs: 0.5.0
   ts-jest: 27.1.1_dc33159234d58f1c7ac35b6119da0e94
   ts-node: 10.4.0_typescript@4.5.3
+  types-tsconfig: 1.2.1
 
 packages:
 
@@ -2939,6 +2941,16 @@ packages:
     resolution: {integrity: sha512-zdu8XMNEDepKKR+XYOXAVPtWui0ly0NtohUscw+UmaHiAWT8hrV1rr//H6V+0DvJ3OQ19S979M0laLfX8rm82Q==}
     dependencies:
       is-typedarray: 1.0.0
+    dev: true
+
+  /types-json/1.2.2:
+    resolution: {integrity: sha512-VfVLISHypS7ayIHvhacOESOTib4Sm4mAhnsgR8fzQdGp89YoBwMqvGmqENjtYehUQzgclT+7NafpEXkK/MHKwA==}
+    dev: true
+
+  /types-tsconfig/1.2.1:
+    resolution: {integrity: sha512-Gdc6wt+deM9u1tQIYooqsS4XgOfmwrtogtfpj4FaekRoDTGxkDLGkF2aQUNJb4yRy7V2Zi2e5XHLDRlaDqjRrg==}
+    dependencies:
+      types-json: 1.2.2
     dev: true
 
   /typescript/4.5.3:

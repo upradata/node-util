@@ -39,20 +39,26 @@ export class TscCompiler {
     constructor() { }
 
     static compile(fileNames: string[], options: TsCompileOptions = {}) {
-        let compilerOptions: ts.CompilerOptions;
 
         const { useTsConfig, host } = options;
 
-        if (useTsConfig) {
-            const tsconfigPath = typeof useTsConfig === 'string' ? useTsConfig : undefined;
-            compilerOptions = loadTsConfig(tsconfigPath).config.compilerOptions;
 
-        } else {
+        const getCompilerOptions = (): ts.CompilerOptions => {
+            if (useTsConfig) {
+                const tsconfigPath = typeof useTsConfig === 'string' ? useTsConfig : undefined;
 
-            compilerOptions = assignRecursive(defaultTscOptions(), options);
-        }
+                return assignRecursive(
+                    {},
+                    loadTsConfig(tsconfigPath).config.compilerOptions,
+                    options,
+                    new AssignOptions({ arrayMode: 'replace' })
+                );
+            }
 
-        assignRecursive(compilerOptions, options, new AssignOptions({ arrayMode: 'replace' }));
+            return assignRecursive(defaultTscOptions(), options);
+        };
+
+        const compilerOptions = getCompilerOptions();
 
         /* if (!compilerOptions.outDir) {
             const { path: tsconfigPath, config } = loadTsConfig();
@@ -100,22 +106,25 @@ export class TscCompiler {
 
     static compileModuleFromString(source: string, options?: ts.CompilerOptions & { useTsconfig?: boolean; }) {
 
-        let compilerOptions: ts.CompilerOptions = undefined;
+        const getCompilerOptions = (): ts.CompilerOptions => {
 
-        if (options && options.useTsconfig) {
-            const tsConfig: { path?: string; config: TsConfig; } = tsconfig.loadSync(__dirname);
-            if (!tsConfig.path)
-                throw new Error('cannot find project with tsconfig.json');
+            if (options?.useTsconfig) {
+                const tsConfig: { path?: string; config: TsConfig<'programmatically'>; } = tsconfig.loadSync(__dirname);
 
-            compilerOptions = tsConfig.config.compilerOptions;
-        } else {
-            compilerOptions = options || {
+                if (!tsConfig.path)
+                    throw new Error('cannot find project with tsconfig.json');
+
+                return tsConfig.config.compilerOptions;
+            }
+
+            return options || {
                 noEmitOnError: true, noImplicitAny: true,
                 target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.CommonJS,
             };
-        }
+        };
 
-        const result = ts.transpileModule(source, { compilerOptions });
+
+        const result = ts.transpileModule(source, { compilerOptions: getCompilerOptions() });
         return result;
     }
 
