@@ -4,6 +4,7 @@ import * as commanderOption from 'commander/lib/option';
 import { NonFunctionProperties, ifthen } from '@upradata/util';
 import { CommanderParser } from './parsers';
 import { camelcase } from './util';
+import { option } from 'yargs';
 
 
 
@@ -17,7 +18,7 @@ declare module 'commander' {
 }
 
 
-export type CliOptionInit<T> = Omit<NonFunctionProperties<Partial<Option>>, 'parseArg' | 'argChoices'> & {
+export type CliOptionInit<T> = NonFunctionProperties<Partial<Option>> & {
     flags: string;
     description?: string;
     defaultValue?: T;
@@ -27,7 +28,10 @@ export type CliOptionInit<T> = Omit<NonFunctionProperties<Partial<Option>>, 'par
     hidden?: boolean;
     choices?: T[];
     aliases?: Alias[];
+    noNegate?: boolean;
 };
+
+
 
 export type AliasDirection = 'source' | 'target';
 export type AliasMode = 'multi-way' | 'two-way' | AliasDirection;
@@ -49,6 +53,7 @@ type AliasDetail = {
 export type AliasInit = {
     flags: string;
     parser?: CommanderParser<any>;
+    noNegate?: boolean;
 } & AliasDetail;
 
 export type AliasCliOption = { option: CliOption; } & AliasDetail;
@@ -64,9 +69,27 @@ export class CliOption extends Option {
     public isValueFromDefault = false;
     public parser: CommanderParser<any> = undefined; // parseArg synonym
 
-    constructor(flags: string, description?: string) {
+
+    constructor(flags: string, description?: string);
+    constructor(options: CliOptionInit<any>);
+    constructor(arg1?: string | CliOptionInit<any>, arg2?: string) {
+        const getArgs = () => {
+            if (typeof arg1 === 'object') {
+                const { flags, description, ...rest } = arg1;
+                return { flags, description, rest };
+            }
+
+            return { flags: arg1, description: arg2, rest: {} };
+        };
+
+        const { flags, description, rest } = getArgs();
         super(flags, description);
+
+        const { noNegate = false, ...option } = rest;
+        Object.assign(this, { ...option, argChoices: rest.argChoices || rest.choices, parser: rest.parser, parseArg: rest.parser });
+
         this.isObject = this.name().split('.').length > 1;
+        this.negate = noNegate ? false : this.negate;
     }
 
     get aliases() {
@@ -118,7 +141,8 @@ export class CliOption extends Option {
                     defaultValueDescription: mode === 'source' ? undefined : this.defaultValueDescription,
                     envVar: mode === 'source' ? undefined : this.envVar,
                     hidden: this.hidden,
-                    argChoices: this.argChoices
+                    argChoices: this.argChoices,
+                    negate: alias.noNegate || this.negate
                 } as Partial<CliOption>
             );
 
@@ -167,8 +191,9 @@ export class CliOption extends Option {
     }
 
     attributeName() {
-        return camelcase(this.name().replace(/^no-/, ''));
-    };
+        const name = this.negate ? this.name().replace(/^no-/, '') : this.name();
+        return camelcase(name);
+    }
 }
 
 

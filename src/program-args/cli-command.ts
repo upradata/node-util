@@ -84,13 +84,9 @@ export class CliCommand extends Command {
         if (typeof args[ 0 ] === 'string')
             return super.option.apply(this, args);
 
-        const { flags, description, parser, choices, aliases = [], ...rest } = args[ 0 ] as CliOptionInit<any>;
+        const { aliases = [], ...rest } = args[ 0 ] as CliOptionInit<any>;
 
-        const newOption = new CliOption(flags, description);
-
-        Object.assign(newOption, rest, { argChoices: choices } as Partial<Option>);
-
-        newOption.argParser(parser);
+        const newOption = new CliOption(rest);
         newOption.addAliases(...aliases);
 
         this.addOption(newOption);

@@ -44,15 +44,15 @@ export class CacheChangeOptions {
     }
 }
 
-export type StoreOptions = PartialRecursive<StoreOptions_>;
+export type StoreOpts = PartialRecursive<StoreOptions>;
 
-export class StoreOptions_ extends CacheChangeOptions {
+export class StoreOptions extends CacheChangeOptions {
     path: string;
     criteria: Criteria | 'mtime' | 'md5' = 'mtime';
     isSameComparator: IsSameComparator;
     extra?: Extra;
 
-    constructor(options: StoreOptions) {
+    constructor(options: StoreOpts) {
         super(options);
         Object.assign(this, options);
 
@@ -67,10 +67,10 @@ export class StoreOptions_ extends CacheChangeOptions {
 export class Store {
     storeCollection: StoreCollection;
     criteriaFunc: Criteria;
-    public options: StoreOptions_;
+    public options: StoreOptions;
 
-    constructor(options: StoreOptions = {}) {
-        this.options = new StoreOptions_(options);
+    constructor(options: StoreOpts = {}) {
+        this.options = new StoreOptions(options);
         this.storeCollection = new StoreCollection(this.options.path);
         this.init();
     }

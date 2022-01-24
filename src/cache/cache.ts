@@ -1,14 +1,14 @@
 import { ensureArray, isDefined, isUndefined } from '@upradata/util';
 import { warn } from './common';
 import { File, GlobFiles } from './glob-files';
-import { CacheChangeOptions, Store, StoreOptions } from './store';
+import { CacheChangeOptions, Store, StoreOpts } from './store';
 
 
 export class CacheOpts {
-    verbose?: boolean = false;
+    verbose?: boolean = true;
 }
 
-export type CacheOptions = CacheOpts & StoreOptions & CacheChangeOptions;
+export type CacheOptions = CacheOpts & StoreOpts & CacheChangeOptions;
 
 
 export interface LoopArguments {
@@ -108,7 +108,7 @@ export class Cache {
     }
 
     public changedFiles(collectionName?: string | string[], files: File[] = [], options?: CacheChangeOptions): string[] {
-        const opts = new CacheChangeOptions(options);
+        const opts = new CacheChangeOptions({ ...options, verbose: isDefined(options?.verbose) ? options.verbose : this.options.verbose });
 
         const collName = ensureArray(collectionName);
 
