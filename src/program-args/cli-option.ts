@@ -50,11 +50,7 @@ type AliasDetail = {
     transform?: AliasTransform | AliasTransforms;
 };
 
-export type AliasInit = {
-    flags: string;
-    parser?: CommanderParser<any>;
-    noNegate?: boolean;
-} & AliasDetail;
+export type AliasInit = CliOptionInit<any> & AliasDetail;
 
 export type AliasCliOption = { option: CliOption; } & AliasDetail;
 
@@ -85,8 +81,8 @@ export class CliOption extends Option {
         const { flags, description, rest } = getArgs();
         super(flags, description);
 
-        const { noNegate = false, ...option } = rest;
-        Object.assign(this, { ...option, argChoices: rest.argChoices || rest.choices, parser: rest.parser, parseArg: rest.parser });
+        const { noNegate = false, ...options } = rest;
+        Object.assign(this, { ...options, argChoices: rest.argChoices || rest.choices, parser: rest.parser, parseArg: rest.parser });
 
         this.isObject = this.name().split('.').length > 1;
         this.negate = noNegate ? false : this.negate;
@@ -127,24 +123,25 @@ export class CliOption extends Option {
             if (isAliasCliOption(alias))
                 return alias.option;
 
+            const { mode, transform, ...options } = alias;
+
             // undefined means no parser => raw string will stay as it is
             // not that in cli-command parseOption in addOption, if there is no parser, _concatValue is called if it is a variadic option
-            const parser = alias.parser || alias.transform ? undefined : this.parseArg;
+            // when an alias parser or a transform is defined, we want to get the original string as a parameter to this functions
+            // and not a transformed value being any
+            const parser = alias.parser || transform ? undefined : this.parseArg;
 
-            const aliasOption = Object.assign(
-                new CliOption(alias.flags),
-                {
-                    parser,
-                    parseArg: parser,
-                    description: this.description,
-                    defaultValue: mode === 'source' ? undefined : this.defaultValue,
-                    defaultValueDescription: mode === 'source' ? undefined : this.defaultValueDescription,
-                    envVar: mode === 'source' ? undefined : this.envVar,
-                    hidden: this.hidden,
-                    argChoices: this.argChoices,
-                    negate: alias.noNegate || this.negate
-                } as Partial<CliOption>
-            );
+            const aliasOption = new CliOption({
+                ...options,
+                parser,
+                description: this.description,
+                defaultValue: mode === 'source' ? undefined : this.defaultValue,
+                defaultValueDescription: mode === 'source' ? undefined : this.defaultValueDescription,
+                envVar: mode === 'source' ? undefined : this.envVar,
+                hidden: this.hidden,
+                argChoices: this.argChoices,
+                negate: this.negate
+            });
 
             const optionFlags = splitOptionFlags(alias.flags);
 
@@ -192,7 +189,7 @@ export class CliOption extends Option {
 
     attributeName() {
         const name = this.negate ? this.name().replace(/^no-/, '') : this.name();
-        return camelcase(name);
+        return camelcase(name, '-').replaceAll('.', '_');
     }
 }
 

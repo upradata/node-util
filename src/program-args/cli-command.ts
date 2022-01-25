@@ -81,15 +81,21 @@ export class CliCommand extends Command {
     /** @deprecated since v7, instead use choices or a custom function */
     option(flags: string, description: string, regexp: RegExp, defaultValue?: string | boolean): this;
     option(...args: any[]) {
-        if (typeof args[ 0 ] === 'string')
-            return super.option.apply(this, args);
 
-        const { aliases = [], ...rest } = args[ 0 ] as CliOptionInit<any>;
+        const createCliOption = () => {
+            if (typeof args[ 0 ] === 'string')
+                return new CliOption(...(args as [ any ]));
 
-        const newOption = new CliOption(rest);
-        newOption.addAliases(...aliases);
+            const { aliases = [], ...rest } = args[ 0 ] as CliOptionInit<any>;
 
-        this.addOption(newOption);
+            const newOption = new CliOption(rest);
+            newOption.addAliases(...aliases);
+
+            return newOption;
+        };
+
+
+        this.addOption(createCliOption());
 
         return this;
     }
