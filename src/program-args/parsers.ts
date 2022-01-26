@@ -1,6 +1,6 @@
 import { InvalidArgumentError } from 'commander';
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
-import { composeLeft, isBoolean, isUndefined, ObjectOf, setRecursive, TT as UtilTT } from '@upradata/util';
+import { composeLeft, isBoolean, isUndefined, ObjectOf, setRecursive, stringToRegex, TT as UtilTT } from '@upradata/util';
 import { requireModule, RequireOptions } from '../require';
 import { CliOption, AliasTransform } from './cli-option';
 
@@ -135,6 +135,24 @@ export const parsers = {
 
         return concatIfVariadic(this?.variadic, parsedValue, previous);
     },
+
+    regex: function (this: CliOption, value: string, previous: CliParserPrevious<RegExp>) {
+        const getRegex = () => {
+            const res = value.match(/\/(.*)\/(.*)/);
+
+            if (res) {
+                const [ _, regexS, flags ] = res;
+                return { regexS, flags };
+            }
+
+            return { regexS: value, flags: undefined };
+        };
+
+        const { regexS, flags } = getRegex();
+        const regex = stringToRegex(regexS, flags);
+
+        return concatIfVariadic(this?.variadic, regex, previous);
+    } as CommanderParser<RegExp>,
 
     require: <T = any>(options: RequireOptions): CommanderParser<T> => function (this: CliOption, value, previous) {
         return concatIfVariadic(this?.variadic, requireModule(value, options), previous);

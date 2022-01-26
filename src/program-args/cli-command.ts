@@ -76,15 +76,25 @@ export class CliCommand extends Command {
     }
 
     option<T>(opt: CliOptionInit<T>): this;
-    option(flags: string, description?: string, defaultValue?: string | boolean): this;
+    option(flags: string, description?: string): this;
+    option(flags: string, description: string, defaultValue?: string | boolean): this;
+    option<T>(flags: string, description: string, fn: (value: string, previous: T) => T): this;
     option<T>(flags: string, description: string, fn: (value: string, previous: T) => T, defaultValue?: T): this;
     /** @deprecated since v7, instead use choices or a custom function */
     option(flags: string, description: string, regexp: RegExp, defaultValue?: string | boolean): this;
     option(...args: any[]) {
 
         const createCliOption = () => {
-            if (typeof args[ 0 ] === 'string')
-                return new CliOption(...(args as [ any ]));
+            if (typeof args[ 0 ] === 'string') {
+                const options: CliOptionInit<any> = {
+                    flags: args[ 0 ],
+                    description: args[ 1 ],
+                    defaultValue: typeof args[ 2 ] === 'function' ? args[ 3 ] : args[ 2 ],
+                    parser: typeof args[ 2 ] === 'function' ? args[ 2 ] : undefined
+                };
+
+                return new CliOption(options);
+            }
 
             const { aliases = [], ...rest } = args[ 0 ] as CliOptionInit<any>;
 
