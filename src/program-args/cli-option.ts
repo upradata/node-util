@@ -4,7 +4,6 @@ import { NonFunctionProperties, ifthen, isDefinedProp } from '@upradata/util';
 import { CommanderParser } from './parsers';
 import { camelcase } from './util';
 
-export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 
 declare module 'commander' {
     interface Option {
@@ -58,7 +57,7 @@ const isAliasCliOption = (v: Alias): v is AliasCliOption => !!(v as AliasCliOpti
 
 
 export class CliOption extends Option {
-    private cliAliases: Set<{ option: CliOption, direction: AliasDirection; transform: AliasTransform; }> = new Set();
+    private cliAliases: Set<{ option: CliOption; direction: AliasDirection; transform: AliasTransform; }> = new Set();
     public isObject = false;
     public isValueFromDefault = false;
     public parser: CommanderParser<any> = undefined; // parseArg synonym
@@ -99,7 +98,7 @@ export class CliOption extends Option {
         const add = (d: Omit<AliasCliOption, 'transform'> & { transform: AliasTransform; }) => {
             const { option, mode, transform = (v: string) => v } = d;
 
-            const addAlias = (d: { alias: AliasDirection, this: AliasDirection; }) => {
+            const addAlias = (d: { alias: AliasDirection; this: AliasDirection; }) => {
                 option.cliAliases.add({ option: this, direction: d.this, transform: transform.bind(this) });
                 this.cliAliases.add({ option, direction: d.alias, transform: transform.bind(option) });
             };
@@ -172,7 +171,7 @@ export class CliOption extends Option {
         }
 
         return this;
-    };
+    }
 
     addAliases(...aliases: Alias[]) {
         aliases.forEach(alias => this.addAlias(alias));
