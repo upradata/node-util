@@ -96,7 +96,8 @@
 			"@upradata/tilda-services-components": "/home/milottit/Libraries/Tilda/services-components",
 			"@upradata/webpack": "/home/milottit/Libraries/Upra-Data/webpack",
 			"@upradata/commands": "/home/milottit/Libraries/Upra-Data/commands",
-			"@upradata/website": "/home/milottit/Projects/UpraDataWebsite-Tilda-new-version"
+			"@upradata/website": "/home/milottit/Projects/UpraDataWebsite-Tilda-new-version",
+			"google-app-engine": "/home/milottit/Projects/upradata-website/google-app-engine"
 		},
 		"dependencies": {
 			"@upradata/util": "link:/home/milottit/Libraries/Upra-Data/util@15.0.0"
