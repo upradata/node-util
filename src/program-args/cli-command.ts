@@ -1,4 +1,5 @@
-import { Command, CommanderError, Option, OptionValueSource } from 'commander';
+/* eslint-disable no-dupe-class-members */
+import { Command, CommanderError, OptionValueSource } from 'commander';
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 import { EventEmitter } from 'events';
 import { FunctionN, TT$ } from '@upradata/util';
@@ -127,7 +128,7 @@ export class CliCommand extends Command {
         // super.addOption(option);
         const getDefaultOption = () => {
             const name = option.attributeName();
-            let defaultValue = option.defaultValue;
+            let { defaultValue } = option;
 
             // preassign default value for --no-*, [optional], <required>, or plain flag if boolean value
             if (option.negate || option.optional || option.required || typeof defaultValue === 'boolean') {
@@ -162,7 +163,7 @@ export class CliCommand extends Command {
                         return o.parser(cliRawValue, oldValue === undefined ? defaultValue : oldValue, option);
                     } catch (err) {
                         const e = err as CommanderError;
-                        debugger;
+
                         if (e.code === 'commander.invalidArgument') {
                             const message = `${invalidValueMessage} ${e.message}`;
                             this._displayError(e.exitCode, e.code, message);
@@ -207,10 +208,10 @@ export class CliCommand extends Command {
         };
 
 
-        this.on('option:' + option.name(), onNewValue('cli', v => `error: option '${option.flags}' argument '${v}' is invalid.`));
+        this.on(`option:${option.name()}`, onNewValue('cli', v => `error: option '${option.flags}' argument '${v}' is invalid.`));
 
         if (option.envVar)
-            this.on('option:' + option.name(), onNewValue('env', v => `error: option '${option.flags}' value '${v}' from env '${option.envVar}' is invalid.`));
+            this.on(`option:${option.name()}`, onNewValue('env', v => `error: option '${option.flags}' value '${v}' from env '${option.envVar}' is invalid.`));
 
 
         for (const alias of aliases) {
@@ -274,5 +275,5 @@ export class CliCommand extends Command {
 
     createHelp() {
         return Object.assign(new CliHelper(this.helperOptions()), this.configureHelp());
-    };
+    }
 }

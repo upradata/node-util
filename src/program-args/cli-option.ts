@@ -1,12 +1,10 @@
 import { Option } from 'commander';
-export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 import * as commanderOption from 'commander/lib/option';
-import { NonFunctionProperties, ifthen } from '@upradata/util';
+import { NonFunctionProperties, ifthen, isDefinedProp } from '@upradata/util';
 import { CommanderParser } from './parsers';
 import { camelcase } from './util';
-import { option } from 'yargs';
 
-
+export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 
 declare module 'commander' {
     interface Option {
@@ -135,7 +133,8 @@ export class CliOption extends Option {
                 ...options,
                 parser,
                 description: this.description,
-                defaultValue: mode === 'source' ? undefined : this.defaultValue,
+                // defautValue can be undefined to unset it from this (source)
+                defaultValue: mode === 'source' ? undefined : isDefinedProp(options, 'defaultValue') ? options.defaultValue : this.defaultValue,
                 defaultValueDescription: mode === 'source' ? undefined : this.defaultValueDescription,
                 envVar: mode === 'source' ? undefined : this.envVar,
                 hidden: this.hidden,

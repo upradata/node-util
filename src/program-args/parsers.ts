@@ -1,8 +1,9 @@
+/* eslint-disable object-shorthand */
 import { InvalidArgumentError } from 'commander';
-export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
-import { composeLeft, isBoolean, isUndefined, ObjectOf, setRecursive, stringToRegex, TT as UtilTT } from '@upradata/util';
+import { composeLeft, isBoolean, isNil, isUndefined, ObjectOf, setRecursive, stringToRegex, TT as UtilTT } from '@upradata/util';
 import { requireModule, RequireOptions } from '../require';
 import { CliOption, AliasTransform } from './cli-option';
+export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 
 
 export type CliParserPrevious<T> = UtilTT<T, 'mutable'>;
@@ -27,8 +28,8 @@ const parseNumber = (type: 'int' | 'float'): CommanderParser<number> => function
     // parseInt takes a string and a radix
     const parsedValue = type === 'int' ? parseInt(value, 10) : parseFloat(value);
 
-    if (isNaN(parsedValue))
-        throw new InvalidArgumentError(`Not a ${type === 'int' ? 'number' : 'float'}.`);
+    if (Number.isNaN(parsedValue))
+        throw new InvalidArgumentError(`"${parsedValue}" is not a ${type === 'int' ? 'number' : 'float'}.`);
 
     return concatIfVariadic(this?.variadic, parsedValue, previous);
 };
@@ -61,7 +62,7 @@ export const parsers = {
     boolean: function (this: CliOption, value: string, previous: CliParserPrevious<boolean>) {
         // when it is a boolean type option, like command --enable, there is no value
 
-        const v = isUndefined(value) ?
+        const v = isNil(value) ?
             this.negate ? false : this.defaultValue || true :
             value;
 
@@ -76,7 +77,7 @@ export const parsers = {
         if (v === 'false')
             return ret(false);
 
-        throw new InvalidArgumentError(`Not a boolean`);
+        throw new InvalidArgumentError(`"${v}" is not a boolean`);
     } as CommanderParser<boolean>,
 
     reduce,
