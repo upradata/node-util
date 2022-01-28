@@ -1,6 +1,6 @@
 import { Alignment, table, TableUserConfig } from 'table';
 import * as alignString from 'table/dist/src/alignString.js';
-import * as calculateCellWidths from 'table/dist/src/calculateCellWidths';
+import * as calculateCellWidths from 'table/dist/src/calculateMaximumColumnWidths';
 import { makeTableConfig } from 'table/dist/src/makeTableConfig';
 import {
     arrayN,
@@ -69,11 +69,15 @@ const alignCenter = (subject: string, whiteSpaces: number) => {
 // I use makeConfig in this class and I use it with string|number while it is intending to use it with string only
 // I just convert value to value + ''
 
-(calculateCellWidths as RemoveReadOnly<typeof calculateCellWidths>).calculateCellWidths = (cells: TableRow) => {
+(calculateCellWidths as RemoveReadOnly<typeof calculateCellWidths>).calculateMaximumCellWidth = cell => {
+    return Math.max(...`${cell}`.split('\n').map(stringWidth));
+};
+
+/* (cells: TableRow) => {
     return cells.map(value => {
         return Math.max(...(`${value}`).split('\n').map(line => stringWidth(line)));
     });
-};
+}; */
 
 
 
