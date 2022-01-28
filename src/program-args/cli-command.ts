@@ -1,11 +1,12 @@
 /* eslint-disable no-dupe-class-members */
 import { Command, CommanderError, OptionValueSource } from 'commander';
-export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 import { EventEmitter } from 'events';
 import { FunctionN, TT$ } from '@upradata/util';
 import { CliOption, CliOptionInit } from './cli-option';
 import { CliHelper, CliHelperOpts } from './helper';
 import { camelcase } from './util';
+
+export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 
 
 declare module 'commander' {

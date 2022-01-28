@@ -9,7 +9,7 @@
 		"url": "https://github.com/upradata/node-util.git"
 	},
 	"license": "MIT",
-	"version": "15.0.0",
+	"version": "16.0.0",
 	"description": "Set of typescript util tools working in NodeJs",
 	"sideEffects": false,
 	"main": "lib",
@@ -99,7 +99,7 @@
 			"@upradata/website": "/home/milottit/Projects/UpraDataWebsite-Tilda-new-version"
 		},
 		"dependencies": {
-			"@upradata/util": "link:/home/milottit/Libraries/Upra-Data/util@13.0.1"
+			"@upradata/util": "link:/home/milottit/Libraries/Upra-Data/util@15.0.0"
 		}
 	}
 }
