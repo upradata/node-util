@@ -64,6 +64,8 @@ export class CliHelper extends Help {
 
     formatHelp(command: Command, helper: CliHelper) {
         const output = super.formatHelp(command, helper);
-        return output.replaceAll(/(.*?):(.*)/g, s.underline.$`$1` + ':$2');
+
+        // eslint-disable-next-line prefer-template
+        return output.replaceAll(/^(\S*?):(.*)/gm, s.underline.$`$1` + ':$2');
     }
 }
