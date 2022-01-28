@@ -2,7 +2,7 @@ import { CSVParseParam } from 'csvtojson/v2/Parameters';
 import { TransformOptions } from 'stream';
 import {
     compose,
-    ifChained,
+    ifThen,
     isDefined,
     isDefinedProp,
     isUndefined,
@@ -45,7 +45,7 @@ export type Parsers<O extends { default?: string; }> = Partial<Record<keyof O, P
 const commaToNumber = (s: number | string) => isDefined(s) ? parseFloat(`${s}`.replace(',', '.')) : s;
 
 export const cellParsers = {
-    boolean: (cellData: string | boolean) => typeof cellData === 'boolean' ? cellData : cellData === 'true' ? true : false,
+    boolean: (cellData: string | boolean) => typeof cellData === 'boolean' ? cellData : cellData === 'true',
     string: (cellData: string) => cellData,
     number: (cellData: string) => commaToNumber(cellData),
     arrayString: (cellData: string) => isDefined(cellData) ? cellData.replace(/[\[\]]/g, '').split(',') : cellData,
@@ -92,12 +92,12 @@ export const regexParsers = {
 
 
 export const autoParser = (emptyCell: any = '') => (cellData: string) => {
-    const parser = ifChained(cellData)
-        .next(cellData => ({ if: regexParsers.boolean.test(cellData), then: cellParsers.boolean }))
-        .next(cellData => ({ if: regexParsers.number.test(cellData), then: cellParsers.number }))
-        .next(cellData => ({ if: regexParsers.arrayNumber.test(cellData), then: cellParsers.arrayNumber }))
-        .next(cellData => ({ if: regexParsers.arrayString.test(cellData), then: cellParsers.arrayString }))
-        .next(cellData => ({ then: cellParsers.string }))
+    const parser = ifThen()
+        .next({ if: regexParsers.boolean.test(cellData), then: cellParsers.boolean })
+        .next({ if: regexParsers.number.test(cellData), then: cellParsers.number })
+        .next({ if: regexParsers.arrayNumber.test(cellData), then: cellParsers.arrayNumber })
+        .next({ if: regexParsers.arrayString.test(cellData), then: cellParsers.arrayString })
+        .next({ then: cellParsers.string })
         .value;
 
     return cellDataParser(parser, emptyCell);
@@ -107,11 +107,11 @@ export const cellDataParser = (parser: Parser<string, unknown>, emptyCell: any) 
     return compose([ parser, cellParsers.setEmptyCell(emptyCell) ], cellData);
 };
 
-export const getParsers = <O extends { default?: string; }>(
-    headers: (keyof O)[] = [], defaultParserOptions: ParsersOptions<O> = {}, parsersOptions: ParsersOpts<O> = {}
+export const getParsers = <O extends { default?: string; }, Headers extends string = DefaultHeaders<O>>(
+    headers: Headers[] = [], defaultParserOptions: ParsersOptions<O> = {}, parsersOptions: ParsersOpts<O> = {}
 ): Parsers<O> => {
 
-    const names = ifChained()
+    const names = ifThen()
         .next({ if: headers.length > 0, then: headers })
         .next({ if: keys(parsersOptions).length > 0, then: keys(defaultParserOptions) })
         .next({ if: keys(defaultParserOptions).length > 0, then: keys(defaultParserOptions), else: [] as string[] })
@@ -121,13 +121,13 @@ export const getParsers = <O extends { default?: string; }>(
         const defaultParser = defaultParserOptions[ name ] as ParserOptions || defaultParserOptions.default || { emptyCell: '', parser: cellParsers.string };
         const option = parsersOptions[ name ];
 
-        const emptyCell = ifChained()
+        const emptyCell = ifThen()
             .next({ if: isUndefined(option), then: defaultParser.emptyCell })
             .next({ if: isDefault(option), then: defaultParser.emptyCell, next: parsersOptions as ParserOptions })
             .next(option => ({ if: isDefinedProp(option, 'emptyCell'), then: option.emptyCell, else: defaultParser.emptyCell }))
             .value;
 
-        const parser = ifChained()
+        const parser = ifThen()
             .next({ if: isUndefined(option), then: defaultParser.parser })
             .next({ if: isDefault(option), then: defaultParser.parser, next: parsersOptions as ParserOptions })
             .next(option => ({ if: isDefinedProp(option, 'parser'), then: option.parser, else: defaultParser.parser }))
@@ -141,11 +141,14 @@ export const getParsers = <O extends { default?: string; }>(
 
 
 
-export type CsvOptions<O extends {} = {}> = Partial<Omit<CSVParseParam, 'headers'>> & { headers?: (keyof O & string)[]; };
+export type CsvOptions<Headers extends string = string> = Partial<Omit<CSVParseParam, 'headers'>> & { headers?: Headers[]; };
 
+type DefaultHeaders<O> = Exclude<keyof O & string, 'default'>;
 
 export const csvToJsonWithDefaultParsers = <O extends { default?: string; }>(defaultParserOptions: ParsersOptions<O> = {}) =>
-    <R>(file: string, csvOptions?: CsvOptions<O>, options: { stream?: TransformOptions, parsers?: ParsersOpts<O>; } = {}): Promise<R[]> => {
+    <R, Headers extends string = DefaultHeaders<O>>(
+        file: string, csvOptions?: CsvOptions<Headers>, options: { stream?: TransformOptions; parsers?: ParsersOpts<O>; } = {}
+    ): Promise<R[]> => {
 
         return csvToJson<R>(file, {
             colParser: getParsers(csvOptions.headers, defaultParserOptions, options.parsers),
@@ -154,7 +157,9 @@ export const csvToJsonWithDefaultParsers = <O extends { default?: string; }>(def
     };
 
 
-export const csvToJsonWithAutoParsers = <O extends { default?: string; }, R>(file: string, csvOptions?: CsvOptions<O>, options: { stream?: TransformOptions, parsers?: ParsersOpts<O>; } = {}): Promise<R[]> => {
+export const csvToJsonWithAutoParsers = <O extends { default?: string; }, R, Headers extends string = DefaultHeaders<O>>(
+    file: string, csvOptions?: CsvOptions<Headers>, options: { stream?: TransformOptions; parsers?: ParsersOpts<O>; } = {}
+): Promise<R[]> => {
 
     return csvToJsonWithDefaultParsers<O>({
         default:

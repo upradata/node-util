@@ -4,6 +4,7 @@ export * from './files';
 export * from './find-up';
 export * from './fs';
 export * from './json';
+export * from './log-nice';
 export * from './path-normalize';
 export * from './program-args';
 export * from './require';

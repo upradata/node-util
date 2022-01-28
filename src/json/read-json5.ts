@@ -9,11 +9,11 @@ export type ReadJson<T> = {
 };
 
 
-const normalizeData = (data: string) => data === '' ? {} : JSON5.parse(data);
+const jsonParse = (data: string) => data === '' ? {} : JSON5.parse(data);
 
 export const readJson = {
-    sync: <T>(filename: string) => normalizeData(readFileSync(filename, 'utf8')) as T[],
-    async: <T>(filename: string) => readFile(filename, 'utf8').then(normalizeData) as Promise<T[]>
+    sync: <T>(filename: string) => jsonParse(readFileSync(filename, 'utf8')) as T,
+    async: <T>(filename: string) => readFile(filename, 'utf8').then(jsonParse) as Promise<T>
 };
 
 

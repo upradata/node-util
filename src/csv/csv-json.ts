@@ -55,7 +55,8 @@ const enableSkipEmptyRows = () => {
 
 
 // Converter.then is defined => we can use it like a promise :)
-export function csvToJson<R>(file: string, param?: Partial<CSVParseParam & { skipEmptyRows?: boolean; }>, options?: TransformOptions): Promise<R[]> {
+export type CsvToJsonOpts = Partial<CSVParseParam & { skipEmptyRows?: boolean; }>;
+export const csvToJson = <R>(file: string, param?: CsvToJsonOpts, options?: TransformOptions): Promise<R[]> => {
     const { promise, resolve, reject } = delayedPromise<R[]>();
 
     const disableSkipRows = param?.skipEmptyRows ? enableSkipEmptyRows() : () => { };
@@ -67,44 +68,65 @@ export function csvToJson<R>(file: string, param?: Partial<CSVParseParam & { ski
         disableSkipRows();
         return json;
     });
-}
+};
 
 
 // export type Row = ObjectOf<string>;
-export function jsonToCsv<T>(json: T[], options: { csvColumnKeys?: Array<keyof T>; nbKeys?: number; } = {}): string {
-    const { csvColumnKeys, nbKeys } = options;
+export type JsonToCsvOptions<T> = {
+    headers?: [ keyof T ] extends [ never ] ? string[] : Array<keyof T>;
+    nbKeys?: number;
+    delimiter?: string;
+};
 
-    let header: string[] = csvColumnKeys ? csvColumnKeys as any : [];
 
-    if (!csvColumnKeys) {
+export function jsonToCsv<T>(json: T[], options: JsonToCsvOptions<T> = {}): string {
+    const { nbKeys, delimiter = ';' } = options;
+
+    const getHeaders = () => {
+        if (options.headers)
+            return options.headers;
+
         // we are oblige to parse all the rows to be sure we have a full row to get the header keys
-        for (const row of json) {
-            const headers = Object.keys(row);
-            if (headers.length > header.length || nbKeys === headers.length) {
-                header = headers;
+        const get = (next: IteratorResult<T>, headers: PropertyKey[]) => {
+            const { value, done } = next;
+
+            if (done)
+                return headers;
+
+            const row = value as T;
+            const rowHeaders = Object.keys(row);
+
+            if (nbKeys === rowHeaders.length) {
                 // we stop if user specified that this is the number of keys
-                if (nbKeys === headers.length)
-                    break;
+                return rowHeaders;
             }
-        }
-    }
 
-    let csv = header.join(';');
+            return get(it.next(), rowHeaders.length > headers.length ? rowHeaders : headers);
+        };
 
-    for (const row of json) {
+        const it = json[ Symbol.iterator ]();
+
+        return get(it.next(), []);
+    };
+
+    const headers = getHeaders();
+
+    const csv = json.reduce((csv, row) => {
         const fullRow = {};
 
-        for (const h of header)
+        for (const h of headers)
             fullRow[ h ] = row[ h ] ?? '';
 
-        csv += '\n' + Object.values(fullRow).join((';'));
-    }
+        return csv + '\n' + Object.values(fullRow).join((delimiter));
+    }, headers.join(delimiter));
+
+
 
     return csv;
 }
 
 
-export const csvHeaders = <H extends string = string>(file: string, options: { delimiter?: string; } = {}) => {
+export const csvHeaders = <H extends string = string>(file: string, options: { delimiter?: string; } = {}): Promise<H[]> => {
     const { promise, resolve, reject } = delayedPromise<H[]>();
 
     let headers: H[] = [];

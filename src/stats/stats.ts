@@ -1,11 +1,13 @@
 
-import { isArray, ObjectOf } from '@upradata/util';
-import { highlightMagenta } from '../template-style';
-import { TableColumnConfig, TableRow, TableRows, Terminal } from '../terminal';
+import { camelize, CamelCase } from '@upradata/util';
+import { styles as s } from '../template-style';
+import { Terminal } from '../terminal';
 import { Stat, StatCtor, StatData } from './stat';
+import {
+    Statistics, StatTableWithName, StatCollection, OutputStats, StatsToStringOptions,
+    SortData, StatSorter, SortType, statSorters
+} from './types';
 
-
-type Statistics<S extends Stat> = ObjectOf<S | Statistics<S>>;
 
 export class Stats<S extends Stat> {
     stats: Statistics<S> = {};
@@ -42,40 +44,39 @@ export class Stats<S extends Stat> {
     }
 
     get(...names: string[]) {
-        let stat: Stat | Statistics<S> = this.stats[ names[ 0 ] ];
-
-        for (const name of names.slice(1)) {
-            if (!this.stats[ name ])
-                return undefined;
-
-            stat = stat[ name ];
-        }
-
-        return stat;
+        return names.reduce((stat, name) => stat[ name ] || {}, this.stats);
     }
 
 
-
-    log(...names: string[]) {
+    output(...names: string[]): OutputStats {
         const stats = names.length === 0 ? this.stats : this.get(...names);
 
-        const datas: ObjectOf<ObjectOf<{ header: string[]; rows: TableRows; }> | GlobalStat> = {};
-        const isGlobalStat = (statData: StatData): statData is { header: string[]; data: TableRow; } => !isArray(statData.data[ 0 ]);
+        const datas: OutputStats = {
+            collections: {},
+            global: {}
+        };
+
+        const isGlobalStat = (s: StatData): s is StatData<'global'> => !Array.isArray(s.data[ 0 ]);
 
         const addData = (fullName: string, stat: S) => {
-            for (const [ dataName, data ] of Object.entries(stat.datas(fullName))) {
-                if (data.data?.length > 0) {
+            for (const [ dataName, statData ] of Object.entries(stat.datas(fullName))) {
+                if (statData.data?.length > 0) {
 
-                    if (isGlobalStat(data)) {
-                        const globalStat = datas[ dataName ] as GlobalStat || new GlobalStat();
-                        globalStat.addData(data);
+                    if (isGlobalStat(statData)) {
+                        const stat = datas.global[ dataName ] as StatTableWithName || {
+                            collectionName: '', name: dataName, headers: statData.headers, rows: []
+                        };
 
-                        datas[ dataName ] = globalStat;
+                        stat.rows.push(statData.data);
+
+                        datas.global[ dataName ] = stat;
                     } else {
-                        const stats = datas[ dataName ] || {};
-                        stats[ fullName ] = data;
+                        const collection = (datas.collections[ fullName ] || { collectionName: fullName, stats: {} }) as StatCollection;
 
-                        datas[ dataName ] = stats;
+                        const s = statData as StatData<'detailed'>;
+                        collection.stats[ dataName ] = { headers: s.headers, rows: s.data, name: dataName, collectionName: fullName };
+
+                        datas.collections[ fullName ] = collection;
                     }
                 }
             }
@@ -94,49 +95,82 @@ export class Stats<S extends Stat> {
             }
         };
 
-        const terminal = new Terminal();
-
         if (this.isStat(stats))
             addData(stats.name, stats);
         else
             buildData('', stats as Statistics<S>);
 
-        terminal.logTitle(`"${this.statsName}" summary`, { type: 'band', style: highlightMagenta });
 
-        for (const [ dataName, data ] of Object.entries(datas).filter(([ _, d ]) => !(d instanceof GlobalStat))) {
-            for (const [ name, { header, data: rows } ] of Object.entries(data)) {
-                if (rows.length > 0) {
-                    terminal.logTable({
-                        data: rows,
-                        header
-                    });
-                }
-            }
-        }
 
-        for (const [ dataName, data ] of Object.entries(datas).filter(([ _, d ]) => (d instanceof GlobalStat))) {
-            const { header, rows } = data as GlobalStat;
-
-            if (rows.length > 0) {
-                terminal.logTable({
-                    data: rows,
-                    header
-                });
-            }
-        }
-
-        return this;
+        return datas;
     }
-}
+
+    toString(...names: string[]): string;
+    toString(names: string[], options?: StatsToStringOptions): string;
+    toString(...args: any[]): string {
+        const hasOptions = Array.isArray(args[ 0 ]);
+
+        const names = (hasOptions ? args[ 0 ] || [] : args) as string[];
+        const options = (hasOptions ? args[ 1 ] || {} : {}) as StatsToStringOptions;
+
+        const datas = this.output(...names);
+
+        const { rowWidth, columnToShrink, maxCellWidth } = options;
+
+        const terminal = new Terminal({
+            maxWidth: {
+                row: {
+                    width: rowWidth,
+                    indexToShrink: columnToShrink > 0 ? columnToShrink - 1 : undefined
+                },
+                cell: maxCellWidth
+            }
+        });
 
 
+        const toString = ({ name, collectionName, headers, rows }: StatTableWithName) => {
+            if (rows.length > 0) {
+                return terminal.table({
+                    title: collectionName ? `${collectionName.replaceAll('.', ' ❯ ')} ⟹  ${name}` : name,
+                    headers,
+                    data: rows
+                }, options.tableConfig);
+            }
+        };
 
-class GlobalStat {
-    header: string[];
-    rows: TableRows = [];
+        const title = terminal.title(`"${this.statsName}" summary`, { type: 'band', style: s.white.bgMagenta.transform });
 
-    addData(statData: { header: string[]; data: TableRow; }) {
-        this.header = statData.header;
-        this.rows.push(statData.data);
+        const sort = <T extends SortType>(datas: SortData<T>[], type: T): SortData<T>[] => {
+            const sorter = options.sort?.[ camelize(type) ] as StatsToStringOptions[ 'sort' ][ CamelCase<T> ];
+
+            if (!sorter)
+                return datas;
+
+            const s = (typeof sorter === 'function' ? sorter : statSorters[ camelize(sorter) ](type)) as StatSorter<T>;
+            return s?.(datas) ?? datas;
+        };
+
+
+        const stats = [
+            ...sort(Object.values(datas.collections), 'collections').flatMap(c => Object.values(c.stats)),
+            /* ...sort(
+                sort(Object.values(datas.detailed), 'collections').flatMap(c => Object.values(c.stats)),
+                'stats'
+            ), */
+            ...sort(Object.values(datas.global).map(stats => options.sort?.globalRows ? ({
+                ...stats,
+                rows: sort(stats.rows, 'global-rows')
+            }) : stats), 'stats')
+        ];
+
+        return stats.reduce((s, data) => `${s}\n${toString(data)}`, `${title}\n`);
+    }
+
+
+    log(...names: string[]): this;
+    log(names: string[], options?: StatsToStringOptions): this;
+    log(...args: any[]): this {
+        console.log(this.toString(...args));
+        return this;
     }
 }

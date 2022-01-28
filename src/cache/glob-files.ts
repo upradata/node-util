@@ -32,28 +32,26 @@ export class GlobFiles {
     }
 
     toGlobFiles(): GlobFile[] {
-        const plainFiles: GlobFile[] = [];
 
-        let filesList: FilePath[] = undefined;
-        let globalOptions: GlobFilesOptions = {};
+        const getData = () => {
+            if (isFilesWithGlobalOptions(this.files)) {
+                const f = this.files[ 0 ].files;
 
-        if (isFilesWithGlobalOptions(this.files)) {
-            const f = this.files[ 0 ].files;
+                return { filesList: ensureArray(f) as FilePath[], options: this.files[ 0 ].options };
+            }
 
-            filesList = ensureArray(f);
-            globalOptions = this.files[ 0 ].options;
-        } else {
-            filesList = this.files as FilePath[];
-        }
+            return { filesList: this.files as FilePath[], options: {} as GlobFilesOptions };
 
-        for (const file of filesList) {
+        };
+
+        const { filesList, options } = getData();
+
+        return filesList.map(file => {
             if (isGlobFile(file))
-                plainFiles.push({ pattern: file.pattern, options: assignRecursive({}, globalOptions, file.options) });
-            else
-                plainFiles.push({ pattern: file, options: globalOptions });
-        }
+                return { pattern: file.pattern, options: assignRecursive({}, options, file.options) };
 
-        return plainFiles;
+            return { pattern: file, options };
+        });
     }
 
     getFiles(): { files: string[], missed: { pattern: string; err?: any; }[]; } {

@@ -10,7 +10,7 @@ export interface StatFail {
 
 export class StatFiles implements Stat {
     all: string[] = [];
-    processed: string[] = [];
+    toBeProcessed: string[] = [];
     fails: StatFail[] = [];
     successes: string[] = [];
 
@@ -21,7 +21,7 @@ export class StatFiles implements Stat {
     }
 
     addToBeProcessed(...files: string[]) {
-        this.processed.push(...files);
+        this.toBeProcessed.push(...files);
     }
 
     succeed(...files: string[]) {
@@ -42,19 +42,19 @@ export class StatFiles implements Stat {
                 data: [
                     collectionName,
                     this.all.length,
-                    yellow`${this.nbOutOf(this.all.length - this.processed.length)}`,
+                    yellow`${this.nbOutOf(this.all.length - this.toBeProcessed.length)}`,
                     green`${this.nbOutOf(this.successes.length)}`,
                     red`${this.nbOutOf(this.fails.length)}`
                 ],
-                header: [ 'name', 'total', 'cache hits', 'successes', 'fails' ]
+                headers: [ 'name', 'total', 'cache hits', 'successes', 'fails' ]
             },
             success: {
                 data: this.successes.map((file, i) => [ i === 0 ? collectionName : '', file ]),
-                header: [ green`success` + ' (name)', green`file` ]
+                headers: [ green`success` + ' (name)', green`file` ]
             },
             fails: {
                 data: this.fails.map((fail, i) => [ i === 0 ? collectionName : '', fail.file, fail.reason ]),
-                header: [ 'name', red`fails`, 'reason' ]
+                headers: [ 'name', red`fails`, 'reason' ]
             }
         };
     }

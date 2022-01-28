@@ -10,7 +10,7 @@ import { guid, SyncAsync } from './useful';
 
 const existsFile = promisify(fs.exists);
 
-const getFile = (mode: keyof SyncAsync, option?: TmpFileOption): TT$<string> => {
+const getFile = (mode: keyof SyncAsync, option: TmpFileOption = {}): TT$<string> => {
     const { tmpDirRoot = os.tmpdir(), prefix = '' } = option;
 
     const get = (i: number = 0) => {
