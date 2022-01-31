@@ -1,12 +1,12 @@
 /* eslint-disable object-shorthand */
 import { InvalidArgumentError } from 'commander';
-import { composeLeft, isBoolean, isNil, isUndefined, ObjectOf, setRecursive, stringToRegex, TT as UtilTT } from '@upradata/util';
+import { composeLeft, isBoolean, isNil, isUndefined, ObjectOf, setRecursive, stringToRegex, TT } from '@upradata/util';
 import { requireModule, RequireOptions } from '../require';
 import { CliOption, AliasTransform } from './cli-option';
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 
 
-export type CliParserPrevious<T> = UtilTT<T, 'mutable'>;
+export type CliParserPrevious<T> = TT<T, 'mutable'>;
 
 // export type CommanderValueParser = <T>(value: string, previous?: TT<T>, aliasOriginOption?: CliOption) => T;
 export type CommanderValueParser<T> = (value: string, previous?: CliParserPrevious<T>, aliasOriginOption?: CliOption) => T;

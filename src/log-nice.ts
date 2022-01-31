@@ -32,29 +32,36 @@ export const nice = (v: any, options: NiceOptions = {}): string => {
     const {
         indent: indentSize = 4,
         indentSymbol = ' ',
-        key = defaultV.key,
+        key: keyTransform = defaultV.key,
         value = defaultV.value,
         bracket = defaultV.bracket,
         indentize = defaultV.indentize
     } = options;
 
-    const _ = (u: any, indentCount: number, level: number = 0): string => {
+    const ref = new Map<object, PropertyKey>();
+
+    const _ = (key: PropertyKey, u: any, indentCount: number, level: number = 0): string => {
         const indentKey = indentize({ symbol: indentSymbol, size: indentCount, level: level + 1 });
         const indentClose = indentize({ symbol: indentSymbol, size: indentCount - indentSize, level });
 
         if (isArray(u) || isPlainObject(u)) {
+            if (ref.has(u))
+                return value(`<circular ref>: "${ref.get(u).toString()}"`);
+
+            ref.set(u, key);
 
             const s = entries(u).reduce((s, [ k, v ]) => {
-                return `${s}\n${indentKey}${key(k)}: ${_(v, indentCount + indentSize + `${k}`.length + 2, level + 1)}`;
+                return `${s}\n${indentKey}${keyTransform(k)}: ${_(k, v, indentCount + indentSize + `${k}`.length + 2, level + 1)},`;
             }, `${open(u, bracket)}`);
 
-            return `${s}\n${indentClose}${close(u, bracket)}`;
+            const closeIndent = s === open(u, bracket) ? ` ` : `\n${indentClose}`;
+            return `${s}${closeIndent}${close(u, bracket)}`;
         }
 
         return value(u);
     };
 
-    return _(v, indentSize);
+    return _('', v, indentSize);
 };
 
 

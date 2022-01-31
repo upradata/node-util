@@ -1,10 +1,11 @@
 /* eslint-disable no-dupe-class-members */
 import { Command, CommanderError, OptionValueSource } from 'commander';
 import { EventEmitter } from 'events';
-import { FunctionN, TT$ } from '@upradata/util';
+import { FunctionN, TT, TT$ } from '@upradata/util';
 import { CliOption, CliOptionInit } from './cli-option';
 import { CliHelper, CliHelperOpts } from './helper';
 import { camelcase } from './util';
+import { CommanderParser } from './parsers';
 
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 
@@ -79,9 +80,9 @@ export class CliCommand extends Command {
 
     option<T>(opt: CliOptionInit<T>): this;
     option(flags: string, description?: string): this;
-    option(flags: string, description: string, defaultValue?: string | boolean): this;
-    option<T>(flags: string, description: string, fn: (value: string, previous: T) => T): this;
-    option<T>(flags: string, description: string, fn: (value: string, previous: T) => T, defaultValue?: T): this;
+    option(flags: string, description: string, defaultValue?: TT<string> | boolean): this;
+    option<T>(flags: string, description: string, parser: CommanderParser<T>): this;
+    option<T>(flags: string, description: string, parser: CommanderParser<T>, defaultValue?: TT<T>): this;
     /** @deprecated since v7, instead use choices or a custom function */
     option(flags: string, description: string, regexp: RegExp, defaultValue?: string | boolean): this;
     option(...args: any[]) {
