@@ -8,6 +8,7 @@ import { camelcase } from './util';
 import { CommanderParser } from './parsers';
 
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
+export { Argument as CliArgument } from 'commander';
 
 
 declare module 'commander' {

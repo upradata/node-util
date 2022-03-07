@@ -53,10 +53,23 @@ export type ColorsSafe = {
 };
 
 
-export const disableTTYStylesIfNotSupported = (stream = process.stdout) => {
+
+
+export const disableTTYStylesIfNotSupported = (stream: NodeJS.WriteStream = process.stdout) => {
 
     const supports = supportsColor(stream);
 
     if (!supports)
         colorsSafe.disable();
+};
+
+
+type Std = 'stdout' | 'stderr';
+export const disableStdTTYStyles = (stds: readonly [ Std ] | readonly [ Std, Std ] = [ 'stdout', 'stderr' ]) => {
+    stds.forEach(k => disableTTYStylesIfNotSupported(process[ k ]));
+};
+
+
+export const enableTTYStyles = () => {
+    colorsSafe.enable();
 };

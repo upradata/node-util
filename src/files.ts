@@ -28,7 +28,7 @@ export async function forEachFiles(directory: string, optionsOrCallback: ForEach
             withContent = false,
             filterFiles = _file => true,
             filterFolders = _dir => true,
-            maxDepth = NaN
+            maxDepth = Infinity
         } = options;
 
 
@@ -40,7 +40,7 @@ export async function forEachFiles(directory: string, optionsOrCallback: ForEach
         const files = dirents.filter(d => d.isFile() && filterFiles(join(d.name), directory));
         const directories = dirents.filter(d => d.isDirectory() && filterFolders(d.name, directory)).map(d => d.name);
 
-        await Promise.all([
+        await Promise.allSettled([
             ...files.map(async dirent => callback(join(dirent.name), dirent, withContent ? await fs.readFile(join(dirent.name), 'utf8') : undefined)),
             ...(recursive && depth < maxDepth ? directories.map(dir => forEach(join(dir), options, callback, depth + 1)) : [])
         ]);
