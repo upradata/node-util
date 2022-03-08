@@ -267,8 +267,11 @@ export class CliCommand extends Command {
 
         if (!this._actionHandler) {
             super.action((...args: any[]) => {
-                for (const handler of this._actionHandlers)
-                    handler.apply(this, args);
+                const results = this._actionHandlers.map(handler => handler.apply(this, args));
+                const hasSomePromise = results.some(r => r instanceof Promise);
+
+                if (hasSomePromise)
+                    return Promise.all(results).then(() => { });
             });
         }
 
