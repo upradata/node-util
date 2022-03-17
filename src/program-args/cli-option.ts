@@ -1,7 +1,7 @@
 import { Option } from 'commander';
 import * as commanderOption from 'commander/lib/option';
 import { NonFunctionProperties, ifthen, isDefinedProp } from '@upradata/util';
-import { CommanderParser } from './parsers';
+import { CommanderParser, parsers } from './parsers';
 import { camelcase } from './util';
 
 
@@ -23,11 +23,12 @@ export type CliOptionInit<T> = NonFunctionProperties<Partial<Option>> & {
     envVar?: string;
     parser?: CommanderParser<T>;
     hidden?: boolean;
-    choices?: T[];
+    choices?: string[] | { values: string[]; parser: CommanderParser<T>; };
     aliases?: Alias[];
     noNegate?: boolean;
 };
 
+export const isSimpleChoices = (v: string[] | { values: string[]; parser: CommanderParser<any>; }): v is string[] => Array.isArray(v);
 
 
 export type AliasDirection = 'source' | 'target';
@@ -79,7 +80,20 @@ export class CliOption extends Option {
         super(flags, description);
 
         const { noNegate = false, ...options } = rest;
-        Object.assign(this, { ...options, argChoices: rest.argChoices || rest.choices, parser: rest.parser, parseArg: rest.parser });
+
+        const getChoices = (): { choices?: string[]; parser?: CommanderParser<any>; } => {
+            if (!rest.choices)
+                return {};
+
+            if (isSimpleChoices(rest.choices))
+                return { choices: rest.choices };
+
+            return { choices: rest.choices.values, parser: parsers.choices(rest.choices.values, rest.choices.parser) };
+        };
+
+        const { choices, parser } = getChoices();
+
+        Object.assign(this, { ...options, argChoices: rest.argChoices || choices, parser, parseArg: rest.parser || parser });
 
         this.isObject = this.name().split('.').length > 1;
         this.negate = noNegate ? false : this.negate;
