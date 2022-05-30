@@ -1,0 +1,80 @@
+const fs = require('fs');
+const { promisify } = require('util');
+const path = require('path');
+
+const writeFile = promisify(fs.writeFile);
+const exists = promisify(fs.exists);
+
+const removeField = async ({ context, lockfile }, fields, ...pkgs) => {
+
+    const isPathExistsOrWait = async (filepath, { wait = 500, nbRetry = 10 } = {}) => {
+        if (await exists(filepath))
+            return Promise.resolve(true);
+
+        if (nbRetry === 0)
+            return Promise.resolve(false);
+
+        return new Promise(res => {
+            setTimeout(async () => res(await isPathExistsOrWait(filepath, { wait, nbRetry: nbRetry - 1 }), wait));
+        });
+    };
+
+    const getPkgJsonPaths = (pkg, isDirectDep) => {
+        if (isDirectDep)
+            return [ (path.join(__dirname, './node_modules', pkg, 'package.json')) ];
+        // [ require.resolve(path.join(pkg, 'package.json')) ];
+
+        const pnpmPkgName = pkg.startsWith('@') ? pkg.replace('/', '+') : pkg;
+        const pkgsKeys = Object.keys(lockfile.packages).filter(p => p.split('/')[ 1 ] === pnpmPkgName);
+
+        // all versions
+        return pkgsKeys.map(key => {
+            const [ , name, version ] = key.split('/');
+            return path.join(__dirname, './node_modules/.pnpm', version ? `${name}@${version}` : name, `node_modules/${name}/package.json`);
+        });
+    };
+
+    const deleteFields = async pkgJsonPath => {
+        const relativePkgJsonpath = path.relative(__dirname, pkgJsonPath);
+
+        if (await isPathExistsOrWait(pkgJsonPath)) {
+            const pkgJson = require(pkgJsonPath);
+
+            await Promise.all(fields.map(async field => {
+                delete pkgJson[ field ];
+
+                await writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 4), { encoding: 'utf-8' });
+                context.log(`‣ ${relativePkgJsonpath} "${field}" field REMOVED!`);
+            }));
+        } else {
+            context.log(`‣ ${relativePkgJsonpath} does not exist!`);
+        }
+    };
+
+
+    await Promise.all(pkgs.map(package => {
+
+        const { pkg, isDirectDep = true } = typeof package === 'string' ? { pkg: package } : package;
+
+        context.log(`‣ Trying to remove fields "[ ${fields.join(', ')} ]" from package ${pkg}`);
+        return getPkgJsonPaths(pkg, isDirectDep === false ? false : true).forEach(deleteFields);
+    }));
+};
+
+const afterAllResolved = async (lockfile, context) => {
+    await removeField({ lockfile, context }, [ 'exports' ], { pkg: 'commander', isDirectDep: true });
+    return lockfile;
+};
+
+
+function readPackage(pkg, context) {
+    return pkg;
+}
+
+
+module.exports = {
+    hooks: {
+        // readPackage,
+        afterAllResolved
+    }
+};
