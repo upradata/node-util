@@ -1,12 +1,13 @@
 /* eslint-disable object-shorthand */
 import { InvalidArgumentError } from 'commander';
-import { composeLeft, isBoolean, isNil, isUndefined, ObjectOf, setRecursive, stringToRegex, TT as UtilTT } from '@upradata/util';
+import { composeLeft, isBoolean, isNil, isUndefined, ObjectOf, setRecursive, stringToRegex, TT } from '@upradata/util';
 import { requireModule, RequireOptions } from '../require';
-import { CliOption, AliasTransform } from './cli-option';
+import { CliOption, AliasTransform } from './cli.option';
+
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 
 
-export type CliParserPrevious<T> = UtilTT<T, 'mutable'>;
+export type CliParserPrevious<T> = TT<T, 'mutable'>;
 
 // export type CommanderValueParser = <T>(value: string, previous?: TT<T>, aliasOriginOption?: CliOption) => T;
 export type CommanderValueParser<T> = (value: string, previous?: CliParserPrevious<T>, aliasOriginOption?: CliOption) => T;
@@ -128,13 +129,17 @@ export const parsers = {
         return concatIfVariadic(this?.variadic, trySetLastValue(), previous);
     },
 
-    choices: <T = string>(choices: T[], parser?: CommanderValueParser<T>): CommanderParser<T> => function (this: CliOption, value, previous) {
-        const parsedValue = parser?.(value, previous) ?? value as unknown as T;
+    choices: <T = string>(choices: string[], parser?: CommanderValueParser<T>): CommanderParser<T> => {
+        const parsedChoices = (parser ? choices.map(c => parser(c)) : choices) as T[];
 
-        if (!choices.includes(parsedValue))
-            throw new InvalidArgumentError(`Allowed choices are ${choices.join(', ')}.`);
+        return function (this: CliOption, value, previous) {
+            const parsedValue = parser?.(value, previous) ?? value as unknown as T;
 
-        return concatIfVariadic(this?.variadic, parsedValue, previous);
+            if (!parsedChoices.includes(parsedValue))
+                throw new InvalidArgumentError(`Allowed choices are ${choices.join(', ')}.`);
+
+            return concatIfVariadic(this?.variadic, parsedValue, previous);
+        };
     },
 
     regex: function (this: CliOption, value: string, previous: CliParserPrevious<RegExp>) {

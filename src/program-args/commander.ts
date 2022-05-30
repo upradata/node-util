@@ -1,5 +1,5 @@
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
-import { CliCommand } from './cli-command';
+import { CliCommand } from './cli.command';
 import { red, yellow, styles as s } from '../template-style';
 
 

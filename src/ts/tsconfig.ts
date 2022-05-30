@@ -15,7 +15,7 @@ interface TsConfigData {
     config: TsConfig;
 }
 
-export function getTsConfigJson(directory: string = __dirname, filename: string = 'tsconfig.json'): TsConfigJson {
+export function getTsConfigJson(directory: string = process.cwd(), filename: string = 'tsconfig.json'): TsConfigJson {
 
     const tsConfig: TsConfigData = tsconfig.loadSync(directory, filename);
 

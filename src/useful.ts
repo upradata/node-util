@@ -1,3 +1,4 @@
+import path from 'path';
 import {
     exec,
     ExecOptions,
@@ -96,3 +97,7 @@ export const poll = <S, E>(handler: () => TT$<{ stop: boolean; error?: E; succes
         }, timeStep);
     });
 };
+
+
+export const relativePath = (dir: string) => (...paths: string[]) => path.relative(dir, path.join(...paths));
+export const relativeCwd = (...paths: string[]) => relativePath(process.cwd())(...paths);
