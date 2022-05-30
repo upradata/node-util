@@ -2,7 +2,7 @@
 import { Command, CommanderError, OptionValueSource } from 'commander';
 import { EventEmitter } from 'events';
 import { FunctionN, TT, TT$ } from '@upradata/util';
-import { CliOption, CliOptionInit } from './cli-option';
+import { CliOption, CliOptionInit } from './cli.option';
 import { CliHelper, CliHelperOpts } from './helper';
 import { camelcase } from './util';
 import { CommanderParser } from './parsers';

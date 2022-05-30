@@ -2,7 +2,7 @@
 import { InvalidArgumentError } from 'commander';
 import { composeLeft, isBoolean, isNil, isUndefined, ObjectOf, setRecursive, stringToRegex, TT } from '@upradata/util';
 import { requireModule, RequireOptions } from '../require';
-import { CliOption, AliasTransform } from './cli-option';
+import { CliOption, AliasTransform } from './cli.option';
 
 export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 

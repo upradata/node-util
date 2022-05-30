@@ -1,7 +1,7 @@
 import { Argument, Command, Help } from 'commander';
 import { PartialRecursive, assignRecursive } from '@upradata/util';
 import { StyleTransformString, styles as s } from '../template-style';
-import { CliOption } from './cli-option';
+import { CliOption } from './cli.option';
 
 
 export type CliHelperStyles = {
