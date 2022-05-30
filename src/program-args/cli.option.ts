@@ -1,5 +1,4 @@
 import { Option } from 'commander';
-import * as commanderOption from 'commander/lib/option';
 import { NonFunctionProperties, ifthen, isDefinedProp } from '@upradata/util';
 import { CommanderParser, parsers } from './parsers';
 import { camelcase } from './util';
@@ -206,5 +205,28 @@ export class CliOption extends Option {
 }
 
 
-type SplitOptionFlags = (flags: string) => { shortFlag: string; longFlag: string; };
-const splitOptionFlags = commanderOption.splitOptionFlags as SplitOptionFlags;
+
+// from node_modules/.pnpm/commander@9.3.0/node_modules/commander/lib/option.js
+// new commander version uses package.json exports field and commander/lib/options.js is not exported
+// So it is better to rewrite it here instead of doing some hacks!
+export const splitOptionFlags = (flags: string) => {
+    let shortFlag: string;
+    let longFlag: string;
+
+    // Use original very loose parsing to maintain backwards compatibility for now,
+    // which allowed for example unintended `-sw, --short-word` [sic].
+
+    const flagParts = flags.split(/[ |,]+/);
+
+    if (flagParts.length > 1 && !/^[[<]/.test(flagParts[ 1 ]))
+        shortFlag = flagParts.shift();
+
+    longFlag = flagParts.shift();
+
+    // Add support for lone short flag without significantly changing parsing!
+    if (!shortFlag && /^-[^-]$/.test(longFlag)) {
+        shortFlag = longFlag;
+        longFlag = undefined;
+    }
+    return { shortFlag, longFlag };
+};
