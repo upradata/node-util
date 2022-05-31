@@ -129,8 +129,8 @@ export const parsers = {
         return concatIfVariadic(this?.variadic, trySetLastValue(), previous);
     },
 
-    choices: <T = string>(choices: string[], parser?: CommanderValueParser<T>): CommanderParser<T> => {
-        const parsedChoices = (parser ? choices.map(c => parser(c)) : choices) as T[];
+    choices: <T = string>(choices: readonly T[], parser?: CommanderValueParser<T>): CommanderParser<T> => {
+        const parsedChoices = (parser ? choices.map(c => typeof c === 'string' ? parser(c) : c) : choices) as T[];
 
         return function (this: CliOption, value, previous) {
             const parsedValue = parser?.(value, previous) ?? value as unknown as T;
@@ -147,7 +147,7 @@ export const parsers = {
             const res = value.match(/\/(.*)\/(.*)/);
 
             if (res) {
-                const [ _, regexS, flags ] = res;
+                const [ , regexS, flags ] = res;
                 return { regexS, flags };
             }
 
@@ -174,8 +174,8 @@ export const parsers = {
 type Map<T1, T2> = (value: T1) => T2;
 export type AliasTransformer = (...transforms: [ Map<string, any>, ...Map<any, any>[], Map<any, string> ]) => AliasTransform;
 
-export const aliasMap: AliasTransformer = (...transforms) => parsers.compose<never, string>(...transforms);
+export const transformCompose: AliasTransformer = (...transforms) => parsers.compose<never, string>(...transforms);
 
-export const aliasMaps = {
-    toObject: (prop: string): AliasTransform => aliasMap(parsers.object(prop), (v: any) => JSON.stringify(v))
+export const transforms = {
+    toObject: (prop: string): AliasTransform => transformCompose(parsers.object(prop), (v: any) => JSON.stringify(v))
 };
