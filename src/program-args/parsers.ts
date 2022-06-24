@@ -37,19 +37,16 @@ const parseNumber = (type: 'int' | 'float'): CommanderParser<number> => function
 
 
 
-const reduce = <V, R = V>(
+const reduce = <R, V = string>(
     init: R, reducer: (container: R, value: V) => R, parser?: CommanderValueParser<V>
 ): CommanderReducer<R> => function (this: CliOption, value, previous, aliasOriginOption) {
 
     // if this.isValueFromDefault ==> option value was initially set with the option.defaultValue at creation
-    const container = this.isValueFromDefault ? previous : init;
+    const container = previous || (this.isValueFromDefault ? previous : init);
 
-    return reducer(container, (parser?.call(this, value, undefined, aliasOriginOption) ?? value) as V);
+    return reducer(container, (parser?.call(this, value, undefined, aliasOriginOption) ?? value));
 };
 
-
-const increaseNumber = (init: number): CommanderParser<number> => reduce(init, (sum, _v) => sum + 1);
-const decreaseNumber = (init: number): CommanderParser<number> => reduce(init, (sum, _v) => sum - 1);
 
 
 export const parsers = {
@@ -82,8 +79,8 @@ export const parsers = {
     } as CommanderParser<boolean>,
 
     reduce,
-    increaseNumber,
-    decreaseNumber,
+    increaseNumber: (init: number): CommanderParser<number> => reduce(init, (sum, _v) => sum + 1),
+    decreaseNumber: (init: number): CommanderParser<number> => reduce(init, (sum, _v) => sum - 1),
 
     array: <V = string>(parser?: CommanderValueParser<V>): CommanderParser<V[], V[]> => reduce([] as V[], (container, value) => container.concat(value), parser),
 

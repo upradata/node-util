@@ -1,4 +1,3 @@
-import { CSVParseParam } from 'csvtojson/v2/Parameters';
 import { TransformOptions } from 'stream';
 import {
     compose,
@@ -12,7 +11,7 @@ import {
     MergeRexesOptions,
     regexToString
 } from '@upradata/util';
-import { csvToJson } from './csv-json';
+import { csvToJson, CsvToJsonOpts } from './csv-json';
 
 
 export type Parser<D = string, N = unknown> = (data: D) => N;
@@ -141,7 +140,7 @@ export const getParsers = <O extends { default?: string; }, Headers extends stri
 
 
 
-export type CsvOptions<Headers extends string = string> = Partial<Omit<CSVParseParam, 'headers'>> & { headers?: Headers[]; };
+export type CsvOptions<Headers extends string = string> = Partial<Omit<CsvToJsonOpts, 'headers'>> & { headers?: Headers[]; };
 
 type DefaultHeaders<O> = Exclude<keyof O & string, 'default'>;
 

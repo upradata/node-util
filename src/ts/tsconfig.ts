@@ -2,6 +2,8 @@ import path from 'path';
 import * as tsconfig from 'tsconfig';
 import { assignRecursive } from '@upradata/util';
 import { TsConfig } from './tsconfig.json';
+import { findUpDir } from '../find-up';
+
 
 
 
@@ -15,12 +17,14 @@ interface TsConfigData {
     config: TsConfig;
 }
 
-export function getTsConfigJson(directory: string = process.cwd(), filename: string = 'tsconfig.json'): TsConfigJson {
+export function getTsConfigJson(directory: string = process.cwd(), tsconfigFile: string = 'tsconfig.json'): TsConfigJson {
 
-    const tsConfig: TsConfigData = tsconfig.loadSync(directory, filename);
+    const tsconfigDir = findUpDir.sync(tsconfigFile, { from: directory });
+
+    const tsConfig: TsConfigData = tsconfig.loadSync(tsconfigDir, tsconfigFile);
 
     if (!tsConfig.path)
-        throw new Error(`Cannot find tsconfig file "${path.join(directory, filename)}"`);
+        throw new Error(`Cannot find tsconfig file "${path.join(directory, tsconfigFile)}"`);
 
     return mergeExtendedTsconfigJson(tsConfig, tsConfig.path);
 }
@@ -31,7 +35,7 @@ const mergeTsconfigData = (tsconfigData: TsConfigData, rootTsconfigJsonPath: str
     config: tsconfigData.config
 });
 
-const mergeExtendedTsconfigJson = (tsconfigData: TsConfigData, rootTsconfigJsonPath: string) => {
+const mergeExtendedTsconfigJson = (tsconfigData: TsConfigData, rootTsconfigJsonPath: string): TsConfigJson => {
     const tsconfigJson = tsconfigData.config;
 
     if (!tsconfigJson.extends)

@@ -13,7 +13,8 @@ const execAndPoll = async (options: { command: string; outputFile: string; } & X
             success: '',
             error: new Error(oneLineTrim`
                 Error while command "${command}".
-                The conversion succeeded. But the OS did not write the output after a maximum waiting time of ${'maxWait'}ms`)
+                If LibreOffice is opened, it cannot work. Please, be sure to close all LibreOffice instances (Writer, Calc, ...).
+                It is possible that the conversion succeeded but the OS did not write the output after a maximum waiting time of ${maxWait}ms. (LibreOffice bug)`)
         }), { duration: maxWait }));
 };
 
@@ -31,6 +32,9 @@ export type OdsToXlsxOption = XlsxOption;
 
 export async function odsToXlsx(filepath: string, option: OdsToXlsxOption): Promise<string> {
     const { outputFileName, outputDir = '.', verbose, maxWait = 2000 } = option;
+
+    if (!(await fileExists.async(filepath)))
+        throw new Error(`file at location "${filepath}" does not exist!`);
 
     const xlsxFileName = `${path.basename(filepath, '.ods')}.xlsx`;
     const xlsxFile = path.join(outputDir, xlsxFileName);
@@ -62,7 +66,7 @@ export async function xlsxToCsv(filepath: string, option: XslxToCsvOption): Prom
     await execAndPoll({
         command: `xlsx2csv -n ${sheetName} -d ';' ${filepath} ${outputFile}`,
         verbose,
-        outputFile: outputFile,
+        outputFile,
         maxWait
     });
 

@@ -30,8 +30,8 @@ export type CliOptionInit<T> = NonFunctionProperties<Partial<Option>> & {
 export const isSimpleChoices = (v: string[] | { values: string[]; parser: CommanderParser<any>; }): v is string[] => Array.isArray(v);
 
 
-export type AliasDirection = 'source' | 'target';
-export type AliasMode = 'multi-way' | 'two-way' | AliasDirection;
+export type AliasType = 'source' | 'target';
+export type AliasMode = 'multi-way' | 'two-way' | AliasType;
 
 export type AliasTransform = ((value: string) => string) | CommanderParser<never, string>;
 export type AliasTransforms = {
@@ -57,7 +57,7 @@ const isAliasCliOption = (v: Alias): v is AliasCliOption => !!(v as AliasCliOpti
 
 
 export class CliOption extends Option {
-    private cliAliases: Set<{ option: CliOption; direction: AliasDirection; transform: AliasTransform; }> = new Set();
+    private cliAliases: Set<{ option: CliOption; type: AliasType; transform: AliasTransform; }> = new Set();
     public isObject = false;
     public isValueFromDefault = false;
     public parser: CommanderParser<any> = undefined; // parseArg synonym
@@ -92,7 +92,8 @@ export class CliOption extends Option {
 
         const { choices, parser } = getChoices();
 
-        Object.assign(this, { ...options, argChoices: rest.argChoices || choices, parser, parseArg: rest.parser || parser });
+        // priority for rest.parser
+        Object.assign(this, { ...options, argChoices: rest.argChoices || choices, parser: rest.parser || parser, parseArg: rest.parser || parser });
 
         this.isObject = this.name().split('.').length > 1;
         this.negate = noNegate ? false : this.negate;
@@ -111,9 +112,9 @@ export class CliOption extends Option {
         const add = (d: Omit<AliasCliOption, 'transform'> & { transform: AliasTransform; }) => {
             const { option, mode, transform = (v: string) => v } = d;
 
-            const addAlias = (d: { alias: AliasDirection; this: AliasDirection; }) => {
-                option.cliAliases.add({ option: this, direction: d.this, transform: transform.bind(this) });
-                this.cliAliases.add({ option, direction: d.alias, transform: transform.bind(option) });
+            const addAlias = (d: { alias: AliasType; this: AliasType; }) => {
+                option.cliAliases.add({ option: this, type: d.this, transform: transform.bind(this) });
+                this.cliAliases.add({ option, type: d.alias, transform: transform.bind(option) });
             };
 
 
