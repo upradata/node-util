@@ -1,6 +1,7 @@
 import { TransformOptions } from 'stream';
 import {
     compose,
+    composeLeft,
     ifThen,
     isDefined,
     isDefinedProp,
@@ -14,12 +15,12 @@ import {
 import { csvToJson, CsvToJsonOpts } from './csv-json';
 
 
-export type Parser<D = string, N = unknown> = (data: D) => N;
+export type Parser<D = string, N = unknown> = (data: D, key: string, resultRow, row: string[], index: number) => N;
 
-export class ParserOptions<E = unknown> {
-    emptyCell: E = undefined;
-    parser: Parser = undefined;
-}
+export type ParserOptions<E = unknown> = {
+    emptyCell?: E;
+    parser: Parser;
+};
 
 // type Recordify<O extends { default: string; }, T> = Record<keyof O, T>;
 // type Recordify2<O extends { default: string; }, T> = { [ K in keyof O ]: T<O[ K ]>> };
@@ -41,15 +42,50 @@ export type Parsers<O extends { default?: string; }> = Partial<Record<keyof O, P
 
 
 // const numberToComma = (n: number | string) => `${n}`.replace('.', ',');
-const commaToNumber = (s: number | string) => isDefined(s) ? parseFloat(`${s}`.replace(',', '.')) : s;
+const commaToNumber = (s: number | string) => isDefined(s) && s !== '' ? parseFloat(`${s}`.replace(',', '.')) : s;
+
+const makeParser = <P extends Parser>(parser: P): P => parser;
+
+export type EnsureParserOptions = {
+    onError?: (message: string) => void;
+    errorMessage?: string;
+};
+
+const ensureParser = (test: (cellData: string | undefined) => boolean, options: EnsureParserOptions = {}) => makeParser((cellData: string | undefined) => {
+    const { onError, errorMessage = '' } = options;
+
+    if (!test(cellData)) {
+        if (!onError)
+            throw new Error(errorMessage);
+
+        onError(errorMessage);
+        return;
+    }
+
+    return cellData;
+});
 
 export const cellParsers = {
-    boolean: (cellData: string | boolean) => typeof cellData === 'boolean' ? cellData : cellData === 'true',
-    string: (cellData: string) => cellData,
-    number: (cellData: string) => commaToNumber(cellData),
-    arrayString: (cellData: string) => isDefined(cellData) ? cellData.replace(/[\[\]]/g, '').split(',') : cellData,
-    arrayNumber: (cellData: string) => isDefined(cellData) ? cellData.replace(/[\[\]]/g, '').split(',').map(commaToNumber) : cellData,
-    setEmptyCell: <T>(emptyCell: T) => (cellData: string | undefined) => cellData === '' || isUndefined(cellData) ? emptyCell : cellData
+    boolean: makeParser((cellData: string | boolean) => typeof cellData === 'boolean' ? cellData : cellData === 'true'),
+    string: makeParser((cellData: string) => cellData),
+    number: makeParser((cellData: string) => commaToNumber(cellData)),
+    arrayString: makeParser((cellData: string) => isDefined(cellData) && cellData !== '' ? cellData.replace(/[[]]/g, '').split(',') : cellData),
+    arrayNumber: makeParser((cellData: string) => isDefined(cellData) && cellData !== '' ? cellData.replace(/[[]]/g, '').split(',').map(commaToNumber) : cellData),
+    setEmptyCell: <T>(emptyCell: T) => makeParser((cellData: string | undefined) => cellData === '' || isUndefined(cellData) ? emptyCell : cellData),
+    ensure: ensureParser,
+    ensureNotEmpty: (options: { what?: string; } & EnsureParserOptions) => {
+        const { what = 'property' } = options;
+        const errorMessage = options.errorMessage || `"${what}" cannot be undefined`;
+
+        return makeParser(ensureParser(cellData => isDefined(cellData) && cellData !== '', { ...options, errorMessage }));
+    },
+    compose: (...parsers: (Parser | undefined | false)[]) => makeParser((...args) => {
+        const [ cellData, ...rest ] = args;
+        return composeLeft(
+            parsers.filter(p => typeof p === 'function').map((parser: Parser) => (cellData: string) => parser(cellData, ...rest)),
+            cellData
+        );
+    })
 };
 
 
@@ -90,7 +126,7 @@ export const regexParsers = {
 };
 
 
-export const autoParser = (emptyCell: any = '') => (cellData: string) => {
+export const autoParser = (emptyCell: any = undefined) => (cellData: string) => {
     const parser = ifThen()
         .next({ if: regexParsers.boolean.test(cellData), then: cellParsers.boolean })
         .next({ if: regexParsers.number.test(cellData), then: cellParsers.number })
@@ -102,9 +138,7 @@ export const autoParser = (emptyCell: any = '') => (cellData: string) => {
     return cellDataParser(parser, emptyCell);
 };
 
-export const cellDataParser = (parser: Parser<string, unknown>, emptyCell: any) => (cellData: string) => {
-    return compose([ parser, cellParsers.setEmptyCell(emptyCell) ], cellData);
-};
+export const cellDataParser = (parser: Parser<string, unknown>, emptyCell: any) => cellParsers.compose(parser, cellParsers.setEmptyCell(emptyCell));
 
 export const getParsers = <O extends { default?: string; }, Headers extends string = DefaultHeaders<O>>(
     headers: Headers[] = [], defaultParserOptions: ParsersOptions<O> = {}, parsersOptions: ParsersOpts<O> = {}
@@ -161,8 +195,7 @@ export const csvToJsonWithAutoParsers = <O extends { default?: string; }, R, Hea
 ): Promise<R[]> => {
 
     return csvToJsonWithDefaultParsers<O>({
-        default:
-            { emptyCell: undefined, parser: autoParser(undefined) }
+        default: { emptyCell: undefined, parser: autoParser(undefined) }
     })(file, csvOptions, options);
 };
 
