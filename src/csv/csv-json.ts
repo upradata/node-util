@@ -70,8 +70,6 @@ export const csvToJson = <R>(file: string, param?: CsvToJsonOpts, options?: Tran
     }).catch(e => {
         disableSkipRows();
         console.error(e);
-        console.log(require('fs-extra').readFileSync(file, { encoding: 'utf8' }));
-        console.log('CACA', param, 'PIPI');
         throw e;
     });
 };
