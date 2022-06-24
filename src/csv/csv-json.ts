@@ -1,9 +1,9 @@
 
-import csv from 'csvtojson';
+import { TransformOptions } from 'stream';
+import csvtojson from 'csvtojson';
 import { Fileline } from 'csvtojson/v2/fileline';
 import { CSVParseParam } from 'csvtojson/v2/Parameters';
 import { MultipleRowResult, RowSplit } from 'csvtojson/v2/rowSplit';
-import { TransformOptions } from 'stream';
 import { delayedPromise } from '@upradata/util';
 
 
@@ -62,11 +62,17 @@ export const csvToJson = <R>(file: string, param?: CsvToJsonOpts, options?: Tran
     const disableSkipRows = param?.skipEmptyRows ? enableSkipEmptyRows() : () => { };
 
     // there is only "then" defined. It is better to get a real Promise and not a PromiseLike wihthout all methods
-    csv({ delimiter: ';', ...param, }, options).fromFile(file).then(resolve, reject);
+    csvtojson({ delimiter: ';', ...param }, options).fromFile(file).then(resolve, reject);
 
     return promise.then(json => {
         disableSkipRows();
         return json;
+    }).catch(e => {
+        disableSkipRows();
+        console.error(e);
+        console.log(require('fs-extra').readFileSync(file, { encoding: 'utf8' }));
+        console.log('CACA', param, 'PIPI');
+        throw e;
     });
 };
 
@@ -117,7 +123,7 @@ export function jsonToCsv<T>(json: T[], options: JsonToCsvOptions<T> = {}): stri
         for (const h of headers)
             fullRow[ h ] = row[ h ] ?? '';
 
-        return csv + '\n' + Object.values(fullRow).join((delimiter));
+        return `${csv}\n${Object.values(fullRow).join((delimiter))}`;
     }, headers.join(delimiter));
 
 
@@ -131,7 +137,7 @@ export const csvHeaders = <H extends string = string>(file: string, options: { d
 
     let headers: H[] = [];
 
-    const csvStream = csv({ noheader: false, delimiter: options.delimiter || ';' }, { objectMode: true })
+    const csvStream = csvtojson({ noheader: false, delimiter: options.delimiter || ';' }, { objectMode: true })
         .fromFile(file)
         .on('data', (line: {}) => {
             headers = Object.keys(line) as H[];

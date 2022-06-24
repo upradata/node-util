@@ -30,13 +30,11 @@ export function registerPaths(options: RegisterOptions) {
     // transform relative paths to absolute ones.
     // Important if registration is not done in the root project folder
 
-    const absolutPaths = map(paths, (path, maps) => ({
-        key: join(tsRootDir, path),
-        value: maps
-    }));
 
-    const allPaths = { ...paths, ...absolutPaths } as Record<string, string[]>;
-    const transformedPaths = map(allPaths, (path, maps) => ({ key: path, value: maps.map(m => transform(m, tsconfig.config)) }));
+    const transformedPaths = map(paths, (_path, maps) => maps.flatMap(
+        p => [ p, ...(isAbsolute(p) ? [] : [ join(tsRootDir, p) ]) ].map(p => transform(p, tsconfig.config))
+    ));
+
 
     // better to have an absolute path if the cwd is not where tsconfig.json is
     let baseUrl = opts.baseUrl || compilerOptions.baseUrl || tsRootDir;

@@ -1,5 +1,5 @@
-import fs from 'fs-extra';
 import path from 'path';
+import fs from 'fs-extra';
 import tsconfig from 'tsconfig';
 import ts from 'typescript';
 import { AssignOptions, assignRecursive } from '@upradata/util';
@@ -84,13 +84,13 @@ export class TscCompiler {
 
                 if (diagnostic.file) {
 
-                    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!);
+                    const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start);
                     const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
 
-                    return errorMessages + `${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}\n`;
+                    return `${errorMessages}${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}\n`;
                 }
 
-                return errorMessages + `${ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')}\n`;
+                return `${errorMessages}${ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')}\n`;
 
             }, '');
 

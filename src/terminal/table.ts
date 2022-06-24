@@ -187,8 +187,9 @@ export class TableString {
                     columnsWidth[ index ] = maxShrinkWidth;
                     return this.resizeColumnsWidth(columnsWidth, builtConfig);
                     // tslint:disable-next-line: no-else-after-return
-                } else
-                    columnsWidth[ index ] = shrinkWidth;
+                }
+
+                columnsWidth[ index ] = shrinkWidth;
             }
 
             return columnsWidth;
