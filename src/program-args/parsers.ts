@@ -48,6 +48,7 @@ const reduce = <R, V = string>(
 };
 
 
+const parseArray = <V = string>(parser?: CommanderValueParser<V>): CommanderParser<V[], V[]> => reduce([] as V[], (container, value) => container.concat(value), parser);
 
 export const parsers = {
     int: parseNumber('int'),
@@ -82,9 +83,20 @@ export const parsers = {
     increaseNumber: (init: number): CommanderParser<number> => reduce(init, (sum, _v) => sum + 1),
     decreaseNumber: (init: number): CommanderParser<number> => reduce(init, (sum, _v) => sum - 1),
 
-    array: <V = string>(parser?: CommanderValueParser<V>): CommanderParser<V[], V[]> => reduce([] as V[], (container, value) => container.concat(value), parser),
+    array: parseArray,
 
-    stringToArray: (separator: string | RegExp = ',') => (value: string) => value.split(separator),
+    stringToArray: <V = string>(options: { separator?: string | RegExp; parser?: CommanderValueParser<V>; }) => {
+        const { separator = ',', parser } = options;
+
+        return parseArray((value: string) => {
+            const values = value.split(separator);
+
+            if (parser)
+                return values.map(v => parser(v));
+
+            return values;
+        });
+    },
 
     object: (key?: string) => function (this: CliOption, value, previous) {
         let v: any = undefined;
@@ -164,7 +176,15 @@ export const parsers = {
     compose: <T = any, R = T>(...parsers: CommanderValueParser<any>[]): CommanderParser<T, R> => function (this: CliOption, value, previous, aliasOriginOption) {
         const parsedValue = composeLeft(parsers.map(p => (v: string) => p.call(this, v, previous, aliasOriginOption)), value);
         return concatIfVariadic(this?.variadic, parsedValue, previous);
-    }
+    },
+
+    try: <T>(parser: CommanderParser<T>) => function (this: CliOption, value: string, previous: CliParserPrevious<T>) {
+        try {
+            return parser.call(this, value, previous);
+        } catch (e) {
+            return value;
+        }
+    } as CommanderParser<T | string>,
 };
 
 
