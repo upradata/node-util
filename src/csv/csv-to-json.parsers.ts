@@ -141,7 +141,7 @@ export const autoParser = (emptyCell: any = undefined) => (cellData: string) => 
 export const cellDataParser = (parser: Parser<string, unknown>, emptyCell: any) => cellParsers.compose(parser, cellParsers.setEmptyCell(emptyCell));
 
 export const getParsers = <O extends { default?: string; }, Headers extends string = DefaultHeaders<O>>(
-    headers: Headers[] = [], defaultParserOptions: ParsersOptions<O> = {}, parsersOptions: ParsersOpts<O> = {}
+    headers: readonly Headers[] = [], defaultParserOptions: ParsersOptions<O> = {}, parsersOptions: ParsersOpts<O> = {}
 ): Parsers<O> => {
 
     const names = ifThen()
@@ -174,7 +174,7 @@ export const getParsers = <O extends { default?: string; }, Headers extends stri
 
 
 
-export type CsvOptions<Headers extends string = string> = Partial<Omit<CsvToJsonOpts, 'headers'>> & { headers?: Headers[]; };
+export type CsvOptions<Headers extends string = string> = Partial<Omit<CsvToJsonOpts, 'headers'>> & { headers?: readonly Headers[]; };
 
 type DefaultHeaders<O> = Exclude<keyof O & string, 'default'>;
 
