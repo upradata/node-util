@@ -55,14 +55,15 @@ const enableSkipEmptyRows = () => {
 
 
 // Converter.then is defined => we can use it like a promise :)
-export type CsvToJsonOpts = Partial<CSVParseParam & { skipEmptyRows?: boolean; }>;
+export type CsvToJsonOpts = Partial<Omit<CSVParseParam, 'headers'> & { headers?: Readonly<CSVParseParam[ 'headers' ]>; skipEmptyRows?: boolean; }>;
+
 export const csvToJson = <R>(file: string, param?: CsvToJsonOpts, options?: TransformOptions): Promise<R[]> => {
     const { promise, resolve, reject } = delayedPromise<R[]>();
 
     const disableSkipRows = param?.skipEmptyRows ? enableSkipEmptyRows() : () => { };
 
     // there is only "then" defined. It is better to get a real Promise and not a PromiseLike wihthout all methods
-    csvtojson({ delimiter: ';', ...param }, options).fromFile(file).then(resolve, reject);
+    csvtojson({ delimiter: ';', ...param } as CSVParseParam, options).fromFile(file).then(resolve, reject);
 
     return promise.then(json => {
         disableSkipRows();

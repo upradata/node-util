@@ -1,6 +1,7 @@
-export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 import { CliCommand } from './cli.command';
 import { red, yellow, styles as s } from '../template-style';
+
+export { InvalidArgumentError as CliInvalidArgumentError } from 'commander';
 
 
 export interface CommandOptions {
