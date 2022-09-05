@@ -137,7 +137,7 @@ export class CliCommand extends Command {
             // preassign default value for --no-*, [optional], <required>, or plain flag if boolean value
             if (option.negate || option.optional || option.required || typeof defaultValue === 'boolean') {
                 // when --no-foo we make sure default is true, unless a --foo option is already defined
-                if (option.negate) {
+                if (option.negate && !option.negateNoDefault) {
                     const positiveLongFlag = option.long.replace(/^--no-/, '--');
                     defaultValue = this._findOption(positiveLongFlag) ? this.getOptionValue(name) : true;
                 }

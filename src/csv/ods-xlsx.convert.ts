@@ -1,13 +1,13 @@
 import path from 'path';
 import { oneLineTrim } from '@upradata/util';
-import { execAsync, fileExists, poll } from '../useful';
+import { execAsync, ExecAsyncOptions, fileExists, poll } from '../useful';
 import { absolutePath } from './util';
 
 
 const execAndPoll = async (options: { command: string; outputFile: string; } & XlsxOption) => {
-    const { command, outputFile, verbose: logOutput, maxWait = 2000 } = options;
+    const { command, outputFile, exec: execOptions, maxWait = 2000 } = options;
 
-    return execAsync(command, { logOutput })
+    return execAsync(command, execOptions)
         .then(async () => poll(async () => ({
             stop: await fileExists.async(outputFile),
             success: '',
@@ -23,15 +23,15 @@ const execAndPoll = async (options: { command: string; outputFile: string; } & X
 export interface XlsxOption {
     outputFileName?: string;
     outputDir?: string;
-    verbose?: boolean;
     maxWait?: number;
+    exec?: ExecAsyncOptions;
 }
 
 
 export type OdsToXlsxOption = XlsxOption;
 
 export async function odsToXlsx(filepath: string, option: OdsToXlsxOption): Promise<string> {
-    const { outputFileName, outputDir = '.', verbose, maxWait = 2000 } = option;
+    const { outputFileName, outputDir = '.', exec, maxWait = 2000 } = option;
 
     if (!(await fileExists.async(filepath)))
         throw new Error(`file at location "${filepath}" does not exist!`);
@@ -41,7 +41,7 @@ export async function odsToXlsx(filepath: string, option: OdsToXlsxOption): Prom
 
     await execAndPoll({
         command: `libreoffice --headless --convert-to xlsx ${filepath} --outdir ${outputDir}`,
-        verbose,
+        exec,
         outputFile: xlsxFile,
         maxWait
     });
@@ -58,14 +58,14 @@ export async function odsToXlsx(filepath: string, option: OdsToXlsxOption): Prom
 export type XslxToCsvOption = XlsxOption & { sheetName: string; };
 
 export async function xlsxToCsv(filepath: string, option: XslxToCsvOption): Promise<string> {
-    const { sheetName, outputFileName, outputDir = '.', verbose, maxWait } = option;
+    const { sheetName, outputFileName, outputDir = '.', exec, maxWait } = option;
 
     const filename = outputFileName || `${sheetName.toLocaleLowerCase()}.csv`;
     const outputFile = await absolutePath({ dir: outputDir, filename });
 
     await execAndPoll({
         command: `xlsx2csv -n ${sheetName} -d ';' ${filepath} ${outputFile}`,
-        verbose,
+        exec,
         outputFile,
         maxWait
     });

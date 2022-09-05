@@ -5,6 +5,7 @@ import {
     ifThen,
     isDefined,
     isDefinedProp,
+    isNil,
     isUndefined,
     keys,
     makeObject,
@@ -42,9 +43,16 @@ export type Parsers<O extends { default?: string; }> = Partial<Record<keyof O, P
 
 
 // const numberToComma = (n: number | string) => `${n}`.replace('.', ',');
-const commaToNumber = (s: number | string) => isDefined(s) && s !== '' ? parseFloat(`${s}`.replace(',', '.')) : s;
+const commaToNumber = (s: number | string) => {
+    if (isDefined(s) && s !== '') {
+        const nb = parseFloat(`${s}`.replace(',', '.'));
+        return Number.isNaN(nb) ? undefined : nb;
+    }
 
-const makeParser = <P extends Parser>(parser: P): P => parser;
+    return undefined;
+};
+
+export const makeParser = <P extends Parser>(parser: P): P => parser;
 
 export type EnsureParserOptions = {
     onError?: (message: string) => void;
@@ -66,11 +74,21 @@ const ensureParser = (test: (cellData: string | undefined) => boolean, options: 
 });
 
 export const cellParsers = {
-    boolean: makeParser((cellData: string | boolean) => typeof cellData === 'boolean' ? cellData : cellData === 'true'),
-    string: makeParser((cellData: string) => cellData),
+    boolean: makeParser((cellData: string | boolean) => cellData === '' ? undefined : typeof cellData === 'boolean' ? cellData : cellData === 'true'),
+    string: (options: { trim?: boolean; removeQuotesProtection?: `"` | `'`; } = {}) => {
+        const { trim = true, removeQuotesProtection = '"' } = options;
+        return makeParser((cellData: string) => {
+            if (cellData === '' || typeof cellData !== 'string')
+                return undefined;
+
+            const s = trim ? cellData.trim() : cellData;
+            const q = removeQuotesProtection;
+            return s ? s.replace(new RegExp(`^(\\s*)${q}(.*)${q}(\\s*)$`), '$1$2$3') : s;
+        });
+    },
     number: makeParser((cellData: string) => commaToNumber(cellData)),
-    arrayString: makeParser((cellData: string) => isDefined(cellData) && cellData !== '' ? cellData.replace(/[[]]/g, '').split(',') : cellData),
-    arrayNumber: makeParser((cellData: string) => isDefined(cellData) && cellData !== '' ? cellData.replace(/[[]]/g, '').split(',').map(commaToNumber) : cellData),
+    arrayString: makeParser((cellData: string) => isDefined(cellData) && cellData !== '' ? cellData.replace(/[[]]/g, '').split(',') : undefined),
+    arrayNumber: makeParser((cellData: string) => isDefined(cellData) && cellData !== '' ? cellData.replace(/[[]]/g, '').split(',').map(commaToNumber) : undefined),
     setEmptyCell: <T>(emptyCell: T) => makeParser((cellData: string | undefined) => cellData === '' || isUndefined(cellData) ? emptyCell : cellData),
     ensure: ensureParser,
     ensureNotEmpty: (options: { what?: string; } & EnsureParserOptions) => {
@@ -79,13 +97,50 @@ export const cellParsers = {
 
         return makeParser(ensureParser(cellData => isDefined(cellData) && cellData !== '', { ...options, errorMessage }));
     },
-    compose: (...parsers: (Parser | undefined | false)[]) => makeParser((...args) => {
+    compose: <N = unknown>(
+        ...parsers: [ ...(Parser<unknown, unknown> | undefined | false)[], Parser<unknown, N> | undefined | false ]
+    ) => makeParser((...args) => {
         const [ cellData, ...rest ] = args;
         return composeLeft(
-            parsers.filter(p => typeof p === 'function').map((parser: Parser) => (cellData: string) => parser(cellData, ...rest)),
+            parsers.filter(p => typeof p === 'function').map((parser: Parser<unknown, N>) => (cellData: string) => parser(cellData, ...rest)),
             cellData
-        );
-    })
+        ) as N;
+    }),
+    firstToSucceed: <N = unknown>(
+        ...parsers: [ ...(Parser<unknown, unknown> | undefined | false)[], Parser<unknown, N> | undefined | false ]
+    ) => makeParser((...args) => {
+        const parsersFn = parsers.filter(p => typeof p === 'function') as Parser<unknown, N>[];
+        const [ cellData, ...rest ] = args;
+
+        const tryParsers = (index = 0): N => {
+            if (index > parsersFn.length - 1)
+                return undefined;
+
+            try {
+                const result = parsersFn[ index ](cellData, ...rest);
+                if (!isNil(result))
+                    return result;
+            } catch { }
+
+            return tryParsers(index + 1);
+        };
+
+        return tryParsers();
+    }),
+    choices: <T>(options: { values: readonly T[]; emitError?: boolean; }) => {
+        const { values, emitError = true } = options;
+
+        return makeParser((cellData: unknown) => {
+            if (!cellData)
+                return undefined;
+
+            if (values.includes(cellData as T))
+                return cellData;
+
+            if (emitError)
+                throw new Error(`cellData "${cellData}" not included in choices in [ ${values.join(', ')} ]`);
+        });
+    }
 };
 
 
@@ -132,7 +187,7 @@ export const autoParser = (emptyCell: any = undefined) => (cellData: string) => 
         .next({ if: regexParsers.number.test(cellData), then: cellParsers.number })
         .next({ if: regexParsers.arrayNumber.test(cellData), then: cellParsers.arrayNumber })
         .next({ if: regexParsers.arrayString.test(cellData), then: cellParsers.arrayString })
-        .next({ then: cellParsers.string })
+        .next({ then: cellParsers.string() })
         .value;
 
     return cellDataParser(parser, emptyCell);
@@ -151,7 +206,7 @@ export const getParsers = <O extends { default?: string; }, Headers extends stri
         .value as string[];
 
     const parsers = names.map(name => {
-        const defaultParser = defaultParserOptions[ name ] as ParserOptions || defaultParserOptions.default || { emptyCell: '', parser: cellParsers.string };
+        const defaultParser = defaultParserOptions[ name ] as ParserOptions || defaultParserOptions.default || { emptyCell: '', parser: cellParsers.string() };
         const option = parsersOptions[ name ];
 
         const emptyCell = ifThen()
@@ -217,13 +272,13 @@ type CsvTextDataParsersOption = CsvTextDataBase & { default: string; };
 type CsvTextDataParsersOptions = ParsersOptions<CsvTextDataParsersOption>;
 
 const defaultParserOptions: CsvTextDataParsersOptions = {
-    rootId: { emptyCell: '', parser: cellParsers.string },
-    path: { emptyCell: '', parser: cellParsers.string },
-    editorPath: { emptyCell: '', parser: cellParsers.string },
+    rootId: { emptyCell: '', parser: cellParsers.string() },
+    path: { emptyCell: '', parser: cellParsers.string() },
+    editorPath: { emptyCell: '', parser: cellParsers.string() },
     updated: { emptyCell: false, parser: cellParsers.boolean },
     static: { emptyCell: true, parser: cellParsers.boolean },
-    type: { emptyCell: 'normal', parser: cellParsers.string },
-    default: { emptyCell: '', parser: cellParsers.string }
+    type: { emptyCell: 'normal', parser: cellParsers.string() },
+    default: { emptyCell: '', parser: cellParsers.string() }
 };
 
 
