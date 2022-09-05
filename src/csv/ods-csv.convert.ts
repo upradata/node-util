@@ -1,15 +1,14 @@
-import fs from 'fs-extra';
 import path from 'path';
+import fs from 'fs-extra';
 import { ifThen } from '@upradata/util';
 import { green, oneLineTrim, yellow } from '../template-style';
-import { tmpFileName } from '../tmpfile';
-import { execAsync } from '../useful';
+import { execAsync, ExecAsyncOptions, isExecLog } from '../useful';
 import { odsToXlsx, xlsxToCsv, XslxToCsvOption } from './ods-xlsx.convert';
 import { absolutePath } from './util';
 
 
 export class OdsConvertOptions {
-    verbose: boolean = true;
+    exec: ExecAsyncOptions = { logOutput: { stdout: true } };
     sheetName: string;
     outputFileName: string;
     outputDir: string = '.';
@@ -28,9 +27,8 @@ const UNOCONV = 'UNOPATH=/usr/bin/libreoffice /usr/bin/python3.6 /usr/bin/unocon
 const convert = async (filepath: string, options: Partial<OdsConvertOptions> & { conversionType: ConvertType; }) => {
 
     const {
-        verbose, fieldSeparator, textDelimiter, encoding, firstRow, columnFormat, conversionType, outputFileName, outputDir
+        exec: execOptions, fieldSeparator, textDelimiter, encoding, firstRow, columnFormat, conversionType, outputFileName, outputDir
     } = Object.assign(new OdsConvertOptions(), options);
-
 
     const filename = path.parse(outputFileName || filepath).name; // basename without extension
     const outputFile = absolutePath({ dir: outputDir, filename });
@@ -40,13 +38,14 @@ const convert = async (filepath: string, options: Partial<OdsConvertOptions> & {
     // Here we use Field Separator (1)	Text Delimiter (2)	Character Set (3) || wrong => for import Number of First Line (4)
 
     /* https://manpages.ubuntu.com/manpages/trusty/man1/doc2odt.1.html#import%20filters
-    * 
-    * The CSV IMPORT filter accepts a FilterOptions setting, the order is:
-    *  separator(s),text-delimiter,encoding,first-row,column-format
+     *import { ExecOptions } from 'child_process';
 
-    * The CSV export filter accepts various arguments, the order is:
-    * field-seperator(s),text-delimiter,encoding
-    */
+     * The CSV IMPORT filter accepts a FilterOptions setting, the order is:
+     *  separator(s),text-delimiter,encoding,first-row,column-format
+
+     * The CSV export filter accepts various arguments, the order is:
+     * field-seperator(s),text-delimiter,encoding
+     */
 
     let filterOptions = `${fieldSeparator},${textDelimiter},${encoding}`;
     if (conversionType === 'ods->csv')
@@ -72,14 +71,14 @@ const convert = async (filepath: string, options: Partial<OdsConvertOptions> & {
                 `;
 
 
-    if (verbose) {
+    if (isExecLog(execOptions.logOutput, 'stdout')) {
         console.log(yellow`Converting ${filepath} to ${conversionType === 'csv->ods' ? 'ods' : 'csv'}`);
     }
 
     // unoconv is SOOOO good that only one process at a time can be executed. So we do it synchronously
-    await execAsync(command, { logOutput: options.verbose });
+    await execAsync(command, execOptions);
 
-    if (verbose)
+    if (isExecLog(execOptions.logOutput, 'stdout'))
         console.log(green`${outputFile} generated\n`);
 
     return outputFile;

@@ -10,6 +10,7 @@ declare module 'commander' {
         _concatValue: <T>(v1: T, v2: T | T[]) => T[];
         // parseArg?: (<T>(value: string, previous: T) => T) | (<T>(value: string, previous: T, aliasOriginOption?: CliOption) => T);
         // <T>(value: string, previous: T) => T;
+        negateNoDefault: boolean;
     }
 }
 
@@ -25,6 +26,7 @@ export type CliOptionInit<T> = NonFunctionProperties<Partial<Option>> & {
     choices?: string[] | { values: string[]; parser: CommanderParser<T>; };
     aliases?: Alias[];
     noNegate?: boolean;
+    negateNoDefault?: boolean;
 };
 
 export const isSimpleChoices = (v: string[] | { values: string[]; parser: CommanderParser<any>; }): v is string[] => Array.isArray(v);
@@ -93,7 +95,12 @@ export class CliOption extends Option {
         const { choices, parser } = getChoices();
 
         // priority for rest.parser
-        Object.assign(this, { ...options, argChoices: rest.argChoices || choices, parser: rest.parser || parser, parseArg: rest.parser || parser });
+        Object.assign(this, {
+            negateNoDefault: false,
+            ...options,
+            argChoices: rest.argChoices || choices,
+            parser: rest.parser || parser, parseArg: rest.parser || parser
+        });
 
         this.isObject = this.name().split('.').length > 1;
         this.negate = noNegate ? false : this.negate;
@@ -143,19 +150,21 @@ export class CliOption extends Option {
             const parser = alias.parser || transform ? undefined : this.parseArg;
 
             const aliasOption = new CliOption({
+                defaultValueDescription: this.defaultValueDescription,
+                envVar: this.envVar,
+                                hidden: this.hidden,
+                argChoices: this.argChoices,
+                negate: this.negate,
                 ...options,
                 parser,
                 description: this.description,
                 // defautValue can be undefined to unset it from this (source)
                 defaultValue: mode === 'source' ? undefined : isDefinedProp(options, 'defaultValue') ? options.defaultValue : this.defaultValue,
-                defaultValueDescription: mode === 'source' ? undefined : this.defaultValueDescription,
-                envVar: mode === 'source' ? undefined : this.envVar,
-                hidden: this.hidden,
-                argChoices: this.argChoices,
-                negate: this.negate
+                // defaultValueDescription: mode === 'source' ? undefined : this.defaultValueDescription,
+                // envVar: mode === 'source' ? undefined : this.envVar,
             });
 
-            const optionFlags = splitOptionFlags(alias.flags);
+            /* const optionFlags = splitOptionFlags(alias.flags);
 
             aliasOption.short = optionFlags.shortFlag;
             aliasOption.long = optionFlags.longFlag;
@@ -163,7 +172,7 @@ export class CliOption extends Option {
 
             if (aliasOption.long) {
                 aliasOption.negate = aliasOption.long.startsWith('--no-');
-            }
+            } */
 
             return aliasOption;
         };
