@@ -103,7 +103,8 @@
             "@upradata/email": "/home/milottit/Libraries/Upra-Data/email",
             "@upradata/academie-nice": "/home/milottit/Projects/academie-nice",
             "caca": "/home/milottit/CACA",
-            "upradata-fiscalite": "/home/milottit/Projects/Accounting"
+            "upradata-fiscalite": "/home/milottit/Projects/Accounting",
+            "@upradata/carla-apartments-website": "/home/milottit/Projects/UpraData/Clients/Carla-Colombi"
         },
         "dependencies": {
             "@upradata/util": "link:/home/milottit/Libraries/Upra-Data/util@16.0.3"
