@@ -1,6 +1,6 @@
 /* eslint-disable no-dupe-class-members */
 import { EventEmitter } from 'events';
-import { Command, CommanderError, OptionValueSource } from 'commander';
+import { Command, CommanderError, OptionValueSource, Option as CommanderOption } from 'commander';
 import { FunctionN, TT, TT$ } from '@upradata/util';
 import { CliOption, CliOptionInit } from './cli.option';
 import { CliHelper, CliHelperOpts } from './helper';
@@ -40,7 +40,8 @@ declare module 'commander' {
         _findOption: (name: string) => CliOption;
         _displayError: (exitCode: number, code: string, message: string) => void;
 
-        options: CliOption[];
+        // options: CliOption[];
+        readonly options: readonly CommanderOption[];
         createHelp(): CliHelper;
     }
 }
@@ -51,10 +52,14 @@ export class CliCommand extends Command {
     private _actionHandlers: FunctionN<any[], TT$<void>>[] = [];
     private optionNames = new Set<string>();
 
+
     constructor(name?: string) {
         super(name);
     }
 
+    private getOptions(): CliOption[] {
+        return this.options as CliOption[];
+    }
 
     helperOptions(): CliHelperOpts;
     helperOptions(options: CliHelperOpts): this;
@@ -126,7 +131,7 @@ export class CliCommand extends Command {
         // I retrieve the option with this.options and the name passed as a parameter
         // So I need to add it before this.setOptionValueWithSource is called (it is done just if there is option.defaultValue during addOption)
         // BUT NO WORRY, I redefined this.options.push to push options if they do not exist already with a Set in the constructor
-        this.options.push(option);
+        this.getOptions().push(option);
         this.optionNames.add(option.name());
 
         // super.addOption(option);
@@ -232,7 +237,7 @@ export class CliCommand extends Command {
         // key is the option attributeName => --option-name => optionName
         // name of --option-name is option-name
 
-        const option = this.options.find(o => o.attributeName() === key);
+        const option = this.getOptions().find(o => o.attributeName() === key);
 
         if (option?.isObject) {
             const parts = option.name().split('.');

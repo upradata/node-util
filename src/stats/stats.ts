@@ -1,11 +1,17 @@
-
-import { camelize, CamelCase } from '@upradata/util';
+import { CamelCase, camelize } from '@upradata/util';
 import { styles as s } from '../template-style';
 import { Terminal } from '../terminal';
 import { Stat, StatCtor, StatData } from './stat';
 import {
-    Statistics, StatTableWithName, StatCollection, OutputStats, StatsToStringOptions,
-    SortData, StatSorter, SortType, statSorters
+    OutputStats,
+    SortData,
+    SortType,
+    StatCollection,
+    Statistics,
+    StatSorter,
+    statSorters,
+    StatsToStringOptions,
+    StatTableWithName,
 } from './types';
 
 
@@ -63,11 +69,13 @@ export class Stats<S extends Stat> {
                 if (statData.data?.length > 0) {
 
                     if (isGlobalStat(statData)) {
+                        const s = statData as StatData<'global'>;
+
                         const stat = datas.global[ dataName ] as StatTableWithName || {
-                            collectionName: '', name: dataName, headers: statData.headers, rows: []
+                            collectionName: '', name: dataName, headers: s.headers, rows: []
                         };
 
-                        stat.rows.push(statData.data);
+                        stat.rows.push(s.data);
 
                         datas.global[ dataName ] = stat;
                     } else {

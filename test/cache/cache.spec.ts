@@ -1,5 +1,6 @@
-import { MockFS, mockFs } from './../mocks/fs.mock';
 import VinylFile from 'vinyl';
+import { mockFs, MockFS } from '../mocks/fs.mock';
+
 import type { CacheMock } from '../mocks/cache.mock';
 
 

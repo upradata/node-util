@@ -1,10 +1,10 @@
-import path from 'path';
-import * as tsconfig from 'tsconfig';
-import { assignRecursive } from '@upradata/util';
 import { TsConfig } from './tsconfig.json';
+
+import path from 'node:path';
+
+import { assignRecursive, ensureArray } from '@upradata/util';
+import * as tsconfig from 'tsconfig';
 import { findUpDir } from '../find-up';
-
-
 
 
 export interface TsConfigJson {
@@ -36,20 +36,26 @@ const mergeTsconfigData = (tsconfigData: TsConfigData, rootTsconfigJsonPath: str
 });
 
 const mergeExtendedTsconfigJson = (tsconfigData: TsConfigData, rootTsconfigJsonPath: string): TsConfigJson => {
-    const tsconfigJson = tsconfigData.config;
 
-    if (!tsconfigJson.extends)
-        return mergeTsconfigData(tsconfigData, rootTsconfigJsonPath);
+    const addExtendConfig = (tsConfigJson: TsConfigJson, extendsPath: string): TsConfigJson => {
+        const { dir, name } = path.parse(extendsPath);
+        const extendedTsconfigJsonFilePath = `${name}.json`;
 
-    const { dir, name } = path.parse(tsconfigJson.extends);
-    const extendedTsconfigJsonFilePath = `${name}.json`;
+        const extendedTsConfig = tsconfig.loadSync(dir, extendedTsconfigJsonFilePath);
 
-    const extendedTsConfig = tsconfig.loadSync(dir, extendedTsconfigJsonFilePath);
+        if (!extendedTsConfig.path)
+            throw new Error(`Cannot find tsconfig file: "${path.join(dir, extendedTsconfigJsonFilePath)}"`);
 
-    if (!extendedTsConfig.path)
-        throw new Error(`Cannot find tsconfig file: "${path.join(dir, extendedTsconfigJsonFilePath)}"`);
+        const mergedTsconfig = assignRecursive(
+            tsConfigJson,
+            { extends: undefined as TsConfig[ 'extends' ] },
+            extendedTsConfig.config as TsConfig
+        );
 
-    const mergedTsconfig = assignRecursive(tsconfigJson, { extends: undefined as TsConfig[ 'extends' ] }, extendedTsConfig.config as TsConfig);
+        return mergeExtendedTsconfigJson({ ...extendedTsConfig, config: mergedTsconfig }, rootTsconfigJsonPath);
+    };
 
-    return mergeExtendedTsconfigJson({ ...extendedTsConfig, config: mergedTsconfig }, rootTsconfigJsonPath);
+    const extendsPaths = ensureArray(tsconfigData.config.extends || []);
+
+    return extendsPaths.reduce<TsConfigJson>(addExtendConfig, mergeTsconfigData(tsconfigData, rootTsconfigJsonPath));
 };

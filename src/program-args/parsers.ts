@@ -126,7 +126,7 @@ export const parsers = {
             let isSet = false;
 
             for (const [ key, value ] of Object.entries(o)) {
-                if (lastValue && !(key in lastValue)) {
+                if (lastValue && !(key in (lastValue as T & ObjectOf<any>))) {
                     lastValue[ key ] = value;
                     isSet = true;
                 }

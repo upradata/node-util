@@ -1,6 +1,7 @@
+import path from 'node:path';
+import process from 'node:process';
+
 import fs from 'fs-extra';
-import path from 'path';
-import process from 'process';
 import { SyncAsyncMode, SyncAsyncType } from '../useful';
 
 
@@ -55,7 +56,7 @@ export type FindFirstPathOpts = Partial<FindFirstPathOptions>;
 
 const getStatFunction = <Mode extends SyncAsyncMode>(
     mode: Mode, allowSymlinks: boolean
-): SyncAsyncType<Mode, fs.StatSyncFn, (path: fs.PathLike) => Promise<fs.Stats>> => {
+): (path: fs.PathLike) => SyncAsyncType<Mode, fs.Stats> => {
 
     const statSync = allowSymlinks ? fs.statSync : fs.lstatSync;
     const statAsync = (allowSymlinks ? fs.stat : fs.lstat);

@@ -1,9 +1,11 @@
-import glob, { IOptions as GlobOptions } from 'glob';
-import path from 'path';
-import { assignRecursive, isPlainObject, ensureArray } from '@upradata/util';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { assignRecursive, ensureArray, isPlainObject } from '@upradata/util';
+import { globSync, GlobOptions } from 'glob';
 
 
-export type GlobFilesOptions = GlobOptions & { noGlob?: boolean; };
+export type GlobFilesOptions = (GlobOptions & { withFileTypes?: false; }) & { noGlob?: boolean; };
 export type GlobFile = { pattern: string; options?: GlobFilesOptions; };
 export type FilePath = string | GlobFile;
 export type FilesWithGlobalOptions = { files: (FilePath | FilePath[]), options?: GlobFilesOptions; };
@@ -62,11 +64,11 @@ export class GlobFiles {
             try {
 
                 if (!options.noGlob) {
-                    const filesList = glob.sync(pattern, options).map(file => {
+                    const filesList = globSync(pattern, options).map(file => {
                         if (file.startsWith('/'))
                             return file;
 
-                        return path.join(options.cwd || '.', file);
+                        return path.join(fileURLToPath(options.cwd || '.'), file);
                     });
 
                     if (filesList.length === 0)

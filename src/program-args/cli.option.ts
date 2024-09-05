@@ -6,7 +6,7 @@ import { camelcase } from './util';
 
 declare module 'commander' {
     interface Option {
-        envVar: string;
+        envVar?: string;
         _concatValue: <T>(v1: T, v2: T | T[]) => T[];
         // parseArg?: (<T>(value: string, previous: T) => T) | (<T>(value: string, previous: T, aliasOriginOption?: CliOption) => T);
         // <T>(value: string, previous: T) => T;
