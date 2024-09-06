@@ -17,7 +17,7 @@ declare module 'commander' {
         _allowUnknownOption: boolean;
         _allowExcessArguments: boolean;
         /** @type {Argument[]} */
-        _args: Argument[];
+        _args: Argument[]; // deprecated : use registeredArguments
         _scriptPath: string;
         _name: string;
         _optionValues: Record<string, any>;
@@ -40,8 +40,7 @@ declare module 'commander' {
         _findOption: (name: string) => CliOption;
         _displayError: (exitCode: number, code: string, message: string) => void;
 
-        // options: CliOption[];
-        readonly options: readonly CommanderOption[];
+        // options: CliOption[]; cannot be used with the new Command typescript definition being readonly options: readonly CommanderOption[];
         createHelp(): CliHelper;
     }
 }
@@ -237,6 +236,16 @@ export class CliCommand extends Command {
         // key is the option attributeName => --option-name => optionName
         // name of --option-name is option-name
 
+        // before, this was done in Commander.js: command.js => Command.prototype.setOptionValue (but it changed in 9.4.1)
+        const setOptionValue = (key: string, value: unknown) => {
+            if (this._storeOptionsAsProperties) {
+                this[ key ] = value;
+            } else {
+                this._optionValues[ key ] = value;
+            }
+        };
+
+
         const option = this.getOptions().find(o => o.attributeName() === key);
 
         if (option?.isObject) {
@@ -254,12 +263,12 @@ export class CliCommand extends Command {
             }, obj);
 
 
-            this.setOptionValue(objectName, obj);
+            setOptionValue(objectName, obj);
             this._optionValueSources[ objectName ] = source;
         }
 
 
-        this.setOptionValue(key, value);
+        setOptionValue(key, value);
 
         if (option)
             option.isValueFromDefault = source === 'default';
